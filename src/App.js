@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import * as Toast from '@radix-ui/react-toast';
 import SignIn from './Sign-In/SignIn';
 import MainPage from './MainPage/MainPage';
+import LandingPage from './LandingPage/LandingPage';
 import { supabase } from './config/supabase';
 
 function App() {
@@ -22,13 +23,23 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleGetStarted = () => {
+    window.location.href = '/signin';
+  };
+
   return (
     <Router>
       <Toast.Provider>
         <Routes>
           <Route
             path="/"
-            element={session ? <MainPage session={session} /> : <Navigate to="/signin" />}
+            element={
+              session ? (
+                <MainPage session={session} />
+              ) : (
+                <LandingPage onGetStarted={handleGetStarted} />
+              )
+            }
           />
           <Route
             path="/signin"

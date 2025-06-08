@@ -159,6 +159,22 @@
   min-width: 140px;
   z-index: 50;
   border: 1px solid var(--border-primary);
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+[data-state="open"].dropdown-content {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+[data-state="closed"].dropdown-content {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
 }
 
 .dropdown-item {

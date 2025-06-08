@@ -3,68 +3,157 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
 }
 
 .sign-in-box {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--bg-primary, #fff);
+  padding: 2.5rem 2rem 2rem 2rem;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(30, 64, 175, 0.18), 0 2px 8px rgba(0,0,0,0.08);
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sign-in-box h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  width: 100%;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
 }
 
 .form-group input {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border-primary, #e2e8f0);
+  border-radius: 8px;
   font-size: 1rem;
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-primary, #1e293b);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.sign-in-container button {
+.form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  background: var(--bg-primary, #fff);
+}
+
+.sign-in-container button[type="submit"] {
   width: 100%;
-  padding: 0.75rem;
-  background-color: #2ea043;
+  padding: 0.85rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.10);
+  transition: background 0.2s, transform 0.1s;
 }
 
-.sign-in-container button:hover {
-  background-color: #2c974b;
+.sign-in-container button[type="submit"]:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  transform: translateY(-2px) scale(1.01);
 }
 
-.sign-in-container button:disabled {
-  background-color: #ccc;
+.sign-in-container button[type="submit"]:disabled {
+  background: #b6c3e0;
+  color: #f1f5f9;
   cursor: not-allowed;
 }
 
 .toggle-auth {
   background: none;
   border: none;
-  color: #2ea043;
+  color: #3b82f6;
   padding: 0;
   font-size: 1rem;
   cursor: pointer;
   width: auto;
+  font-weight: 600;
+  transition: color 0.2s;
 }
 
 .toggle-auth:hover {
   text-decoration: underline;
+  color: #1e40af;
   background: none;
+}
+
+.sign-in-box p {
+  margin-top: 1.25rem;
+  color: var(--text-secondary, #6b7280);
+  font-size: 1rem;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .sign-in-container {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+[data-theme="dark"] .sign-in-box {
+  background: var(--bg-primary, #0f172a);
+  box-shadow: 0 8px 32px rgba(30, 64, 175, 0.10), 0 2px 8px rgba(0,0,0,0.18);
+}
+[data-theme="dark"] .form-group input {
+  background: var(--bg-secondary, #1e293b);
+  color: var(--text-primary, #f1f5f9);
+  border-color: var(--border-primary, #334155);
+}
+[data-theme="dark"] .form-group input:focus {
+  background: var(--bg-primary, #0f172a);
+}
+[data-theme="dark"] .sign-in-box h2,
+[data-theme="dark"] .form-group label {
+  color: var(--text-primary, #f1f5f9);
+}
+[data-theme="dark"] .sign-in-box p {
+  color: var(--text-secondary, #94a3b8);
+}
+[data-theme="dark"] .toggle-auth {
+  color: #60a5fa;
+}
+[data-theme="dark"] .toggle-auth:hover {
+  color: #3b82f6;
+}
+
+.back-button {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  background: none;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: transform 0.2s ease;
+}
+
+.back-button:hover {
+  transform: translateX(-4px);
 } 

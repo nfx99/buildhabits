@@ -17,14 +17,29 @@ const SignIn = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        // Try to sign up - this will fail if the email exists
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
-        if (error) throw error;
-        setToastMessage('Check your email for the confirmation link!');
-        setShowToast(true);
+
+        if (error) {
+          // If the error indicates the user exists, switch to sign in
+          if (error.message.toLowerCase().includes('already registered')) {
+            setToastMessage('Email already registered. Switching to sign in...');
+            setShowToast(true);
+            setTimeout(() => {
+              setIsSignUp(false);
+            }, 1500);
+          } else {
+            throw error;
+          }
+        } else if (data?.user) {
+          setToastMessage('Check your email for the confirmation link!');
+          setShowToast(true);
+        }
       } else {
+        // Regular sign in
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -39,9 +54,16 @@ const SignIn = () => {
     }
   };
 
+  const handleBackToHome = () => {
+    window.location.href = '/';
+  };
+
   return (
     <div className="sign-in-container">
       <div className="sign-in-box">
+        <button className="back-button" onClick={handleBackToHome}>
+          ← Go Back
+        </button>
         <h2>{isSignUp ? 'Create Account' : 'Sign In'}</h2>
         <form onSubmit={handleAuth}>
           <div className="form-group">
@@ -83,6 +105,7 @@ const SignIn = () => {
         className="toast-root"
         open={showToast}
         onOpenChange={setShowToast}
+        duration={3000}
       >
         <Toast.Title className="toast-title">Notification</Toast.Title>
         <Toast.Description className="toast-description">
