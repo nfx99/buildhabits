@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="Build habits and track your progress with a beautiful habit tracker"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
@@ -24,7 +24,23 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+    
+    <!-- Immediate theme detection to prevent FOUC -->
+    <script>
+      (function() {
+        try {
+          const savedTheme = localStorage.getItem('theme');
+          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          // Fallback to light theme if localStorage is not available
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+    
+    <title>Build Habits</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

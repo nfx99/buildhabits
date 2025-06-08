@@ -1,0 +1,386 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { format, getDay, startOfYear, endOfYear, eachDayOfInterval, getYear, addDays } from 'date-fns';
+import * as Dialog from '@radix-ui/react-dialog';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import * as Toast from '@radix-ui/react-toast';
+import './HabitCard.css';
+
+const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [selectedDate, setSelectedDate] = React.useState(new Date());
+  const [isDateCompleted, setIsDateCompleted] = React.useState(false);
+  const [editName, setEditName] = React.useState(habit.name);
+  const tooltipRef = React.useRef(null);
+
+  const heatmapData = React.useMemo(() => {
+    const startDate = startOfYear(new Date());
+    const endDate = endOfYear(new Date());
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    
+    return days.map(date => ({
+      date,
+      completed: habit.habit_completions?.some(
+        completion => format(new Date(completion.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+      ) || false
+    }));
+  }, [habit.habit_completions]);
+
+  const dateGrid = React.useMemo(() => {
+    const startDate = startOfYear(new Date());
+    const endDate = endOfYear(new Date());
+    const grid = [];
+    
+    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+      const row = [];
+      let date = addDays(startDate, dayOfWeek - getDay(startDate));
+      
+      for (let week = 0; week < 53; week++) {
+        const cellDate = addDays(date, week * 7);
+        const isInCurrentYear = getYear(cellDate) === getYear(new Date());
+        const isBeforeStart = isInCurrentYear && cellDate < startDate;
+        const isAfterEnd = isInCurrentYear && cellDate > endDate;
+        
+        if (isBeforeStart || isAfterEnd) {
+          row.push({ date: null, completed: false });
+        } else {
+          const dayData = heatmapData.find(d => 
+            format(d.date, 'yyyy-MM-dd') === format(cellDate, 'yyyy-MM-dd')
+          );
+          row.push(dayData || { date: cellDate, completed: false });
+        }
+      }
+      grid.push(row);
+    }
+    
+    return grid;
+  }, [heatmapData]);
+
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const monthLabels = React.useMemo(() => {
+    const months = [];
+    const startDate = startOfYear(new Date());
+    let currentMonth = '';
+    
+    for (let week = 0; week < 53; week++) {
+      const weekDate = addDays(startDate, (week * 7) - getDay(startDate));
+      const monthName = format(weekDate, 'MMM');
+      
+      // Only show the month label if it's a new month and not December from previous year
+      const shouldShowLabel = monthName !== currentMonth && getYear(weekDate) === getYear(new Date());
+      
+      months.push({
+        week,
+        month: monthName,
+        showLabel: shouldShowLabel
+      });
+      
+      if (shouldShowLabel) {
+        currentMonth = monthName;
+      }
+    }
+    
+    return months;
+  }, []);
+
+  const handleDateClick = (date) => {
+    if (!date) return;
+    
+    // Check completion using the original date (same as heatmap)
+    const isCompleted = habit.habit_completions?.some(
+      completion => {
+        const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
+        const originalDate = format(date, 'yyyy-MM-dd');
+        return completionDate === originalDate;
+      }
+    ) || false;
+    
+    // Still use adjusted date for the dialog (to fix the display offset)
+    setSelectedDate(addDays(date, 1));
+    setIsDateCompleted(isCompleted);
+    setIsOpen(true);
+  };
+
+  const handleLogToday = () => {
+    const today = new Date();
+    
+    const isCompleted = habit.habit_completions?.some(
+      completion => {
+        const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
+        const todayDate = format(today, 'yyyy-MM-dd');
+        return completionDate === todayDate;
+      }
+    ) || false;
+    
+    setSelectedDate(today);
+    setIsDateCompleted(isCompleted);
+    setIsOpen(true);
+  };
+
+  const handleComplete = async () => {
+    try {
+      await onComplete(habit.id, selectedDate);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error completing habit:', error);
+    }
+  };
+
+  const handleUndo = async () => {
+    try {
+      await onComplete(habit.id, selectedDate, true);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error undoing habit:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await onDelete(habit.id);
+      setIsDeleteOpen(false);
+    } catch (error) {
+      console.error('Error deleting habit:', error);
+    }
+  };
+
+  const handleEdit = async () => {
+    try {
+      await onEdit(habit.id, editName);
+      setIsEditOpen(false);
+    } catch (error) {
+      console.error('Error editing habit:', error);
+    }
+  };
+
+  const showTooltip = (event) => {
+    if (!tooltipRef.current) return;
+    
+    const cell = event.currentTarget;
+    const tooltipText = cell.getAttribute('data-tooltip');
+    if (!tooltipText) return;
+    
+    const tooltip = tooltipRef.current;
+    tooltip.textContent = tooltipText;
+    tooltip.style.display = 'block';
+    
+    // Calculate optimal position
+    const cellRect = cell.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Set content to measure actual dimensions
+    tooltip.style.visibility = 'hidden';
+    tooltip.style.display = 'block';
+    const tooltipRect = tooltip.getBoundingClientRect();
+    
+    // Calculate position
+    let x = cellRect.left + (cellRect.width / 2) - (tooltipRect.width / 2);
+    let y = cellRect.top - tooltipRect.height - 8;
+    
+    // Adjust for clipping
+    if (x + tooltipRect.width > viewportWidth - 10) {
+      x = viewportWidth - tooltipRect.width - 10;
+    }
+    if (x < 10) {
+      x = 10;
+    }
+    if (y < 10) {
+      y = cellRect.bottom + 8;
+    }
+    
+    // Apply position and make visible
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+    tooltip.style.visibility = 'visible';
+  };
+
+  const hideTooltip = () => {
+    if (tooltipRef.current) {
+      tooltipRef.current.style.display = 'none';
+    }
+  };
+
+  return (
+    <div className="habit-card" data-theme={theme}>
+      <div className="habit-header">
+        <h3>{habit.name}</h3>
+        <div className="header-buttons">
+          <button 
+            className="log-button"
+            onClick={handleLogToday}
+            title="Log today"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+              <line x1="12" y1="14" x2="12" y2="18"/>
+              <line x1="10" y1="16" x2="14" y2="16"/>
+            </svg>
+            Log
+          </button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button className="more-button" title="More options">
+                ⋮
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="dropdown-content">
+                <DropdownMenu.Item 
+                  className="dropdown-item"
+                  onClick={() => setIsEditOpen(true)}
+                >
+                  Edit
+                </DropdownMenu.Item>
+                <DropdownMenu.Item 
+                  className="dropdown-item delete-item"
+                  onClick={() => setIsDeleteOpen(true)}
+                >
+                  Delete
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
+      </div>
+      <div className="heatmap-container">
+        <div className="heatmap">
+          {/* Month labels row */}
+          <div className="heatmap-months-row">
+            <div className="day-label"></div>
+            <div className="heatmap-months">
+              {monthLabels.map((monthData, index) => (
+                <div key={index} className="month-label">
+                  {monthData.showLabel ? monthData.month : ''}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {weekdays.map((weekday, dayIndex) => (
+            <div key={weekday} className="heatmap-row">
+              <div className="day-label">{weekday}</div>
+              <div className="heatmap-cells">
+                {dateGrid[dayIndex].map((cell, weekIndex) => {
+                  if (!cell.date) {
+                    return <div key={`${weekday}-${weekIndex}`} className="heatmap-cell empty" />;
+                  }
+                  const isIn2025 = getYear(cell.date) === 2025;
+                  const dayName = format(cell.date, 'EEEE');
+                  const dateStr = format(cell.date, 'MMMM dd, yyyy');
+                  const tooltipText = `${dayName}, ${dateStr}`;
+                  return (
+                    <div
+                      key={`${weekday}-${weekIndex}`}
+                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!isIn2025 ? 'empty' : ''}`}
+                      onClick={() => isIn2025 && handleDateClick(cell.date)}
+                      data-tooltip={isIn2025 ? `${dayName}, ${dateStr}` : ''}
+                      onMouseEnter={(e) => isIn2025 && showTooltip(e)}
+                      onMouseLeave={hideTooltip}
+                    >
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Custom instant tooltip rendered to body to avoid clipping */}
+      {ReactDOM.createPortal(
+        <div
+          ref={tooltipRef}
+          className="custom-tooltip"
+          style={{
+            position: 'fixed',
+            display: 'none',
+            zIndex: 9999,
+            pointerEvents: 'none',
+            background: 'var(--text-primary)',
+            color: 'var(--bg-primary)',
+            padding: '0.4rem 0.6rem',
+            borderRadius: '4px',
+            fontSize: '0.7rem',
+            fontWeight: '500',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+          }}
+        />,
+        document.body
+      )}
+
+      <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content">
+            <Dialog.Title>{isDateCompleted ? 'Undo Habit' : 'Complete Habit'}</Dialog.Title>
+            <Dialog.Description>
+              {isDateCompleted 
+                ? `Remove completion for ${habit.name} on ${format(selectedDate, 'MMMM dd, yyyy')}?`
+                : `Mark ${habit.name} as completed for ${format(selectedDate, 'MMMM dd, yyyy')}?`
+              }
+            </Dialog.Description>
+            <div className="dialog-buttons">
+              {isDateCompleted ? (
+                <button className="undo-button" onClick={handleUndo}>Undo</button>
+              ) : (
+                <button onClick={handleComplete}>Complete</button>
+              )}
+              <button onClick={() => setIsOpen(false)}>Cancel</button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content">
+            <Dialog.Title>Delete Habit</Dialog.Title>
+            <Dialog.Description>
+              Are you sure you want to delete "{habit.name}"? This action cannot be undone.
+            </Dialog.Description>
+            <div className="dialog-buttons">
+              <button className="delete-confirm" onClick={handleDelete}>Delete</button>
+              <button onClick={() => setIsDeleteOpen(false)}>Cancel</button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content">
+            <Dialog.Title>Edit Habit</Dialog.Title>
+            <Dialog.Description>
+              Change the name of your habit.
+            </Dialog.Description>
+            <div className="form-group">
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="edit-input"
+                placeholder="Habit name"
+              />
+            </div>
+            <div className="dialog-buttons">
+              <button onClick={handleEdit}>Save</button>
+              <button onClick={() => setIsEditOpen(false)}>Cancel</button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </div>
+  );
+};
+
+export default React.memo(HabitCard); 

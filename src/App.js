@@ -1,25 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import * as Toast from '@radix-ui/react-toast';
+import SignIn from './Sign-In/SignIn';
+import MainPage from './MainPage/MainPage';
+import { supabase } from './config/supabase';
 
 function App() {
+  const [session, setSession] = React.useState(null);
+
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Toast.Provider>
+        <Routes>
+          <Route
+            path="/"
+            element={session ? <MainPage session={session} /> : <Navigate to="/signin" />}
+          />
+          <Route
+            path="/signin"
+            element={!session ? <SignIn /> : <Navigate to="/" />}
+          />
+        </Routes>
+        <Toast.Viewport className="toast-viewport" />
+      </Toast.Provider>
+    </Router>
   );
 }
 
-export default App;
+export default App; 
