@@ -6,6 +6,7 @@ import MainPage from './MainPage/MainPage';
 import LandingPage from './LandingPage/LandingPage';
 import PaymentSuccess from './PaymentSuccess';
 import PaymentCancelled from './PaymentCancelled';
+import EmailConfirmation from './EmailConfirmation';
 import { supabase } from './config/supabase';
 
 function App() {
@@ -18,8 +19,27 @@ function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session);
       setSession(session);
+      
+      // Handle email confirmation redirect
+      if (event === 'SIGNED_IN' && session) {
+        // Check if this is an email confirmation by looking for URL hash parameters
+        const urlHash = window.location.hash;
+        const urlParams = new URLSearchParams(urlHash.substring(1));
+        const hasAccessToken = urlParams.get('access_token');
+        const signupType = urlParams.get('type');
+        
+        // If user just confirmed email (has access token and type), show confirmation page
+        if (hasAccessToken && signupType === 'signup' && window.location.pathname === '/signin') {
+          window.location.href = '/email-confirmed';
+        }
+        // Otherwise, if user just signed in normally on signin page, redirect to main
+        else if (window.location.pathname === '/signin') {
+          window.location.href = '/';
+        }
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -47,6 +67,7 @@ function App() {
             path="/signin"
             element={!session ? <SignIn /> : <Navigate to="/" />}
           />
+          <Route path="/email-confirmed" element={<EmailConfirmation />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/payment-cancelled" element={<PaymentCancelled />} />
         </Routes>

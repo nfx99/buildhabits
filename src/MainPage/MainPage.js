@@ -235,12 +235,21 @@ const MainPage = ({ session }) => {
       setToastMessage('Signing out...');
       setShowToast(true);
       
-      const { error } = await supabase.auth.signOut();
-      console.log('Sign out response:', { error });
+      // Check if there's an active session first
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log('Current session:', currentSession);
       
-      if (error) {
-        console.error('Sign out error:', error);
-        throw error;
+      if (currentSession) {
+        // Only try to sign out if there's an active session
+        const { error } = await supabase.auth.signOut();
+        console.log('Sign out response:', { error });
+        
+        if (error) {
+          console.error('Sign out error:', error);
+          throw error;
+        }
+      } else {
+        console.log('No active session found, proceeding with local cleanup');
       }
       
       console.log('Sign out successful, clearing state...');
@@ -263,8 +272,22 @@ const MainPage = ({ session }) => {
       
     } catch (error) {
       console.error('Error signing out:', error);
-      setToastMessage(`Failed to sign out: ${error.message}`);
-      setShowToast(true);
+      
+      // If it's a session missing error, still proceed with local cleanup and redirect
+      if (error.message.includes('Auth session missing')) {
+        console.log('Session already missing, proceeding with cleanup...');
+        setHabits([]);
+        setHasPaid(false);
+        setToastMessage('Signed out successfully');
+        setShowToast(true);
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+      } else {
+        // For other errors, show the error message
+        setToastMessage(`Failed to sign out: ${error.message}`);
+        setShowToast(true);
+      }
     }
   };
 

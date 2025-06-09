@@ -21,6 +21,9 @@ const SignIn = () => {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${process.env.REACT_APP_BASE_URL || window.location.origin}/signin`
+          }
         });
 
         if (error) {
