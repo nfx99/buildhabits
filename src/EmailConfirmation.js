@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from './config/supabase';
+import confetti from 'canvas-confetti';
 import './EmailConfirmation.css';
 
 const EmailConfirmation = () => {
@@ -16,7 +17,7 @@ const EmailConfirmation = () => {
       if (accessToken && refreshToken) {
         try {
           // Set the session using the tokens
-          const { data, error } = await supabase.auth.setSession({
+          const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           });
@@ -42,6 +43,48 @@ const EmailConfirmation = () => {
     processEmailConfirmation();
   }, []);
 
+  useEffect(() => {
+    // Confetti celebration effect
+    const duration = 15 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+    function randomInRange(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    const interval = setInterval(function() {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+
+      // since particles fall down, start a bit higher than random
+      confetti(
+        Object.assign({}, defaults, {
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        })
+      );
+      confetti(
+        Object.assign({}, defaults, {
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        })
+      );
+    }, 250);
+
+    // Cleanup function to clear interval when component unmounts
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, []);
+
   const handleGoToHabits = () => {
     // Since user is on this page, they came from email confirmation
     // The auth tokens are in the URL, so redirect and let App.js handle the session
@@ -52,29 +95,6 @@ const EmailConfirmation = () => {
     <div className="confirmation-container">
       {/* Animated background */}
       <div className="animated-bg"></div>
-      
-      {/* Confetti particles */}
-      <div className="confetti-container">
-        {[...Array(50)].map((_, i) => (
-          <div 
-            key={i} 
-            className="confetti-piece"
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${3 + Math.random() * 4}s`,
-              backgroundColor: [
-                'var(--accent-primary)',
-                'var(--success)',
-                'var(--warning)',
-                '#8b5cf6',
-                '#ec4899',
-                '#06b6d4'
-              ][Math.floor(Math.random() * 6)]
-            }}
-          />
-        ))}
-      </div>
 
       <div className="confirmation-content">
         <div className="confirmation-card">
