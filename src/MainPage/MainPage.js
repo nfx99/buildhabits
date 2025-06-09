@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -22,11 +22,107 @@ const MainPage = ({ session }) => {
     const documentTheme = document.documentElement.getAttribute('data-theme');
     return documentTheme || localStorage.getItem('theme') || 'light';
   });
+  const [username, setUsername] = useState('');
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [editingUsername, setEditingUsername] = useState('');
+
+  // Define functions before useEffect hooks to avoid use-before-define warnings
+  const checkPaymentStatus = useCallback(async () => {
+    try {
+      console.log('Checking payment status for user:', session.user.id);
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('is_premium, premium_since, username')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
+      
+      console.log('Payment status data:', data);
+      const isPremium = data?.is_premium || false;
+      setHasPaid(isPremium);
+      setUsername(data?.username || '');
+      
+      if (isPremium && !hasPaid) {
+        // Premium status was just detected, show a success message
+        setToastMessage('🎉 Premium upgrade successful! You now have unlimited habits.');
+        setShowToast(true);
+      }
+      
+      return isPremium;
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      return false;
+    }
+  }, [session.user.id, hasPaid]);
+
+  // Backup function to verify payment via Stripe session ID
+  const verifyPaymentWithStripe = useCallback(async (sessionId) => {
+    try {
+      console.log('Verifying payment with Stripe session:', sessionId);
+      const response = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          userId: session.user.id
+        }),
+      });
+
+      const result = await response.json();
+      console.log('Stripe verification result:', result);
+
+      if (result.success && result.isPaid) {
+        // Payment was successful, refresh status
+        await checkPaymentStatus();
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error verifying payment with Stripe:', error);
+      return false;
+    }
+  }, [session.user.id, checkPaymentStatus]);
+
+  const fetchHabits = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('habits')
+        .select(`
+          id,
+          name,
+          created_at,
+          user_id,
+          habit_completions (
+            id,
+            date,
+            created_at
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
+      setHabits(data || []);
+    } catch (error) {
+      console.error('Error fetching habits:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchHabits();
     checkPaymentStatus();
-  }, [session]);
+  }, [session, checkPaymentStatus, fetchHabits]);
 
   // Check payment status when user returns from payment
   useEffect(() => {
@@ -71,7 +167,7 @@ const MainPage = ({ session }) => {
     };
 
     handlePaymentReturn();
-  }, []);
+  }, [checkPaymentStatus, verifyPaymentWithStripe]);
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -85,96 +181,7 @@ const MainPage = ({ session }) => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const checkPaymentStatus = async () => {
-    try {
-      console.log('Checking payment status for user:', session.user.id);
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('is_premium, premium_since')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
 
-      if (error) {
-        console.error('Supabase error details:', error);
-        throw error;
-      }
-      
-      console.log('Payment status data:', data);
-      const isPremium = data?.is_premium || false;
-      setHasPaid(isPremium);
-      
-      if (isPremium && !hasPaid) {
-        // Premium status was just detected, show a success message
-        setToastMessage('🎉 Premium upgrade successful! You now have unlimited habits.');
-        setShowToast(true);
-      }
-      
-      return isPremium;
-    } catch (error) {
-      console.error('Error checking payment status:', error);
-      return false;
-    }
-  };
-
-  // Backup function to verify payment via Stripe session ID
-  const verifyPaymentWithStripe = async (sessionId) => {
-    try {
-      console.log('Verifying payment with Stripe session:', sessionId);
-      const response = await fetch('/api/verify-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId: sessionId,
-          userId: session.user.id
-        }),
-      });
-
-      const result = await response.json();
-      console.log('Stripe verification result:', result);
-
-      if (result.success && result.isPaid) {
-        // Payment was successful, refresh status
-        await checkPaymentStatus();
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Error verifying payment with Stripe:', error);
-      return false;
-    }
-  };
-
-  const fetchHabits = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('habits')
-        .select(`
-          id,
-          name,
-          created_at,
-          user_id,
-          habit_completions (
-            id,
-            date,
-            created_at
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Supabase error details:', error);
-        throw error;
-      }
-      setHabits(data || []);
-    } catch (error) {
-      console.error('Error fetching habits:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreateHabit = async (e) => {
     e.preventDefault();
@@ -423,6 +430,64 @@ const MainPage = ({ session }) => {
     }
   };
 
+  const handleStartEditingUsername = () => {
+    setEditingUsername(username);
+    setIsEditingUsername(true);
+  };
+
+  const handleCancelEditingUsername = () => {
+    setEditingUsername('');
+    setIsEditingUsername(false);
+  };
+
+  const handleSaveUsername = async () => {
+    const sanitizedUsername = editingUsername.trim();
+    
+    if (!sanitizedUsername) {
+      setToastMessage('Please enter a valid username');
+      setShowToast(true);
+      return;
+    }
+
+    if (sanitizedUsername === username) {
+      setIsEditingUsername(false);
+      return;
+    }
+
+    try {
+      // Check if username already exists
+      const { data: existingUser } = await supabase
+        .from('user_profiles')
+        .select('username')
+        .eq('username', sanitizedUsername)
+        .neq('user_id', session.user.id)
+        .single();
+
+      if (existingUser) {
+        setToastMessage('Username already taken. Please choose another one.');
+        setShowToast(true);
+        return;
+      }
+
+      // Update username
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ username: sanitizedUsername })
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+
+      setUsername(sanitizedUsername);
+      setIsEditingUsername(false);
+      setToastMessage('Username updated successfully!');
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error updating username:', error);
+      setToastMessage('Error updating username. Please try again.');
+      setShowToast(true);
+    }
+  };
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -541,10 +606,54 @@ const MainPage = ({ session }) => {
               <div className="profile-content">
                 <div className="profile-info">
                   <div className="profile-avatar">
-                    {session.user.email?.[0]?.toUpperCase() || '👤'}
+                    {username?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase() || '👤'}
                   </div>
                   <div className="profile-details">
-                    <h3>{session.user.email}</h3>
+                    <div className="username-section">
+                      {isEditingUsername ? (
+                        <div className="username-edit">
+                          <input
+                            type="text"
+                            value={editingUsername}
+                            onChange={(e) => setEditingUsername(e.target.value)}
+                            placeholder="Enter username"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSaveUsername();
+                              } else if (e.key === 'Escape') {
+                                handleCancelEditingUsername();
+                              }
+                            }}
+                          />
+                          <div className="username-edit-buttons">
+                            <button 
+                              className="save-username-btn"
+                              onClick={handleSaveUsername}
+                            >
+                              ✓
+                            </button>
+                            <button 
+                              className="cancel-username-btn"
+                              onClick={handleCancelEditingUsername}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="username-display">
+                          <h3>{username || 'No username set'}</h3>
+                          <button 
+                            className="edit-username-btn"
+                            onClick={handleStartEditingUsername}
+                            title="Edit username"
+                          >
+                            ✏️
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <p>{session.user.email}</p>
                     <p>Joined {new Date(session.user.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
@@ -575,26 +684,6 @@ const MainPage = ({ session }) => {
                       onClick={handleUpgrade}
                     >
                       Upgrade Now - $4.99
-                    </button>
-                    <button 
-                      className="refresh-status-button"
-                      onClick={async () => {
-                        setToastMessage('Refreshing payment status...');
-                        setShowToast(true);
-                        await checkPaymentStatus();
-                      }}
-                      style={{
-                        marginTop: '0.5rem',
-                        background: 'transparent',
-                        border: '1px solid var(--border-primary)',
-                        color: 'var(--text-secondary)',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '6px',
-                        fontSize: '0.85rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Refresh Status
                     </button>
                   </div>
                 )}

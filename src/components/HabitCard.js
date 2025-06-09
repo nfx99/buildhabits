@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { format, getDay, startOfYear, endOfYear, eachDayOfInterval, getYear, addDays } from 'date-fns';
 import * as Dialog from '@radix-ui/react-dialog';
-import * as Toast from '@radix-ui/react-toast';
 import './HabitCard.css';
 
 const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
@@ -175,7 +174,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
     // Calculate optimal position
     const cellRect = cell.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
     
     // Set content to measure actual dimensions
     tooltip.style.visibility = 'hidden';
@@ -300,7 +298,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
                   const isIn2025 = getYear(cell.date) === 2025;
                   const dayName = format(cell.date, 'EEEE');
                   const dateStr = format(cell.date, 'MMMM dd, yyyy');
-                  const tooltipText = `${dayName}, ${dateStr}`;
                   return (
                     <div
                       key={`${weekday}-${weekIndex}`}

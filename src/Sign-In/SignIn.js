@@ -3,6 +3,75 @@ import { supabase } from '../config/supabase';
 import * as Toast from '@radix-ui/react-toast';
 import './SignIn.css';
 
+// Function to generate a random username
+const generateUsername = () => {
+  const adjectives = [
+    'Bold', 'Bright', 'Calm', 'Clever', 'Cool', 'Creative', 'Daring', 'Dynamic',
+    'Epic', 'Focused', 'Gentle', 'Happy', 'Inspired', 'Joyful', 'Kind', 'Lively',
+    'Mindful', 'Natural', 'Optimistic', 'Peaceful', 'Quick', 'Radiant', 'Strong',
+    'Thoughtful', 'Unique', 'Vibrant', 'Wise', 'Zen'
+  ];
+  
+  const nouns = [
+    'Achiever', 'Builder', 'Creator', 'Dreamer', 'Explorer', 'Finisher', 'Grower',
+    'Helper', 'Innovator', 'Journeyer', 'Keeper', 'Learner', 'Maker', 'Navigator',
+    'Organizer', 'Pioneer', 'Questioner', 'Runner', 'Seeker', 'Tracker', 'Uniter',
+    'Visionary', 'Walker', 'Xplorer', 'Yearner', 'Zoner'
+  ];
+
+  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const number = Math.floor(Math.random() * 999) + 1;
+  
+  return `${adjective}${noun}${number}`;
+};
+
+// Function to create user profile with username
+const createUserProfile = async (userId) => {
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  while (attempts < maxAttempts) {
+    const username = generateUsername();
+    
+    try {
+      // Check if username already exists
+      const { data: existingUser } = await supabase
+        .from('user_profiles')
+        .select('username')
+        .eq('username', username)
+        .single();
+      
+      if (!existingUser) {
+        // Username is unique, create the profile
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .insert([
+            {
+              user_id: userId,
+              username: username,
+              is_premium: false
+            }
+          ])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        console.log('User profile created with username:', username);
+        return data;
+      }
+      
+      attempts++;
+    } catch (error) {
+      console.error('Error creating user profile:', error);
+      attempts++;
+    }
+  }
+  
+  throw new Error('Could not generate unique username after multiple attempts');
+};
+
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,6 +107,14 @@ const SignIn = () => {
             throw error;
           }
         } else if (data?.user) {
+          // Create user profile with username if user was created successfully
+          try {
+            await createUserProfile(data.user.id);
+          } catch (profileError) {
+            console.error('Error creating user profile:', profileError);
+            // Don't throw error here - signup was successful even if profile creation failed
+          }
+          
           setToastMessage('Check your email for the confirmation link!');
           setShowToast(true);
         }

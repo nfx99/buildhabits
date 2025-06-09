@@ -528,6 +528,103 @@ button, .habit-card, .dialog-content {
   line-height: 1.5;
 }
 
+.username-section {
+  margin-bottom: 0.5rem;
+}
+
+.username-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.username-display h3 {
+  margin: 0;
+  flex: 1;
+}
+
+.edit-username-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.edit-username-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.username-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.username-edit input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.username-edit input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.username-edit-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.save-username-btn,
+.cancel-username-btn {
+  padding: 0.375rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 40px;
+}
+
+.save-username-btn {
+  background: var(--success);
+  color: white;
+}
+
+.save-username-btn:hover {
+  background: var(--success-hover);
+  transform: translateY(-1px);
+}
+
+.cancel-username-btn {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+}
+
+.cancel-username-btn:hover {
+  background: var(--error);
+  color: white;
+  transform: translateY(-1px);
+}
+
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
