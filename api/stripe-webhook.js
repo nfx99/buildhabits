@@ -120,8 +120,7 @@ export default async function handler(req, res) {
             user_id: session.client_reference_id,
             stripe_payment_id: session.payment_intent,
             amount: session.amount_total / 100, // Convert from cents to dollars
-            status: 'succeeded',
-            stripe_session_id: session.id
+            status: 'succeeded'
           }
         ])
         .select();

@@ -39,7 +39,7 @@ export default async function handler(req, res) {
       const { data: existingPayment } = await supabase
         .from('payments')
         .select('id')
-        .eq('stripe_session_id', sessionId)
+        .eq('stripe_payment_id', session.payment_intent)
         .single();
 
       if (!existingPayment) {
@@ -52,8 +52,7 @@ export default async function handler(req, res) {
               user_id: userId,
               stripe_payment_id: session.payment_intent,
               amount: session.amount_total / 100,
-              status: 'succeeded',
-              stripe_session_id: sessionId
+              status: 'succeeded'
             }
           ]);
 
