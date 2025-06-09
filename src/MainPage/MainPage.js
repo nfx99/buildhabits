@@ -231,10 +231,40 @@ const MainPage = ({ session }) => {
 
   const handleSignOut = async () => {
     try {
+      console.log('Starting sign out process...');
+      setToastMessage('Signing out...');
+      setShowToast(true);
+      
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      console.log('Sign out response:', { error });
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        throw error;
+      }
+      
+      console.log('Sign out successful, clearing state...');
+      
+      // Clear any local state
+      setHabits([]);
+      setHasPaid(false);
+      
+      // Show success message briefly then redirect
+      setToastMessage('Signed out successfully');
+      setShowToast(true);
+      
+      console.log('Redirecting to home page...');
+      
+      // Force navigation to home page after a brief delay
+      setTimeout(() => {
+        console.log('Executing redirect...');
+        window.location.href = '/';
+      }, 1000);
+      
     } catch (error) {
       console.error('Error signing out:', error);
+      setToastMessage(`Failed to sign out: ${error.message}`);
+      setShowToast(true);
     }
   };
 
@@ -441,9 +471,11 @@ const MainPage = ({ session }) => {
             </Dialog.Description>
             <div className="dialog-buttons">
               <button 
-                onClick={() => {
+                onClick={async () => {
+                  // Close dialog first
                   setIsProfileDialogOpen(false);
-                  handleSignOut();
+                  // Then handle sign out
+                  await handleSignOut();
                 }}
                 className="sign-out-button"
               >
