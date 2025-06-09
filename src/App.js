@@ -4,6 +4,8 @@ import * as Toast from '@radix-ui/react-toast';
 import SignIn from './Sign-In/SignIn';
 import MainPage from './MainPage/MainPage';
 import LandingPage from './LandingPage/LandingPage';
+import PaymentSuccess from './PaymentSuccess';
+import PaymentCancelled from './PaymentCancelled';
 import { supabase } from './config/supabase';
 
 function App() {
@@ -45,6 +47,8 @@ function App() {
             path="/signin"
             element={!session ? <SignIn /> : <Navigate to="/" />}
           />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-cancelled" element={<PaymentCancelled />} />
         </Routes>
         <Toast.Viewport className="toast-viewport" />
       </Toast.Provider>

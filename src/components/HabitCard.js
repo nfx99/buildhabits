@@ -106,7 +106,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
     setIsOpen(true);
   };
 
-  const handleLogToday = () => {
+  const handleLogToday = async () => {
     const today = new Date();
     
     const isCompleted = habit.habit_completions?.some(
@@ -117,9 +117,12 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
       }
     ) || false;
     
-    setSelectedDate(today);
-    setIsDateCompleted(isCompleted);
-    setIsOpen(true);
+    try {
+      // If already completed today, undo it. Otherwise, complete it.
+      await onComplete(habit.id, today, isCompleted);
+    } catch (error) {
+      console.error('Error logging habit:', error);
+    }
   };
 
   const handleComplete = async () => {
@@ -221,7 +224,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
       <div className="habit-header">
         <h3>{habit.name}</h3>
         <div className="habit-actions">
-          <button className="log-button" onClick={() => setIsOpen(true)}>
+          <button className="log-button" onClick={handleLogToday}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2v20M2 12h20" />
             </svg>

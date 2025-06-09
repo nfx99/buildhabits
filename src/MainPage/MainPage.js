@@ -224,6 +224,11 @@ const MainPage = ({ session }) => {
     }
   };
 
+  const handleUpgrade = () => {
+    setIsProfileDialogOpen(false);
+    handlePayment();
+  };
+
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -277,64 +282,12 @@ const MainPage = ({ session }) => {
     }
   };
 
-  const handleUpgrade = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.error('No active session found');
-        return;
-      }
-
-      console.log('Creating checkout session for user:', session.user.id);
-      
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: session.user.id,
-          priceId: 'price_1RXMtIEVtge1S4ocSIFIGoG1'
-        }),
-      });
-
-      const { sessionId, message, error } = await response.json();
-      console.log('Checkout session created:', sessionId);
-
-      if (!sessionId) {
-        console.error('Failed to create checkout session:', message, error);
-        setToastMessage('Failed to create checkout session. Please try again.');
-        setShowToast(true);
-        return;
-      }
-
-      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-      if (!stripe) {
-        console.error('Stripe failed to load');
-        setToastMessage('Stripe failed to load. Please refresh and try again.');
-        setShowToast(true);
-        return;
-      }
-
-      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
-      if (stripeError) {
-        console.error('Stripe redirect error:', stripeError);
-        setToastMessage('Stripe redirect error. Please try again.');
-        setShowToast(true);
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      setToastMessage('Error creating checkout session. Please try again.');
-      setShowToast(true);
-    }
-  };
-
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
 
   return (
-    <div className="main-page" data-theme={theme}>
+    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen) ? 'dialog-active' : ''}`} data-theme={theme}>
       <header className="header">
         <div className="header-left">
         </div>
@@ -478,10 +431,7 @@ const MainPage = ({ session }) => {
                     <p>Unlock unlimited habits and advanced features</p>
                     <button 
                       className="upgrade-button"
-                      onClick={() => {
-                        setIsProfileDialogOpen(false);
-                        setIsPaymentDialogOpen(true);
-                      }}
+                      onClick={handleUpgrade}
                     >
                       Upgrade Now - $4.99
                     </button>

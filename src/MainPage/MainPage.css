@@ -184,42 +184,6 @@ button, .habit-card, .dialog-content {
   border-color: var(--border-primary);
 }
 
-.payment-banner {
-  background-color: #2ea043;
-  color: white;
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.payment-banner p {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.payment-button {
-  background-color: white;
-  color: #2ea043;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.payment-button:hover {
-  background-color: #f5f5f5;
-}
-
-.payment-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
 .habits-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -280,11 +244,12 @@ button, .habit-card, .dialog-content {
 
 /* Dialog styles */
 .dialog-overlay {
-  background-color: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
   position: fixed;
   inset: 0;
+  z-index: 1000;
   animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 50;
 }
 
 .dialog-content {
@@ -453,11 +418,6 @@ button, .habit-card, .dialog-content {
   margin: 1rem 0;
 }
 
-.payment-icon {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-}
-
 .payment-content h3 {
   margin: 0;
   font-size: 1.5rem;
@@ -470,26 +430,6 @@ button, .habit-card, .dialog-content {
   color: var(--text-secondary);
   line-height: 1.5;
   font-size: 1rem;
-}
-
-.payment-features {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  width: 100%;
-  margin: 1rem 0;
-}
-
-.feature {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  padding: 0.5rem;
-  background: var(--bg-secondary);
-  border-radius: 6px;
-  border: 1px solid var(--border-primary);
 }
 
 .payment-price-button {
@@ -671,7 +611,31 @@ button, .habit-card, .dialog-content {
   box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
 }
 
-/* Dim header buttons when dialog overlay is active */
+/* Dim and blur background content when dialog is active */
+.main-page.dialog-active .header,
+.main-page.dialog-active .habits-container {
+  filter: blur(3px);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+/* Dim header buttons when dialog is active */
+.main-page.dialog-active .theme-toggle,
+.main-page.dialog-active .profile-button {
+  opacity: 0.6;
+  background: var(--bg-secondary);
+}
+
+/* Also keep the :has() approach for browsers that support it */
+.main-page:has(.dialog-overlay) .header,
+.main-page:has(.dialog-overlay) .habits-container {
+  filter: blur(3px);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
 .main-page:has(.dialog-overlay) .theme-toggle,
 .main-page:has(.dialog-overlay) .profile-button {
   opacity: 0.6;
