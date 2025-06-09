@@ -28,6 +28,51 @@ const MainPage = ({ session }) => {
     checkPaymentStatus();
   }, [session]);
 
+  // Check payment status when user returns from payment
+  useEffect(() => {
+    const handlePaymentReturn = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      const paymentCompleted = localStorage.getItem('payment-completed');
+      
+      if (sessionId || paymentCompleted) {
+        // User returned from Stripe checkout, refresh payment status
+        console.log('User returned from payment, checking status...');
+        
+        // Clear the flag
+        localStorage.removeItem('payment-completed');
+        
+        // Add multiple checks with delays to ensure webhook has processed
+        const checkMultipleTimes = async () => {
+          for (let i = 0; i < 5; i++) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+            console.log(`Payment status check attempt ${i + 1}`);
+            const isPremium = await checkPaymentStatus();
+            
+            // If still not premium after 3 attempts and we have a session ID, try Stripe verification
+            if (!isPremium && i >= 2 && sessionId) {
+              console.log('Webhook may have failed, trying Stripe verification...');
+              const stripeResult = await verifyPaymentWithStripe(sessionId);
+              if (stripeResult) {
+                console.log('Stripe verification successful, breaking loop');
+                break;
+              }
+            }
+            
+            if (isPremium) {
+              console.log('Premium status confirmed, breaking loop');
+              break;
+            }
+          }
+        };
+        
+        checkMultipleTimes();
+      }
+    };
+
+    handlePaymentReturn();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('theme', theme);
     // Only set if different to avoid unnecessary DOM updates
@@ -42,9 +87,10 @@ const MainPage = ({ session }) => {
 
   const checkPaymentStatus = async () => {
     try {
+      console.log('Checking payment status for user:', session.user.id);
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('is_premium')
+        .select('is_premium, premium_since')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
@@ -53,9 +99,51 @@ const MainPage = ({ session }) => {
         throw error;
       }
       
-      setHasPaid(data?.is_premium || false);
+      console.log('Payment status data:', data);
+      const isPremium = data?.is_premium || false;
+      setHasPaid(isPremium);
+      
+      if (isPremium && !hasPaid) {
+        // Premium status was just detected, show a success message
+        setToastMessage('🎉 Premium upgrade successful! You now have unlimited habits.');
+        setShowToast(true);
+      }
+      
+      return isPremium;
     } catch (error) {
       console.error('Error checking payment status:', error);
+      return false;
+    }
+  };
+
+  // Backup function to verify payment via Stripe session ID
+  const verifyPaymentWithStripe = async (sessionId) => {
+    try {
+      console.log('Verifying payment with Stripe session:', sessionId);
+      const response = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          userId: session.user.id
+        }),
+      });
+
+      const result = await response.json();
+      console.log('Stripe verification result:', result);
+
+      if (result.success && result.isPaid) {
+        // Payment was successful, refresh status
+        await checkPaymentStatus();
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error verifying payment with Stripe:', error);
+      return false;
     }
   };
 
@@ -487,6 +575,26 @@ const MainPage = ({ session }) => {
                       onClick={handleUpgrade}
                     >
                       Upgrade Now - $4.99
+                    </button>
+                    <button 
+                      className="refresh-status-button"
+                      onClick={async () => {
+                        setToastMessage('Refreshing payment status...');
+                        setShowToast(true);
+                        await checkPaymentStatus();
+                      }}
+                      style={{
+                        marginTop: '0.5rem',
+                        background: 'transparent',
+                        border: '1px solid var(--border-primary)',
+                        color: 'var(--text-secondary)',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Refresh Status
                     </button>
                   </div>
                 )}
