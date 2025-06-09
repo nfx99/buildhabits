@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { format, getDay, startOfYear, endOfYear, eachDayOfInterval, getYear, addDays } from 'date-fns';
 import * as Dialog from '@radix-ui/react-dialog';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Toast from '@radix-ui/react-toast';
 import './HabitCard.css';
 
@@ -10,9 +9,12 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [isMoreOpen, setIsMoreOpen] = React.useState(false);
+  const [menuPosition, setMenuPosition] = React.useState({ top: 0, right: 0 });
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [isDateCompleted, setIsDateCompleted] = React.useState(false);
   const [editName, setEditName] = React.useState(habit.name);
+  const moreButtonRef = React.useRef(null);
   const tooltipRef = React.useRef(null);
 
   const heatmapData = React.useMemo(() => {
@@ -204,49 +206,70 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
     }
   };
 
+  const handleMoreClick = (event) => {
+    const button = event.currentTarget;
+    const rect = button.getBoundingClientRect();
+    setMenuPosition({
+      top: rect.bottom + 8,
+      right: window.innerWidth - rect.right
+    });
+    setIsMoreOpen(true);
+  };
+
   return (
     <div className="habit-card" data-theme={theme}>
       <div className="habit-header">
         <h3>{habit.name}</h3>
-        <div className="header-buttons">
-          <button 
-            className="log-button"
-            onClick={handleLogToday}
-            title="Log today"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-              <line x1="12" y1="14" x2="12" y2="18"/>
-              <line x1="10" y1="16" x2="14" y2="16"/>
+        <div className="habit-actions">
+          <button className="log-button" onClick={() => setIsOpen(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v20M2 12h20" />
             </svg>
-            Log
+            Log Today
           </button>
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <button className="more-button" title="More options">
+          <Dialog.Root open={isMoreOpen} onOpenChange={setIsMoreOpen}>
+            <Dialog.Trigger asChild>
+              <button 
+                className="more-button" 
+                onClick={handleMoreClick}
+                ref={moreButtonRef}
+                aria-label="More options"
+              >
                 ⋮
               </button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content className="dropdown-content">
-                <DropdownMenu.Item 
-                  className="dropdown-item"
-                  onClick={() => setIsEditOpen(true)}
+            </Dialog.Trigger>
+            <Dialog.Portal>
+              <Dialog.Overlay className="dialog-overlay" />
+              <Dialog.Content 
+                className="more-menu"
+                style={{
+                  position: 'fixed',
+                  top: menuPosition.top,
+                  right: menuPosition.right,
+                  transform: 'none'
+                }}
+              >
+                <button 
+                  className="menu-item" 
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    setIsEditOpen(true);
+                  }}
                 >
                   Edit
-                </DropdownMenu.Item>
-                <DropdownMenu.Item 
-                  className="dropdown-item delete-item"
-                  onClick={() => setIsDeleteOpen(true)}
+                </button>
+                <button 
+                  className="menu-item delete" 
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    setIsDeleteOpen(true);
+                  }}
                 >
                   Delete
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+                </button>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
         </div>
       </div>
       <div className="heatmap-container">

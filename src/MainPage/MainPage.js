@@ -4,6 +4,7 @@ import HabitCard from '../components/HabitCard';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Toast from '@radix-ui/react-toast';
 import './MainPage.css';
+import { loadStripe } from '@stripe/stripe-js';
 
 const MainPage = ({ session }) => {
   const [habits, setHabits] = useState([]);
@@ -42,17 +43,17 @@ const MainPage = ({ session }) => {
   const checkPaymentStatus = async () => {
     try {
       const { data, error } = await supabase
-        .from('payments')
-        .select('*')
+        .from('user_profiles')
+        .select('is_premium')
         .eq('user_id', session.user.id)
-        .eq('status', 'succeeded')
         .maybeSingle();
 
       if (error) {
         console.error('Supabase error details:', error);
         throw error;
       }
-      setHasPaid(!!data);
+      
+      setHasPaid(data?.is_premium || false);
     } catch (error) {
       console.error('Error checking payment status:', error);
     }
@@ -171,11 +172,36 @@ const MainPage = ({ session }) => {
   const handlePayment = async () => {
     setIsPaymentLoading(true);
     try {
-      window.location.href = `https://buy.stripe.com/7sY9ATfh71P8cmH0jF0Ny01?client_reference_id=${session.user.id}`;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No active session found');
+        return;
+      }
+
+      console.log('Creating checkout session for user:', session.user.id);
+      
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: session.user.id,
+          priceId: 'price_1QvXwqLkdIwHu7ixYvVqXxXx'
+        }),
+      });
+
+      const { sessionId } = await response.json();
+      console.log('Checkout session created:', sessionId);
+
+      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      
+      if (error) {
+        console.error('Stripe redirect error:', error);
+      }
     } catch (error) {
-      console.error('Error initiating payment:', error);
-      setToastMessage('Error initiating payment');
-      setShowToast(true);
+      console.error('Error creating checkout session:', error);
     } finally {
       setIsPaymentLoading(false);
     }
@@ -231,6 +257,41 @@ const MainPage = ({ session }) => {
       console.error('Error editing habit:', error);
       setToastMessage('Error editing habit');
       setShowToast(true);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No active session found');
+        return;
+      }
+
+      console.log('Creating checkout session for user:', session.user.id);
+      
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: session.user.id,
+          priceId: 'price_1QvXwqLkdIwHu7ixYvVqXxXx'
+        }),
+      });
+
+      const { sessionId } = await response.json();
+      console.log('Checkout session created:', sessionId);
+
+      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      
+      if (error) {
+        console.error('Stripe redirect error:', error);
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
     }
   };
 

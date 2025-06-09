@@ -40,6 +40,7 @@
   max-width: 1200px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   border: 1px solid var(--border-primary);
+  overflow: visible;
 }
 
 .habit-card:hover {
@@ -52,25 +53,19 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  position: relative;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--border-primary);
 }
 
 .habit-header h3 {
-  flex: 1;
-  text-align: left;
   margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 600;
   color: var(--text-primary);
-  letter-spacing: -0.025em;
 }
 
-.header-buttons {
+.habit-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .delete-button {
@@ -95,7 +90,7 @@
 }
 
 .log-button {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
   border: none;
   color: white;
   padding: 0.5rem 0.75rem;
@@ -115,7 +110,7 @@
 }
 
 .log-button:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent-secondary) 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
 }
@@ -129,9 +124,9 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-secondary);
   color: var(--text-secondary);
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   cursor: pointer;
-  padding: 0.3rem 0.6rem;
+  padding: 0.3rem;
   border-radius: 8px;
   transition: all 0.2s ease;
   display: flex;
@@ -141,6 +136,8 @@
   height: 36px;
   line-height: 1;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
 }
 
 .more-button:hover {
@@ -150,6 +147,64 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
+/* More menu styles */
+.more-menu {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  box-shadow: var(--shadow-primary);
+  width: 200px;
+  padding: 0.5rem;
+  animation: menuShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 51;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Remove all overlay effects */
+.dialog-overlay {
+  display: none !important;
+}
+
+@keyframes menuShow {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-item {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  text-align: left;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.menu-item:hover {
+  background: var(--bg-secondary);
+  transform: translateY(-1px);
+}
+
+.menu-item.delete {
+  color: #ef4444;
+}
+
+.menu-item.delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
 /* Dropdown styles */
 .dropdown-content {
   background: var(--bg-primary);
@@ -157,27 +212,23 @@
   box-shadow: var(--shadow-primary);
   padding: 0.75rem;
   min-width: 140px;
-  z-index: 50;
+  z-index: 1000;
   border: 1px solid var(--border-primary);
-  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-[data-state="open"].dropdown-content {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
+.dropdown-content[data-state="open"] {
+  animation: none;
 }
 
-[data-state="closed"].dropdown-content {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
+.dropdown-content[data-state="closed"] {
+  animation: none;
 }
 
 .dropdown-item {
+  all: unset;
   display: flex;
   align-items: center;
   padding: 0.75rem 1rem;
@@ -185,10 +236,10 @@
   color: var(--text-primary);
   cursor: pointer;
   border-radius: 8px;
-  outline: none;
   user-select: none;
-  transition: all 0.2s ease;
   font-weight: 500;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dropdown-item:hover {
