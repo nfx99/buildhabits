@@ -191,17 +191,34 @@ const MainPage = ({ session }) => {
         }),
       });
 
-      const { sessionId } = await response.json();
+      const { sessionId, message, error } = await response.json();
       console.log('Checkout session created:', sessionId);
 
+      if (!sessionId) {
+        console.error('Failed to create checkout session:', message, error);
+        setToastMessage('Failed to create checkout session. Please try again.');
+        setShowToast(true);
+        return;
+      }
+
       const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      
-      if (error) {
-        console.error('Stripe redirect error:', error);
+      if (!stripe) {
+        console.error('Stripe failed to load');
+        setToastMessage('Stripe failed to load. Please refresh and try again.');
+        setShowToast(true);
+        return;
+      }
+
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+      if (stripeError) {
+        console.error('Stripe redirect error:', stripeError);
+        setToastMessage('Stripe redirect error. Please try again.');
+        setShowToast(true);
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
+      setToastMessage('Error creating checkout session. Please try again.');
+      setShowToast(true);
     } finally {
       setIsPaymentLoading(false);
     }
@@ -277,21 +294,38 @@ const MainPage = ({ session }) => {
         },
         body: JSON.stringify({
           userId: session.user.id,
-          priceId: 'price_1QvXwqLkdIwHu7ixYvVqXxXx'
+          priceId: 'price_1RXMtIEVtge1S4ocSIFIGoG1'
         }),
       });
 
-      const { sessionId } = await response.json();
+      const { sessionId, message, error } = await response.json();
       console.log('Checkout session created:', sessionId);
 
+      if (!sessionId) {
+        console.error('Failed to create checkout session:', message, error);
+        setToastMessage('Failed to create checkout session. Please try again.');
+        setShowToast(true);
+        return;
+      }
+
       const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      
-      if (error) {
-        console.error('Stripe redirect error:', error);
+      if (!stripe) {
+        console.error('Stripe failed to load');
+        setToastMessage('Stripe failed to load. Please refresh and try again.');
+        setShowToast(true);
+        return;
+      }
+
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+      if (stripeError) {
+        console.error('Stripe redirect error:', stripeError);
+        setToastMessage('Stripe redirect error. Please try again.');
+        setShowToast(true);
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
+      setToastMessage('Error creating checkout session. Please try again.');
+      setShowToast(true);
     }
   };
 

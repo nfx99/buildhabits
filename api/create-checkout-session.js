@@ -25,6 +25,7 @@ export default async function handler(req, res) {
         },
       ],
       mode: 'payment',
+      allow_promotion_codes: true,
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-cancelled`,
       client_reference_id: userId,
