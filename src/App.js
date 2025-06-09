@@ -40,8 +40,8 @@ function App() {
       // Check for both root path "/" and "/signin" since users can land on either
       if (hasAccessToken && tokenType === 'signup' && (window.location.pathname === '/' || window.location.pathname === '/signin')) {
         console.log('Email confirmation detected on page load, redirecting...');
-        // Immediate redirect since we know this is email confirmation
-        window.location.href = '/email-confirmed';
+        // Preserve the tokens when redirecting to confirmation page
+        window.location.href = `/email-confirmed${window.location.hash}`;
       } else {
         console.log('Redirect conditions not met');
       }

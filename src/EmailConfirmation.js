@@ -3,61 +3,50 @@ import { supabase } from './config/supabase';
 import './EmailConfirmation.css';
 
 const EmailConfirmation = () => {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [sessionEstablished, setSessionEstablished] = useState(false);
 
   useEffect(() => {
-    // Get the current session
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('EmailConfirmation - Current session:', session);
-      setSession(session);
-      setLoading(false);
+    const processEmailConfirmation = async () => {
+      // Get tokens from URL hash
+      const urlHash = window.location.hash;
+      const urlParams = new URLSearchParams(urlHash.substring(1));
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        try {
+          // Set the session using the tokens
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+
+          if (error) {
+            console.error('Error setting session:', error);
+          } else {
+            console.log('Session established successfully');
+            setSessionEstablished(true);
+          }
+        } catch (error) {
+          console.error('Error processing tokens:', error);
+        }
+      } else {
+        // If no tokens, check if session already exists
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setSessionEstablished(true);
+        }
+      }
     };
 
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('EmailConfirmation - Auth state changed:', event, session);
-      setSession(session);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    processEmailConfirmation();
   }, []);
 
   const handleGoToHabits = () => {
-    if (session) {
-      console.log('User is authenticated, redirecting to habits');
-      window.location.href = '/';
-    } else {
-      console.log('User not authenticated yet, trying to refresh session');
-      // Try to refresh the session first
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          console.log('Session found after refresh, redirecting');
-          window.location.href = '/';
-        } else {
-          console.log('No session found, redirecting to signin');
-          window.location.href = '/signin';
-        }
-      });
-    }
+    // Since user is on this page, they came from email confirmation
+    // The auth tokens are in the URL, so redirect and let App.js handle the session
+    window.location.href = '/';
   };
-
-  if (loading) {
-    return (
-      <div className="confirmation-container">
-        <div className="animated-bg"></div>
-        <div className="loading-card">
-          <div className="loading-spinner"></div>
-          <h2>Setting up your account...</h2>
-          <p>Almost ready to start building habits!</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="confirmation-container">
@@ -103,38 +92,28 @@ const EmailConfirmation = () => {
           <p className="confirmation-subtitle">
             Your email has been successfully verified. You're all set to start building amazing habits!
           </p>
-
-          {session && (
-            <div className="auth-status">
-              <div className="auth-indicator">✓</div>
-              <p>Account authenticated as <strong>{session.user.email}</strong></p>
-            </div>
-          )}
           
           <div className="info-card">
             <h3>Ready to get started?</h3>
             <p>Create your first habit, track your progress, and build the life you want!</p>
           </div>
           
-          <button
-            onClick={handleGoToHabits}
-            className={`confirmation-button ${session ? 'ready' : 'loading'}`}
-            disabled={!session}
-          >
-            {session ? (
-              <>
-                Go to My Habits
-                <svg viewBox="0 0 24 24" className="button-arrow">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </>
-            ) : (
-              <>
-                <div className="button-spinner"></div>
-                Setting up account...
-              </>
-            )}
-          </button>
+          {sessionEstablished ? (
+            <button
+              onClick={handleGoToHabits}
+              className="confirmation-button ready"
+            >
+              Go to My Habits
+              <svg viewBox="0 0 24 24" className="button-arrow">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+          ) : (
+            <div className="confirmation-button loading">
+              <div className="button-spinner"></div>
+              Setting up your account...
+            </div>
+          )}
         </div>
       </div>
     </div>
