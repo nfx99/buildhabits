@@ -25,13 +25,25 @@ function App() {
       console.log('Hash:', urlHash);
       console.log('Access token present:', !!hasAccessToken);
       console.log('Token type:', tokenType);
+      console.log('Current pathname:', window.location.pathname);
+      console.log('Pathname === "/":', window.location.pathname === '/');
+      console.log('Pathname === "/signin":', window.location.pathname === '/signin');
       
-      // If we have an access token and we're on signin page, this might be email confirmation
-      if (hasAccessToken && window.location.pathname === '/signin') {
+      // Debug the full condition
+      const hasTokens = hasAccessToken && tokenType === 'signup';
+      const onCorrectPath = window.location.pathname === '/' || window.location.pathname === '/signin';
+      console.log('Has tokens (access_token + type=signup):', hasTokens);
+      console.log('On correct path (/ or /signin):', onCorrectPath);
+      console.log('Should redirect:', hasTokens && onCorrectPath);
+      
+      // If we have an access token and type=signup, this is email confirmation
+      // Check for both root path "/" and "/signin" since users can land on either
+      if (hasAccessToken && tokenType === 'signup' && (window.location.pathname === '/' || window.location.pathname === '/signin')) {
         console.log('Email confirmation detected on page load, redirecting...');
-        setTimeout(() => {
-          window.location.href = '/email-confirmed';
-        }, 1000); // Small delay to ensure auth state is processed
+        // Immediate redirect since we know this is email confirmation
+        window.location.href = '/email-confirmed';
+      } else {
+        console.log('Redirect conditions not met');
       }
     };
 
