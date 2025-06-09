@@ -187,7 +187,7 @@ const MainPage = ({ session }) => {
         },
         body: JSON.stringify({
           userId: session.user.id,
-          priceId: 'price_1QvXwqLkdIwHu7ixYvVqXxXx'
+          priceId: 'price_1RXMtIEVtge1S4ocSIFIGoG1'
         }),
       });
 
