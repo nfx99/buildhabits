@@ -194,7 +194,7 @@ const MainPage = ({ session }) => {
       const { sessionId } = await response.json();
       console.log('Checkout session created:', sessionId);
 
-      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
       const { error } = await stripe.redirectToCheckout({ sessionId });
       
       if (error) {
@@ -284,7 +284,7 @@ const MainPage = ({ session }) => {
       const { sessionId } = await response.json();
       console.log('Checkout session created:', sessionId);
 
-      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
       const { error } = await stripe.redirectToCheckout({ sessionId });
       
       if (error) {
