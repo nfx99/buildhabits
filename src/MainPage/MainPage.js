@@ -41,18 +41,74 @@ const MainPage = ({ session }) => {
         throw error;
       }
       
-      console.log('Payment status data:', data);
-      const isPremium = data?.is_premium || false;
-      setHasPaid(isPremium);
-      setUsername(data?.username || '');
+      console.log('User profile data:', data);
       
-      if (isPremium && !hasPaid) {
-        // Premium status was just detected, show a success message
-        setToastMessage('🎉 Premium upgrade successful! You now have unlimited habits.');
-        setShowToast(true);
+      // If no profile exists, create one with a generated username
+      if (!data) {
+        console.log('No user profile found, creating one...');
+        try {
+          // Import the username generation functions here
+          const generateUsername = () => {
+            const adjectives = [
+              'Bold', 'Bright', 'Calm', 'Clever', 'Cool', 'Creative', 'Daring', 'Dynamic',
+              'Epic', 'Focused', 'Gentle', 'Happy', 'Inspired', 'Joyful', 'Kind', 'Lively',
+              'Mindful', 'Natural', 'Optimistic', 'Peaceful', 'Quick', 'Radiant', 'Strong',
+              'Thoughtful', 'Unique', 'Vibrant', 'Wise', 'Zen'
+            ];
+            
+            const nouns = [
+              'Achiever', 'Builder', 'Creator', 'Dreamer', 'Explorer', 'Finisher', 'Grower',
+              'Helper', 'Innovator', 'Journeyer', 'Keeper', 'Learner', 'Maker', 'Navigator',
+              'Organizer', 'Pioneer', 'Questioner', 'Runner', 'Seeker', 'Tracker', 'Uniter',
+              'Visionary', 'Walker', 'Xplorer', 'Yearner', 'Zoner'
+            ];
+
+            const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            const number = Math.floor(Math.random() * 999) + 1;
+            
+            return `${adjective}${noun}${number}`;
+          };
+
+          const newUsername = generateUsername();
+          const { data: newProfile, error: createError } = await supabase
+            .from('user_profiles')
+            .insert([
+              {
+                user_id: session.user.id,
+                username: newUsername,
+                is_premium: false
+              }
+            ])
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Error creating user profile:', createError);
+          } else {
+            console.log('Created new user profile:', newProfile);
+            setUsername(newProfile.username);
+            setHasPaid(false);
+            return false;
+          }
+        } catch (createError) {
+          console.error('Failed to create user profile:', createError);
+        }
+      } else {
+        const isPremium = data.is_premium || false;
+        setHasPaid(isPremium);
+        setUsername(data.username || '');
+        
+        if (isPremium && !hasPaid) {
+          // Premium status was just detected, show a success message
+          setToastMessage('🎉 Premium upgrade successful! You now have unlimited habits.');
+          setShowToast(true);
+        }
+        
+        return isPremium;
       }
       
-      return isPremium;
+      return false;
     } catch (error) {
       console.error('Error checking payment status:', error);
       return false;
@@ -455,13 +511,21 @@ const MainPage = ({ session }) => {
     }
 
     try {
-      // Check if username already exists
-      const { data: existingUser } = await supabase
+      console.log('Saving username:', sanitizedUsername, 'for user:', session.user.id);
+      
+      // Check if username already exists (excluding current user)
+      const { data: existingUser, error: checkError } = await supabase
         .from('user_profiles')
         .select('username')
         .eq('username', sanitizedUsername)
         .neq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 is "not found" which is expected when no duplicate exists
+        console.error('Error checking username:', checkError);
+        throw checkError;
+      }
 
       if (existingUser) {
         setToastMessage('Username already taken. Please choose another one.');
@@ -469,21 +533,42 @@ const MainPage = ({ session }) => {
         return;
       }
 
-      // Update username
-      const { error } = await supabase
+      // Use upsert to handle both update and insert cases
+      const { data, error } = await supabase
         .from('user_profiles')
-        .update({ username: sanitizedUsername })
-        .eq('user_id', session.user.id);
+        .upsert(
+          {
+            user_id: session.user.id,
+            username: sanitizedUsername,
+            is_premium: false // Default value, will be overridden if record exists
+          },
+          {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
+          }
+        )
+        .select();
 
-      if (error) throw error;
+      console.log('Upsert result:', { data, error });
+
+      if (error) {
+        console.error('Database error details:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No data returned from username update');
+      }
 
       setUsername(sanitizedUsername);
       setIsEditingUsername(false);
       setToastMessage('Username updated successfully!');
       setShowToast(true);
+      
+      console.log('Username successfully saved to database');
     } catch (error) {
       console.error('Error updating username:', error);
-      setToastMessage('Error updating username. Please try again.');
+      setToastMessage(`Error updating username: ${error.message}`);
       setShowToast(true);
     }
   };
