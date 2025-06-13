@@ -96,9 +96,14 @@ const SignIn = () => {
         });
 
         if (error) {
-          // If the error indicates the user exists, switch to sign in
-          if (error.message.toLowerCase().includes('already registered')) {
-            setToastMessage('Email already registered. Switching to sign in...');
+          // Check for various duplicate email error messages
+          if (
+            error.message.toLowerCase().includes('already registered') ||
+            error.message.toLowerCase().includes('already exists') ||
+            error.message.toLowerCase().includes('already in use') ||
+            error.message.toLowerCase().includes('email taken')
+          ) {
+            setToastMessage('This email is already registered. Please sign in instead.');
             setShowToast(true);
             setTimeout(() => {
               setIsSignUp(false);
