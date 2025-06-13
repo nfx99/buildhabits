@@ -54,26 +54,14 @@ const createUserProfile = async (userId) => {
           hint: checkError.hint,
           fullError: checkError
         });
-      }
-      
-      // If we get a 406 error during the username check, it means access is not allowed (email likely already registered)
-      if (checkError && (checkError.status === 406 || checkError.code === 406 || 
-          (checkError.message && checkError.message.includes('406')))) {
-        console.log('406 error detected during username check - email likely already registered');
-        const error406 = new Error('Profile already exists - email already registered');
-        error406.status = 406;
-        error406.code = 406;
-        throw error406;
-      }
-      
-      // If we get a 401 error, it also likely means the user/email already exists
-      if (checkError && (checkError.status === 401 || checkError.code === 401 ||
-          (checkError.message && checkError.message.includes('401')))) {
-        console.log('401 error detected during username check - email likely already registered');
-        const error401 = new Error('Profile already exists - unauthorized access');
-        error401.status = 406; // Treat as 406 for consistency
-        error401.code = 406;
-        throw error401;
+        
+        // If there's ANY error during username check, it likely means we can't access the table
+        // This usually indicates the email is already registered and RLS is blocking access
+        console.log('Username check failed - email likely already registered');
+        const emailExistsError = new Error('Profile already exists - email already registered');
+        emailExistsError.status = 406;
+        emailExistsError.code = 406;
+        throw emailExistsError;
       }
       
       if (!existingUser || checkError?.details?.includes('0 rows')) {
@@ -90,22 +78,18 @@ const createUserProfile = async (userId) => {
           .select()
           .single();
         
-        // If we get a 406 error during profile creation
-        if (error && (error.status === 406 || error.code === 406)) {
-          console.log('406 error detected during profile creation');
-          const error406 = new Error('Profile already exists - email already registered');
-          error406.status = 406;
-          error406.code = 406;
-          throw error406;
-        }
-        
-        // If we get a 401 error during profile creation
-        if (error && (error.status === 401 || error.code === 401)) {
-          console.log('401 error detected during profile creation');
-          const error401 = new Error('Profile already exists - unauthorized');
-          error401.status = 406; // Treat as 406 for consistency
-          error401.code = 406;
-          throw error401;
+        // If we get any error during profile creation that indicates the user already exists
+        if (error && (
+          error.status === 406 || error.code === 406 ||
+          error.status === 401 || error.code === 401 ||
+          error.code === '42501' || // Row-level security policy violation
+          (error.message && error.message.includes('row-level security policy'))
+        )) {
+          console.log('Profile creation failed - user/email already exists:', error.code, error.message);
+          const userExistsError = new Error('Profile already exists - email already registered');
+          userExistsError.status = 406;
+          userExistsError.code = 406;
+          throw userExistsError;
         }
         
         if (error) throw error;
