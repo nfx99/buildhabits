@@ -38,11 +38,19 @@ const createUserProfile = async (userId) => {
     
     try {
       // Check if username already exists
-      const { data: existingUser } = await supabase
+      const { data: existingUser, error: checkError } = await supabase
         .from('user_profiles')
         .select('username')
         .eq('username', username)
         .single();
+      
+      // If we get a 406 error during the username check, it likely means the email is already registered
+      if (checkError && (checkError.status === 406 || checkError.code === 406)) {
+        const error406 = new Error('Profile already exists');
+        error406.status = 406;
+        error406.code = 406;
+        throw error406;
+      }
       
       if (!existingUser) {
         // Username is unique, create the profile
@@ -58,6 +66,14 @@ const createUserProfile = async (userId) => {
           .select()
           .single();
         
+        // If we get a 406 error during profile creation, it means the email is already registered
+        if (error && (error.status === 406 || error.code === 406)) {
+          const error406 = new Error('Profile already exists');
+          error406.status = 406;
+          error406.code = 406;
+          throw error406;
+        }
+        
         if (error) throw error;
         
         console.log('User profile created with username:', username);
@@ -66,6 +82,11 @@ const createUserProfile = async (userId) => {
       
       attempts++;
     } catch (error) {
+      // If it's a 406 error, don't retry - just throw it up
+      if (error.status === 406 || error.code === 406) {
+        throw error;
+      }
+      
       console.error('Error creating user profile:', error);
       attempts++;
     }
@@ -156,6 +177,16 @@ const SignIn = () => {
             setShowToast(true);
           } catch (profileError) {
             console.error('Error creating user profile:', profileError);
+            
+            // Check specifically for 406 status code (Not Acceptable)
+            if (profileError.status === 406 || profileError.code === 406) {
+              setToastMessage('This email is already registered. Please sign in instead.');
+              setShowToast(true);
+              setTimeout(() => {
+                setIsSignUp(false);
+              }, 1500);
+              return; // Stop further processing
+            }
             
             // Check for various error conditions that indicate the user already exists
             if (
