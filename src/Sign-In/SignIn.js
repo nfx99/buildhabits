@@ -122,13 +122,22 @@ const SignIn = () => {
           // Create user profile with username if user was created successfully
           try {
             await createUserProfile(data.user.id);
+            setToastMessage('Check your email for the confirmation link!');
+            setShowToast(true);
           } catch (profileError) {
             console.error('Error creating user profile:', profileError);
-            // Don't throw error here - signup was successful even if profile creation failed
+            
+            // Check if this is a row-level security policy violation (user already exists)
+            if (profileError.code === '42501' && 
+                profileError.message.includes('row-level security policy')) {
+              setToastMessage('This email is already registered. Please sign in instead.');
+              setShowToast(true);
+            } else {
+              // For other profile creation errors, still show success for auth
+              setToastMessage('Check your email for the confirmation link!');
+              setShowToast(true);
+            }
           }
-          
-          setToastMessage('Check your email for the confirmation link!');
-          setShowToast(true);
         }
       } else {
         // Regular sign in
