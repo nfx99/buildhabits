@@ -44,16 +44,40 @@ const createUserProfile = async (userId) => {
         .eq('username', username)
         .single();
       
-      // If we get a 406 error during the username check, it likely means the email is already registered
-      if (checkError && (checkError.status === 406 || checkError.code === 406)) {
-        const error406 = new Error('Profile already exists');
+      // Debug: Log the full error structure to understand what we're getting
+      if (checkError) {
+        console.log('Username check error details:', {
+          message: checkError.message,
+          status: checkError.status,
+          code: checkError.code,
+          details: checkError.details,
+          hint: checkError.hint,
+          fullError: checkError
+        });
+      }
+      
+      // If we get a 406 error during the username check, it means access is not allowed (email likely already registered)
+      if (checkError && (checkError.status === 406 || checkError.code === 406 || 
+          (checkError.message && checkError.message.includes('406')))) {
+        console.log('406 error detected during username check - email likely already registered');
+        const error406 = new Error('Profile already exists - email already registered');
         error406.status = 406;
         error406.code = 406;
         throw error406;
       }
       
-      if (!existingUser) {
-        // Username is unique, create the profile
+      // If we get a 401 error, it also likely means the user/email already exists
+      if (checkError && (checkError.status === 401 || checkError.code === 401 ||
+          (checkError.message && checkError.message.includes('401')))) {
+        console.log('401 error detected during username check - email likely already registered');
+        const error401 = new Error('Profile already exists - unauthorized access');
+        error401.status = 406; // Treat as 406 for consistency
+        error401.code = 406;
+        throw error401;
+      }
+      
+      if (!existingUser || checkError?.details?.includes('0 rows')) {
+        // Username is unique (or we got an error indicating no rows), try to create the profile
         const { data, error } = await supabase
           .from('user_profiles')
           .insert([
@@ -66,12 +90,22 @@ const createUserProfile = async (userId) => {
           .select()
           .single();
         
-        // If we get a 406 error during profile creation, it means the email is already registered
+        // If we get a 406 error during profile creation
         if (error && (error.status === 406 || error.code === 406)) {
-          const error406 = new Error('Profile already exists');
+          console.log('406 error detected during profile creation');
+          const error406 = new Error('Profile already exists - email already registered');
           error406.status = 406;
           error406.code = 406;
           throw error406;
+        }
+        
+        // If we get a 401 error during profile creation
+        if (error && (error.status === 401 || error.code === 401)) {
+          console.log('401 error detected during profile creation');
+          const error401 = new Error('Profile already exists - unauthorized');
+          error401.status = 406; // Treat as 406 for consistency
+          error401.code = 406;
+          throw error401;
         }
         
         if (error) throw error;
@@ -82,13 +116,21 @@ const createUserProfile = async (userId) => {
       
       attempts++;
     } catch (error) {
-      // If it's a 406 error, don't retry - just throw it up
+      console.log('Error in createUserProfile:', error);
+      
+      // If it's a 406 error or we marked it as 406, don't retry - immediately throw it up
       if (error.status === 406 || error.code === 406) {
+        console.log('Breaking out of loop due to 406 error');
         throw error;
       }
       
-      console.error('Error creating user profile:', error);
+      console.error('Error creating user profile (will retry):', error);
       attempts++;
+      
+      // If we've exhausted attempts, throw the last error
+      if (attempts >= maxAttempts) {
+        throw error;
+      }
     }
   }
   
@@ -173,19 +215,22 @@ const SignIn = () => {
           // Create user profile with username if user was created successfully
           try {
             await createUserProfile(data.user.id);
+            // Only show success message if profile creation actually succeeded
             setToastMessage('Check your email for the confirmation link!');
             setShowToast(true);
           } catch (profileError) {
             console.error('Error creating user profile:', profileError);
             
-            // Check specifically for 406 status code (Not Acceptable)
-            if (profileError.status === 406 || profileError.code === 406) {
+            // Check specifically for 406 status code (Not Acceptable) or 401 (Unauthorized)
+            if (profileError.status === 406 || profileError.code === 406 || 
+                profileError.status === 401 || profileError.code === 401) {
+              console.log('Detected 406/401 error - email already registered');
               setToastMessage('This email is already registered. Please sign in instead.');
               setShowToast(true);
               setTimeout(() => {
                 setIsSignUp(false);
               }, 1500);
-              return; // Stop further processing
+              return; // Stop further processing - do NOT show success message
             }
             
             // Check for various error conditions that indicate the user already exists
@@ -200,11 +245,12 @@ const SignIn = () => {
               setTimeout(() => {
                 setIsSignUp(false);
               }, 1500);
-            } else {
-              // For other profile creation errors, still show success for auth
-              setToastMessage('Check your email for the confirmation link!');
-              setShowToast(true);
+              return; // Stop further processing - do NOT show success message
             }
+            
+            // For other profile creation errors, show an error message instead of success
+            setToastMessage('An error occurred while creating your profile. Please try again.');
+            setShowToast(true);
           }
         } else {
           // If no user and no error, something unexpected happened
