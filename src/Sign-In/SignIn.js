@@ -96,6 +96,13 @@ const SignIn = () => {
         });
 
         if (error) {
+          // Log the exact error message for debugging
+          console.log('Supabase auth error:', {
+            message: error.message,
+            status: error.status,
+            name: error.name
+          });
+          
           // Check for various duplicate email error messages
           if (
             error.message.toLowerCase().includes('already registered') ||
