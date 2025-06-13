@@ -3,6 +3,8 @@ import { supabase } from '../config/supabase';
 import * as Toast from '@radix-ui/react-toast';
 import './SignIn.css';
 
+
+
 // Function to generate a random username
 const generateUsername = () => {
   const adjectives = [
@@ -86,7 +88,7 @@ const SignIn = () => {
 
     try {
       if (isSignUp) {
-        // Try to sign up - this will fail if the email exists
+        // Try to sign up
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -104,21 +106,49 @@ const SignIn = () => {
           });
           
           // Check for various duplicate email error messages
+          const errorMsg = error.message.toLowerCase();
           if (
-            error.message.toLowerCase().includes('already registered') ||
-            error.message.toLowerCase().includes('already exists') ||
-            error.message.toLowerCase().includes('already in use') ||
-            error.message.toLowerCase().includes('email taken')
+            errorMsg.includes('already registered') ||
+            errorMsg.includes('already exists') ||
+            errorMsg.includes('already in use') ||
+            errorMsg.includes('email taken') ||
+            errorMsg.includes('user already registered') ||
+            errorMsg.includes('duplicate') ||
+            errorMsg.includes('email address is already') ||
+            error.status === 422 // Unprocessable Entity - often used for duplicate emails
           ) {
             setToastMessage('This email is already registered. Please sign in instead.');
             setShowToast(true);
             setTimeout(() => {
               setIsSignUp(false);
             }, 1500);
+            return; // Exit early to prevent further processing
           } else {
             throw error;
           }
-        } else if (data?.user) {
+        } 
+        
+        // If signup succeeded, check if we actually got a user
+        if (data?.user) {
+          // For existing users, Supabase might return a user object but not create a new account
+          // Check if this is a case where the user already exists but wasn't flagged as an error
+          if (data.user && !data.user.email_confirmed_at && data.user.created_at) {
+            // Check if created_at is recent (within last few seconds) to determine if this is a new user
+            const createdAt = new Date(data.user.created_at);
+            const now = new Date();
+            const diffInSeconds = (now - createdAt) / 1000;
+            
+            // If the user was created more than 10 seconds ago, it's likely an existing user
+            if (diffInSeconds > 10) {
+              setToastMessage('This email is already registered. Please sign in instead.');
+              setShowToast(true);
+              setTimeout(() => {
+                setIsSignUp(false);
+              }, 1500);
+              return;
+            }
+          }
+
           // Create user profile with username if user was created successfully
           try {
             await createUserProfile(data.user.id);
@@ -127,17 +157,28 @@ const SignIn = () => {
           } catch (profileError) {
             console.error('Error creating user profile:', profileError);
             
-            // Check if this is a row-level security policy violation (user already exists)
-            if (profileError.code === '42501' && 
-                profileError.message.includes('row-level security policy')) {
+            // Check for various error conditions that indicate the user already exists
+            if (
+              (profileError.code === '42501' && profileError.message.includes('row-level security policy')) ||
+              (profileError.code === '23505') || // Unique constraint violation
+              profileError.message.toLowerCase().includes('already exists') ||
+              profileError.message.toLowerCase().includes('duplicate')
+            ) {
               setToastMessage('This email is already registered. Please sign in instead.');
               setShowToast(true);
+              setTimeout(() => {
+                setIsSignUp(false);
+              }, 1500);
             } else {
               // For other profile creation errors, still show success for auth
               setToastMessage('Check your email for the confirmation link!');
               setShowToast(true);
             }
           }
+        } else {
+          // If no user and no error, something unexpected happened
+          setToastMessage('An unexpected error occurred. Please try again.');
+          setShowToast(true);
         }
       } else {
         // Regular sign in
