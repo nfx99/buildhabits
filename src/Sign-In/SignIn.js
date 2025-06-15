@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 import * as Toast from '@radix-ui/react-toast';
 import './SignIn.css';
@@ -121,7 +121,7 @@ const createUserProfile = async (userId) => {
   throw new Error('Could not generate unique username after multiple attempts');
 };
 
-const SignIn = () => {
+const SignIn = ({ isPasswordRecovery: isPasswordRecoveryProp = false }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -134,19 +134,71 @@ const SignIn = () => {
   const [toastMessage, setToastMessage] = useState('');
 
   // Check if user is coming from password reset email
-  React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const isReset = urlParams.get('reset') === 'true';
-    const urlHash = window.location.hash;
-    const hashParams = new URLSearchParams(urlHash.substring(1));
-    const hasAccessToken = hashParams.get('access_token');
-    const tokenType = hashParams.get('type');
+  useEffect(() => {
+    const checkPasswordReset = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isReset = urlParams.get('reset') === 'true';
+      const urlHash = window.location.hash;
+      const hashParams = new URLSearchParams(urlHash.substring(1));
+      const hasAccessToken = hashParams.get('access_token');
+      const tokenType = hashParams.get('type');
+      
+      console.log('SignIn useEffect - Password reset detection:');
+      console.log('URL search params:', window.location.search);
+      console.log('URL hash:', urlHash);
+      console.log('isReset:', isReset);
+      console.log('hasAccessToken:', !!hasAccessToken);
+      console.log('tokenType:', tokenType);
+      
+      // Check for password recovery mode
+      if ((isReset && hasAccessToken && tokenType === 'recovery') || 
+          (hasAccessToken && tokenType === 'recovery')) {
+        console.log('Password recovery mode detected');
+        setIsPasswordReset(true);
+        setToastMessage('Please enter your new password');
+        setShowToast(true);
+        return true;
+      }
+      return false;
+    };
+
+    // Check immediately
+    const foundReset = checkPasswordReset();
     
-    if (isReset && hasAccessToken && tokenType === 'recovery') {
+    // If passed as prop from App.js, override local detection
+    if (isPasswordRecoveryProp && !foundReset) {
+      console.log('Password recovery detected from App.js prop');
       setIsPasswordReset(true);
       setToastMessage('Please enter your new password');
       setShowToast(true);
     }
+    
+    // Also listen for auth state changes in case tokens are processed after component mount
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change in SignIn:', event, !!session);
+      
+      if (event === 'SIGNED_IN' && session && !foundReset && !isPasswordRecoveryProp) {
+        // Check if this is a password recovery sign-in
+        const urlHash = window.location.hash;
+        const hashParams = new URLSearchParams(urlHash.substring(1));
+        const tokenType = hashParams.get('type');
+        const isResetParam = new URLSearchParams(window.location.search).get('reset') === 'true';
+        
+        console.log('Checking auth state change for password recovery:', tokenType, isResetParam);
+        
+        if (tokenType === 'recovery' || isResetParam) {
+          console.log('Password recovery detected via auth state change');
+          setIsPasswordReset(true);
+          setToastMessage('Please enter your new password');
+          setShowToast(true);
+        }
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleAuth = async (e) => {
@@ -375,6 +427,9 @@ const SignIn = () => {
         <button className="back-button" onClick={handleBackToHome}>
           ← Go Back
         </button>
+        
+
+        
         <h2>
           {isPasswordReset 
             ? 'Set New Password'
