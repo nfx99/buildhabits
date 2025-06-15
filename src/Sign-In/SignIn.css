@@ -83,6 +83,22 @@
   cursor: not-allowed;
 }
 
+.forgot-password-link {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  margin-top: 0.5rem;
+  transition: color 0.2s;
+}
+
+.forgot-password-link:hover {
+  color: #1e40af;
+}
+
 .toggle-auth {
   background: none;
   border: none;

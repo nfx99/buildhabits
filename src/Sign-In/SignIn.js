@@ -126,8 +126,28 @@ const SignIn = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Check if user is coming from password reset email
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isReset = urlParams.get('reset') === 'true';
+    const urlHash = window.location.hash;
+    const hashParams = new URLSearchParams(urlHash.substring(1));
+    const hasAccessToken = hashParams.get('access_token');
+    const tokenType = hashParams.get('type');
+    
+    if (isReset && hasAccessToken && tokenType === 'recovery') {
+      setIsPasswordReset(true);
+      setToastMessage('Please enter your new password');
+      setShowToast(true);
+    }
+  }, []);
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -257,8 +277,96 @@ const SignIn = () => {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!email) {
+      setToastMessage('Please enter your email address');
+      setShowToast(true);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.REACT_APP_BASE_URL || window.location.origin}/signin?reset=true`
+      });
+
+      if (error) throw error;
+
+      setToastMessage('Password reset email sent! Check your inbox.');
+      setShowToast(true);
+      
+      // Switch back to sign in mode after successful reset email
+      setTimeout(() => {
+        setIsForgotPassword(false);
+      }, 2000);
+      
+    } catch (error) {
+      setToastMessage(error.message);
+      setShowToast(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    
+    if (!newPassword || !confirmPassword) {
+      setToastMessage('Please fill in both password fields');
+      setShowToast(true);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setToastMessage('Passwords do not match');
+      setShowToast(true);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setToastMessage('Password must be at least 6 characters long');
+      setShowToast(true);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      setToastMessage('Password updated successfully! You are now signed in.');
+      setShowToast(true);
+      
+      // Clear the URL parameters and redirect to main page
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+      
+    } catch (error) {
+      setToastMessage(error.message);
+      setShowToast(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBackToHome = () => {
-    window.location.href = '/';
+    // If in forgot password or password reset mode, go back to sign in
+    if (isForgotPassword || isPasswordReset) {
+      setIsForgotPassword(false);
+      setIsPasswordReset(false);
+      setIsSignUp(false);
+    } else {
+      // Otherwise, go back to landing page
+      window.location.href = '/';
+    }
   };
 
   return (
@@ -267,41 +375,130 @@ const SignIn = () => {
         <button className="back-button" onClick={handleBackToHome}>
           ← Go Back
         </button>
-        <h2>{isSignUp ? 'Create Account' : 'Sign In'}</h2>
-        <form onSubmit={handleAuth}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
-          </button>
-        </form>
-        <p>
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button
-            className="toggle-auth"
-            onClick={() => setIsSignUp(!isSignUp)}
-          >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
-          </button>
-        </p>
+        <h2>
+          {isPasswordReset 
+            ? 'Set New Password'
+            : isForgotPassword 
+            ? 'Reset Password' 
+            : isSignUp 
+            ? 'Create Account' 
+            : 'Sign In'}
+        </h2>
+        
+        {isPasswordReset ? (
+          <form onSubmit={handlePasswordReset}>
+            <div className="form-group">
+              <label htmlFor="newPassword">New Password</label>
+              <input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                placeholder="Enter your new password"
+                minLength="6"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="Confirm your new password"
+                minLength="6"
+              />
+            </div>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Updating...' : 'Update Password'}
+            </button>
+          </form>
+        ) : isForgotPassword ? (
+          <form onSubmit={handleForgotPassword}>
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="Enter your email address"
+              />
+            </div>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Sending...' : 'Send Reset Email'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleAuth}>
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            </button>
+          </form>
+        )}
+        {isPasswordReset ? (
+          <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>
+            Enter your new password above to complete the reset process.
+          </p>
+        ) : isForgotPassword ? (
+          <p>
+            Remember your password?{' '}
+            <button
+              className="toggle-auth"
+              onClick={() => {
+                setIsForgotPassword(false);
+                setIsSignUp(false);
+              }}
+            >
+              Sign In
+            </button>
+          </p>
+        ) : (
+          <>
+            <p>
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button
+                className="toggle-auth"
+                onClick={() => setIsSignUp(!isSignUp)}
+              >
+                {isSignUp ? 'Sign In' : 'Sign Up'}
+              </button>
+            </p>
+            {!isSignUp && (
+              <p>
+                <button
+                  className="forgot-password-link"
+                  onClick={() => setIsForgotPassword(true)}
+                >
+                  Forgot your password?
+                </button>
+              </p>
+            )}
+          </>
+        )}
       </div>
 
       <Toast.Root
