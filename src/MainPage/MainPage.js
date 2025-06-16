@@ -40,6 +40,10 @@ const MainPage = ({ session }) => {
   const [username, setUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [editingUsername, setEditingUsername] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
 
   // Predefined color options
   const colorOptions = [
@@ -614,6 +618,48 @@ const MainPage = ({ session }) => {
     }
   }, [habits, fetchHabits]);
 
+  // Filter habits based on search query
+  const filteredHabits = habits.filter(habit =>
+    habit.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Search for users function
+  const searchUsers = useCallback(async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearchingUsers(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('user_id, username')
+        .ilike('username', `%${query}%`)
+        .neq('user_id', session.user.id)
+        .limit(10);
+
+      if (error) throw error;
+      setSearchResults(data || []);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      setToastMessage('Error searching users');
+      setShowToast(true);
+      setSearchResults([]);
+    } finally {
+      setIsSearchingUsers(false);
+    }
+  }, [session.user.id]);
+
+  // Debounced user search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchUsers(userSearchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [userSearchQuery, searchUsers]);
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -622,6 +668,33 @@ const MainPage = ({ session }) => {
     <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen) ? 'dialog-active' : ''}`}>
       <header className="header">
         <div className="header-left">
+          <div className="user-search-container">
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={userSearchQuery}
+              onChange={(e) => setUserSearchQuery(e.target.value)}
+              className="user-search-input"
+            />
+            <svg className="search-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+            </svg>
+            {(userSearchQuery || searchResults.length > 0) && (
+              <div className="user-search-results">
+                {isSearchingUsers ? (
+                  <div className="search-loading">Searching...</div>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map((user) => (
+                    <div key={user.user_id} className="user-result">
+                      <span className="user-result-name">{user.username}</span>
+                    </div>
+                  ))
+                ) : userSearchQuery ? (
+                  <div className="no-user-results">No users found</div>
+                ) : null}
+              </div>
+            )}
+          </div>
         </div>
         <h1> {'Build Habits'}</h1>
         <div className="header-right">
@@ -632,18 +705,32 @@ const MainPage = ({ session }) => {
       </header>
 
       <div className="habits-container">
-        <button
-          className="create-habit-button"
-          onClick={() => {
-            if (!hasPaid && habits.length >= 2) {
-              setIsPaymentDialogOpen(true);
-            } else {
-              setIsCreateDialogOpen(true);
-            }
-          }}
-        >
-          Create New Habit
-        </button>
+        <div className="habits-header">
+          <button
+            className="create-habit-button"
+            onClick={() => {
+              if (!hasPaid && habits.length >= 2) {
+                setIsPaymentDialogOpen(true);
+              } else {
+                setIsCreateDialogOpen(true);
+              }
+            }}
+          >
+            Create New Habit
+          </button>
+          <div className="habit-search-container">
+            <input
+              type="text"
+              placeholder="Search habits..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="habit-search-input"
+            />
+            <svg className="search-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </div>
 
         <DndContext
           sensors={sensors}
@@ -651,19 +738,29 @@ const MainPage = ({ session }) => {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={habits.map(habit => habit.id)}
+            items={filteredHabits.map(habit => habit.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="habits-grid">
-              {habits.map((habit) => (
-                <HabitCard
-                  key={habit.id}
-                  habit={habit}
-                  onComplete={handleCompleteHabit}
-                  onDelete={handleDeleteHabit}
-                  onEdit={handleEditHabit}
-                />
-              ))}
+              {filteredHabits.length > 0 ? (
+                filteredHabits.map((habit) => (
+                  <HabitCard
+                    key={habit.id}
+                    habit={habit}
+                    onComplete={handleCompleteHabit}
+                    onDelete={handleDeleteHabit}
+                    onEdit={handleEditHabit}
+                  />
+                ))
+              ) : searchQuery ? (
+                <div className="no-results">
+                  <p>No habits found matching "{searchQuery}"</p>
+                </div>
+              ) : (
+                <div className="no-habits">
+                  <p>No habits yet. Create your first habit to get started!</p>
+                </div>
+              )}
             </div>
           </SortableContext>
         </DndContext>
