@@ -375,6 +375,14 @@ const MainPage = ({ session }) => {
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', response.status, errorData);
+        setToastMessage(errorData.message || `Server error (${response.status}). Please try again.`);
+        setShowToast(true);
+        return;
+      }
+
       const { sessionId, error, message } = await response.json();
 
       if (error) {
@@ -383,10 +391,16 @@ const MainPage = ({ session }) => {
         return;
       }
 
+      if (!sessionId) {
+        setToastMessage('Invalid checkout session. Please try again.');
+        setShowToast(true);
+        return;
+      }
+
       const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
       
       if (!stripe) {
-        setToastMessage('Payment system unavailable');
+        setToastMessage('Payment system unavailable. Please disable ad blockers and try again.');
         setShowToast(true);
         return;
       }
@@ -396,11 +410,17 @@ const MainPage = ({ session }) => {
       });
 
       if (stripeError) {
-        setToastMessage('Payment redirect failed');
+        console.error('Stripe Error:', stripeError);
+        setToastMessage(`Payment redirect failed: ${stripeError.message}`);
         setShowToast(true);
       }
     } catch (error) {
-      setToastMessage('Error creating checkout session');
+      console.error('Upgrade Error:', error);
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setToastMessage('Network error. Please check your connection and try again.');
+      } else {
+        setToastMessage('Error creating checkout session. Please try again.');
+      }
       setShowToast(true);
     } finally {
       setIsPaymentLoading(false);

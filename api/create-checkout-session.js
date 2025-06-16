@@ -14,7 +14,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // Check if Stripe secret key is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('STRIPE_SECRET_KEY not configured');
+      return res.status(500).json({ message: 'Payment system not configured' });
+    }
+
     console.log('Creating checkout session for:', { userId, priceId });
+
+    // Use your actual domain or fallback to localhost for development
+    const baseUrl = process.env.BASE_URL || process.env.REACT_APP_BASE_URL || 'https://buildhabits.net';
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -26,8 +35,8 @@ export default async function handler(req, res) {
       ],
       mode: 'payment',
       allow_promotion_codes: true,
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-cancelled`,
+      success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/payment-cancelled`,
       client_reference_id: userId,
     });
 
@@ -36,6 +45,18 @@ export default async function handler(req, res) {
     res.status(200).json({ sessionId: session.id });
   } catch (error) {
     console.error('Error creating checkout session:', error);
-    res.status(500).json({ message: 'Error creating checkout session' });
+    
+    // Provide more specific error messages
+    if (error.type === 'StripeInvalidRequestError') {
+      return res.status(400).json({ 
+        message: 'Invalid payment configuration', 
+        error: error.message 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Error creating checkout session',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 } 
