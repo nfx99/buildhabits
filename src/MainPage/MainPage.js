@@ -27,6 +27,10 @@ const MainPage = ({ session }) => {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
+  const [newHabitColor, setNewHabitColor] = useState('#3A4F41');
+  const [isQuantifiable, setIsQuantifiable] = useState(false);
+  const [targetValue, setTargetValue] = useState('');
+  const [metricUnit, setMetricUnit] = useState('times');
   const [loading, setLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
@@ -36,6 +40,24 @@ const MainPage = ({ session }) => {
   const [username, setUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [editingUsername, setEditingUsername] = useState('');
+
+  // Predefined color options
+  const colorOptions = [
+    '#3A4F41', // Feldgrau (default)
+    '#984447', // Cordovan
+    '#7D84B2', // Current accent-hover
+    '#2563EB', // Blue
+    '#DC2626', // Red
+    '#059669', // Green
+    '#D97706', // Orange
+    '#7C2D92', // Purple
+    '#0891B2', // Cyan
+    '#65A30D', // Lime
+    '#EC4899', // Pink
+    '#374151', // Gray
+  ];
+
+
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -132,17 +154,21 @@ const MainPage = ({ session }) => {
 
   const fetchHabits = useCallback(async () => {
     try {
+      console.log('Fetching habits...');
       const { data, error } = await supabase
         .from('habits')
         .select(`
           *,
-          habit_completions(*)
+          habit_completions!fk_habit_completions_habit_id(*)
         `)
         .eq('user_id', session.user.id)
         .order('order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
+      console.log('Supabase response:', { data, error });
+
       if (error) {
+        console.error('Supabase error:', error);
         throw error;
       }
       
@@ -152,9 +178,11 @@ const MainPage = ({ session }) => {
         order: habit.order !== null ? habit.order : index
       }));
       
+      console.log('Processed habits:', habitsWithOrder);
       setHabits(habitsWithOrder);
     } catch (error) {
-      setToastMessage('Error fetching habits');
+      console.error('fetchHabits error:', error);
+      setToastMessage(`Error fetching habits: ${error.message || error}`);
       setShowToast(true);
     }
   }, [session.user.id]);
@@ -214,15 +242,22 @@ const MainPage = ({ session }) => {
     }
 
     try {
+      const habitData = {
+        name: sanitizedName,
+        user_id: session.user.id,
+        order: habits.length,
+        color: newHabitColor,
+        is_quantifiable: isQuantifiable,
+      };
+
+      if (isQuantifiable) {
+        habitData.target_value = parseFloat(targetValue) || 1;
+        habitData.metric_unit = metricUnit;
+      }
+
       const { data, error } = await supabase
         .from('habits')
-        .insert([
-          {
-            name: sanitizedName,
-            user_id: session.user.id,
-            order: habits.length,
-          },
-        ])
+        .insert([habitData])
         .select()
         .single();
 
@@ -236,6 +271,10 @@ const MainPage = ({ session }) => {
 
       setHabits([data, ...habits]);
       setNewHabitName('');
+      setNewHabitColor('#3A4F41');
+      setIsQuantifiable(false);
+      setTargetValue('');
+      setMetricUnit('times');
       setIsCreateDialogOpen(false);
     } catch (error) {
       setToastMessage(error.message || 'Error creating habit. Please try again.');
@@ -243,59 +282,65 @@ const MainPage = ({ session }) => {
     }
   };
 
-  const handleCompleteHabit = async (habitId, date, isUndo = false) => {
+  const handleCompleteHabit = async (habitId, date, isUndo = false, value = null) => {
     try {
-      // Use the exact date format that's stored in the database
+      // Normalize the date to avoid timezone issues
       const targetDate = format(date, 'yyyy-MM-dd');
+      const normalizedDate = new Date(targetDate + 'T12:00:00.000Z').toISOString();
       
       if (isUndo) {
-        // For undo, delete using date range (faster than fetching all completions)
+        // For undo, delete using exact date match
         const { error } = await supabase
           .from('habit_completions')
           .delete()
           .eq('habit_id', habitId)
-          .gte('date', targetDate + 'T00:00:00.000Z')
-          .lte('date', targetDate + 'T23:59:59.999Z');
+          .eq('date', normalizedDate)
+          .eq('user_id', session.user.id);
 
         if (error) throw error;
       } else {
-        // For new completion, store as ISO timestamp to match existing format
-        const { error } = await supabase
+        // Check if completion already exists for this date
+        const { data: existing, error: selectError } = await supabase
           .from('habit_completions')
-          .insert({
-            habit_id: habitId,
-            date: new Date(targetDate + 'T12:00:00.000Z').toISOString(),
-          });
+          .select('id')
+          .eq('habit_id', habitId)
+          .eq('date', normalizedDate)
+          .eq('user_id', session.user.id)
+          .maybeSingle();
 
-        if (error) throw error;
+        if (selectError) throw selectError;
+
+        const completionData = {
+          habit_id: habitId,
+          date: normalizedDate,
+          user_id: session.user.id,
+        };
+
+        // Add value for quantifiable habits
+        if (value !== null) {
+          completionData.value = value;
+        }
+
+        if (existing) {
+          // Update existing completion
+          const { error } = await supabase
+            .from('habit_completions')
+            .update(completionData)
+            .eq('id', existing.id);
+          
+          if (error) throw error;
+        } else {
+          // Insert new completion
+          const { error } = await supabase
+            .from('habit_completions')
+            .insert(completionData);
+
+          if (error) throw error;
+        }
       }
 
-      // Optimistically update the UI instead of refetching all data
-      setHabits(prevHabits => 
-        prevHabits.map(habit => {
-          if (habit.id === habitId) {
-            const updatedCompletions = isUndo
-              ? habit.habit_completions?.filter(completion => 
-                  format(new Date(completion.date), 'yyyy-MM-dd') !== targetDate
-                ) || []
-              : [
-                  ...(habit.habit_completions || []),
-                  {
-                    id: `temp-${Date.now()}`,
-                    habit_id: habitId,
-                    date: new Date(targetDate + 'T12:00:00.000Z').toISOString(),
-                    created_at: new Date().toISOString()
-                  }
-                ];
-            
-            return {
-              ...habit,
-              habit_completions: updatedCompletions
-            };
-          }
-          return habit;
-        })
-      );
+      // Refetch habits to ensure data consistency
+      await fetchHabits();
     } catch (error) {
       setToastMessage(isUndo ? 'Error removing habit completion' : 'Error completing habit');
       setShowToast(true);
@@ -415,18 +460,26 @@ const MainPage = ({ session }) => {
     }
   };
 
-  const handleEditHabit = async (habitId, newName) => {
+  const handleEditHabit = async (habitId, editData) => {
     try {
-      const sanitizedName = newName.trim();
+      const sanitizedName = editData.name.trim();
       if (!sanitizedName) {
         setToastMessage('Please enter a valid habit name');
         setShowToast(true);
         return;
       }
 
+      const updateData = {
+        name: sanitizedName,
+        color: editData.color,
+        is_quantifiable: editData.is_quantifiable,
+        target_value: editData.target_value,
+        metric_unit: editData.metric_unit
+      };
+
       const { error } = await supabase
         .from('habits')
-        .update({ name: sanitizedName })
+        .update(updateData)
         .eq('id', habitId);
 
       if (error) throw error;
@@ -632,6 +685,70 @@ const MainPage = ({ session }) => {
                   required
                 />
               </div>
+                              <div className="form-group">
+                  <label htmlFor="habit-color">Habit Color</label>
+                  <div className="color-picker">
+                    {colorOptions.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        className={`color-option ${newHabitColor === color ? 'selected' : ''}`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => setNewHabitColor(color)}
+                        aria-label={`Select color ${color}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Tracking Type</label>
+                  <div className="tracking-type-toggle">
+                    <button
+                      type="button"
+                      className={`tracking-option ${!isQuantifiable ? 'active' : ''}`}
+                      onClick={() => setIsQuantifiable(false)}
+                      style={!isQuantifiable ? { backgroundColor: newHabitColor, borderColor: newHabitColor } : {}}
+                    >
+                      Simple
+                    </button>
+                    <button
+                      type="button"
+                      className={`tracking-option ${isQuantifiable ? 'active' : ''}`}
+                      onClick={() => setIsQuantifiable(true)}
+                      style={isQuantifiable ? { backgroundColor: newHabitColor, borderColor: newHabitColor } : {}}
+                    >
+                      Numbers
+                    </button>
+                  </div>
+                </div>
+                {isQuantifiable && (
+                  <>
+                    <div className="form-group">
+                      <label htmlFor="target-value">Daily Target</label>
+                      <input
+                        id="target-value"
+                        type="number"
+                        value={targetValue}
+                        onChange={(e) => setTargetValue(e.target.value)}
+                        placeholder="e.g., 8, 30, 2"
+                        min="0"
+                        step="0.1"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="metric-unit">Unit of Measurement</label>
+                      <input
+                        id="metric-unit"
+                        type="text"
+                        value={metricUnit}
+                        onChange={(e) => setMetricUnit(e.target.value)}
+                        placeholder="e.g., times, minutes, pages, cups"
+                        required
+                      />
+                    </div>
+                  </>
+                )}
               <div className="dialog-buttons">
                 <button type="submit">Create</button>
                 <button

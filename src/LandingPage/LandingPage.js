@@ -7,6 +7,7 @@ const createDemoHabit = (completions) => ({
   id: 'demo',
   name: 'Morning Workout 🏃‍♂️',
   created_at: startOfYear(new Date()).toISOString(),
+  color: '#3A4F41',
   habit_completions: completions
 });
 
@@ -21,11 +22,8 @@ const LandingPage = ({ onGetStarted }) => {
   );
 
   const handleComplete = (habitId, date, isUndo = false) => {
-    // For the Log button (today's date), we don't need to adjust
-    const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-    // Only adjust the date for non-today dates (clicking on cells)
-    const adjustedDate = isToday ? startOfDay(date) : addDays(date, -1);
-    const targetDateStr = format(adjustedDate, 'yyyy-MM-dd');
+    // Use the exact date format that matches the HabitCard logic
+    const targetDateStr = format(date, 'yyyy-MM-dd');
     
     if (isUndo) {
       // Remove the completion by filtering out the matching date
@@ -46,7 +44,7 @@ const LandingPage = ({ onGetStarted }) => {
       if (!exists) {
         const newCompletion = {
           id: `demo-${Date.now()}`,
-          date: adjustedDate.toISOString(),
+          date: new Date(targetDateStr + 'T12:00:00.000Z').toISOString(),
           created_at: new Date().toISOString()
         };
         setDemoCompletions(prev => [...prev, newCompletion]);

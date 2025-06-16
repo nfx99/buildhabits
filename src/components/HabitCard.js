@@ -30,24 +30,80 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [isDateCompleted, setIsDateCompleted] = React.useState(false);
   const [editName, setEditName] = React.useState(habit.name);
+  const [editColor, setEditColor] = React.useState(habit.color || '#3A4F41');
+  const [editIsQuantifiable, setEditIsQuantifiable] = React.useState(habit.is_quantifiable || false);
+  const [editTargetValue, setEditTargetValue] = React.useState(habit.target_value || '');
+  const [editMetricUnit, setEditMetricUnit] = React.useState(habit.metric_unit || 'times');
+  const [quantifiableValue, setQuantifiableValue] = React.useState('');
+
+  // Update state when habit changes
+  React.useEffect(() => {
+    setEditName(habit.name);
+    setEditColor(habit.color || '#3A4F41');
+    setEditIsQuantifiable(habit.is_quantifiable || false);
+    setEditTargetValue(habit.target_value || '');
+    setEditMetricUnit(habit.metric_unit || 'times');
+  }, [habit.name, habit.color, habit.is_quantifiable, habit.target_value, habit.metric_unit]);
   const moreButtonRef = React.useRef(null);
   const tooltipRef = React.useRef(null);
 
   // Cache current year for performance
   const currentYear = React.useMemo(() => new Date().getFullYear(), []);
 
+  // Predefined color options
+  const colorOptions = [
+    '#3A4F41', // Feldgrau (default)
+    '#984447', // Cordovan
+    '#7D84B2', // Current accent-hover
+    '#2563EB', // Blue
+    '#DC2626', // Red
+    '#059669', // Green
+    '#D97706', // Orange
+    '#7C2D92', // Purple
+    '#0891B2', // Cyan
+    '#65A30D', // Lime
+    '#EC4899', // Pink
+    '#374151', // Gray
+  ];
+
+
+
   const heatmapData = React.useMemo(() => {
     const startDate = startOfYear(new Date());
     const endDate = endOfYear(new Date());
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     
-    return days.map(date => ({
-      date,
-      completed: habit.habit_completions?.some(
-        completion => format(new Date(completion.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-      ) || false
-    }));
-  }, [habit.habit_completions]);
+    return days.map(date => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const completion = habit.habit_completions?.find(
+        completion => {
+          // Normalize both dates to avoid timezone issues
+          const completionDate = new Date(completion.date);
+          const normalizedCompletionDate = format(completionDate, 'yyyy-MM-dd');
+          return normalizedCompletionDate === dateStr;
+        }
+      );
+      
+      if (habit.is_quantifiable) {
+        const value = completion?.value || 0;
+        const target = habit.target_value || 1;
+        const progress = Math.min(value / target, 1); // Cap at 100%
+        return {
+          date,
+          completed: value >= target,
+          value,
+          target,
+          progress
+        };
+      } else {
+        return {
+          date,
+          completed: !!completion,
+          value: completion ? 1 : 0
+        };
+      }
+    });
+  }, [habit.habit_completions, habit.is_quantifiable, habit.target_value]);
 
   const dateGrid = React.useMemo(() => {
     const now = new Date();
@@ -119,48 +175,81 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
   const handleDateClick = (date) => {
     if (!date) return;
     
-    // Check completion using the original date (same as heatmap)
-    const isCompleted = habit.habit_completions?.some(
+    // Find existing completion for this date
+    const existingCompletion = habit.habit_completions?.find(
       completion => {
         const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
         const originalDate = format(date, 'yyyy-MM-dd');
         return completionDate === originalDate;
       }
-    ) || false;
+    );
+    
+    const isCompleted = !!existingCompletion;
     
     // Use the original date - no adjustment needed
     setSelectedDate(date);
     setIsDateCompleted(isCompleted);
+    
+    // For quantifiable habits, pre-populate the value if it exists
+    if (habit.is_quantifiable && existingCompletion?.value) {
+      setQuantifiableValue(existingCompletion.value.toString());
+    } else {
+      setQuantifiableValue('');
+    }
+    
     setIsOpen(true);
   };
 
   const handleLogToday = React.useCallback(async () => {
     const today = new Date();
     
-    const isCompleted = habit.habit_completions?.some(
-      completion => {
-        const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
-        const todayDate = format(today, 'yyyy-MM-dd');
-        return completionDate === todayDate;
+    if (habit.is_quantifiable) {
+      // For quantifiable habits, open the dialog to input value
+      setSelectedDate(today);
+      const existingCompletion = habit.habit_completions?.find(
+        completion => {
+          const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
+          const todayDate = format(today, 'yyyy-MM-dd');
+          return completionDate === todayDate;
+        }
+      );
+      setIsDateCompleted(!!existingCompletion);
+      if (existingCompletion?.value) {
+        setQuantifiableValue(existingCompletion.value.toString());
       }
-    ) || false;
-    
-    try {
-      // If already completed today, undo it. Otherwise, complete it.
-      await onComplete(habit.id, today, isCompleted);
-    } catch (error) {
-      // Error is handled by parent component
+      setIsOpen(true);
+    } else {
+      // For simple habits, toggle completion directly
+      const isCompleted = habit.habit_completions?.some(
+        completion => {
+          const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
+          const todayDate = format(today, 'yyyy-MM-dd');
+          return completionDate === todayDate;
+        }
+      ) || false;
+      
+      try {
+        await onComplete(habit.id, today, isCompleted);
+      } catch (error) {
+        // Error is handled by parent component
+      }
     }
-  }, [habit.id, habit.habit_completions, onComplete]);
+  }, [habit.id, habit.habit_completions, habit.is_quantifiable, onComplete]);
 
   const handleComplete = React.useCallback(async () => {
     try {
-      await onComplete(habit.id, selectedDate);
+      if (habit.is_quantifiable) {
+        const value = parseFloat(quantifiableValue) || 0;
+        await onComplete(habit.id, selectedDate, false, value);
+      } else {
+        await onComplete(habit.id, selectedDate);
+      }
       setIsOpen(false);
+      setQuantifiableValue('');
     } catch (error) {
       // Error is handled by parent component
     }
-  }, [habit.id, selectedDate, onComplete]);
+  }, [habit.id, selectedDate, habit.is_quantifiable, quantifiableValue, onComplete]);
 
   const handleUndo = React.useCallback(async () => {
     try {
@@ -182,12 +271,19 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
 
   const handleEdit = React.useCallback(async () => {
     try {
-      await onEdit(habit.id, editName);
+      const editData = {
+        name: editName,
+        color: editColor,
+        is_quantifiable: editIsQuantifiable,
+        target_value: editIsQuantifiable ? parseFloat(editTargetValue) || 1 : null,
+        metric_unit: editIsQuantifiable ? editMetricUnit : null
+      };
+      await onEdit(habit.id, editData);
       setIsEditOpen(false);
     } catch (error) {
       // Error is handled by parent component
     }
-  }, [habit.id, editName, onEdit]);
+  }, [habit.id, editName, editColor, editIsQuantifiable, editTargetValue, editMetricUnit, onEdit]);
 
   const showTooltip = (event) => {
     if (!tooltipRef.current) return;
@@ -197,7 +293,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
     if (!tooltipText) return;
     
     const tooltip = tooltipRef.current;
-    tooltip.textContent = tooltipText;
+    tooltip.innerHTML = tooltipText.replace(/\n/g, '<br>');
     tooltip.style.display = 'block';
     
     // Calculate optimal position
@@ -341,12 +437,32 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
                   const isInCurrentYear = getYear(cell.date) === currentYear;
                   const dayName = isInCurrentYear ? format(cell.date, 'EEEE') : '';
                   const dateStr = isInCurrentYear ? format(cell.date, 'MMMM dd, yyyy') : '';
+                  const cellStyle = {};
+                  if (habit.is_quantifiable) {
+                    if (cell.progress > 0) {
+                      // For quantifiable habits, show partial progress
+                      const intensity = Math.min(cell.progress, 1);
+                      const baseColor = habit.color || '#3A4F41';
+                      cellStyle.backgroundColor = `${baseColor}${Math.round(intensity * 255).toString(16).padStart(2, '0')}`;
+                      cellStyle.borderColor = baseColor;
+                    }
+                  } else if (cell.completed) {
+                    cellStyle.backgroundColor = habit.color || '#3A4F41';
+                    cellStyle.borderColor = habit.color || '#3A4F41';
+                  }
+                  
+                  const tooltipText = isInCurrentYear ? 
+                    (habit.is_quantifiable ? 
+                      `${dayName}, ${dateStr}\n${cell.value || 0}/${cell.target || 1} ${habit.metric_unit || 'times'}` :
+                      `${dayName}, ${dateStr}${cell.completed ? ' ✓' : ''}`) : '';
+                  
                   return (
                     <div
                       key={`${weekday}-${weekIndex}`}
-                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!isInCurrentYear ? 'empty' : ''}`}
+                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!isInCurrentYear ? 'empty' : ''} ${habit.is_quantifiable && cell.progress > 0 && cell.progress < 1 ? 'partial' : ''}`}
+                      style={cellStyle}
                       onClick={() => isInCurrentYear && handleDateClick(cell.date)}
-                      data-tooltip={isInCurrentYear ? `${dayName}, ${dateStr}` : ''}
+                      data-tooltip={tooltipText}
                       onMouseEnter={(e) => isInCurrentYear && showTooltip(e)}
                       onMouseLeave={hideTooltip}
                     >
@@ -386,19 +502,42 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
         <Dialog.Portal>
           <Dialog.Overlay className="dialog-overlay" />
           <Dialog.Content className="dialog-content">
-            <Dialog.Title>{isDateCompleted ? 'Undo Habit' : 'Complete Habit'}</Dialog.Title>
+            <Dialog.Title>
+              {habit.is_quantifiable ? 'Log Progress' : (isDateCompleted ? 'Undo Habit' : 'Complete Habit')}
+            </Dialog.Title>
             <Dialog.Description>
-              {isDateCompleted 
-                ? `Remove completion for ${habit.name} on ${format(selectedDate, 'MMMM dd, yyyy')}?`
-                : `Mark ${habit.name} as completed for ${format(selectedDate, 'MMMM dd, yyyy')}?`
+              {habit.is_quantifiable 
+                ? `Log your progress for ${habit.name} on ${format(selectedDate, 'MMMM dd, yyyy')}`
+                : (isDateCompleted 
+                  ? `Remove completion for ${habit.name} on ${format(selectedDate, 'MMMM dd, yyyy')}?`
+                  : `Mark ${habit.name} as completed for ${format(selectedDate, 'MMMM dd, yyyy')}?`)
               }
             </Dialog.Description>
+            {habit.is_quantifiable && (
+              <div className="form-group">
+                <label htmlFor="quantifiable-value">
+                  Amount ({habit.metric_unit || 'times'}) - Target: {habit.target_value || 1}
+                </label>
+                <input
+                  id="quantifiable-value"
+                  type="number"
+                  value={quantifiableValue}
+                  onChange={(e) => setQuantifiableValue(e.target.value)}
+                  placeholder={`Enter ${habit.metric_unit || 'times'}`}
+                  min="0"
+                  step="0.1"
+                  className="edit-input"
+                />
+              </div>
+            )}
             <div className="dialog-buttons">
-              {isDateCompleted ? (
+              {habit.is_quantifiable ? (
+                <button onClick={handleComplete}>Log Progress</button>
+              ) : (isDateCompleted ? (
                 <button className="undo-button" onClick={handleUndo}>Undo</button>
               ) : (
                 <button onClick={handleComplete}>Complete</button>
-              )}
+              ))}
               <button onClick={() => setIsOpen(false)}>Cancel</button>
             </div>
           </Dialog.Content>
@@ -427,7 +566,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
           <Dialog.Content className="dialog-content">
             <Dialog.Title>Edit Habit</Dialog.Title>
             <Dialog.Description>
-              Change the name of your habit.
+              Change the name, color, and tracking settings of your habit.
             </Dialog.Description>
             <div className="form-group">
               <input
@@ -438,6 +577,72 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
                 placeholder="Habit name"
               />
             </div>
+            <div className="form-group">
+              <label htmlFor="habit-color">Habit Color</label>
+              <div className="color-picker">
+                {colorOptions.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    className={`color-option ${editColor === color ? 'selected' : ''}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setEditColor(color)}
+                    aria-label={`Select color ${color}`}
+                  />
+                ))}
+              </div>
+            </div>
+                         <div className="form-group">
+               <label>Tracking Type</label>
+               <div className="tracking-type-toggle">
+                 <button
+                   type="button"
+                   className={`tracking-option ${!editIsQuantifiable ? 'active' : ''}`}
+                   onClick={() => setEditIsQuantifiable(false)}
+                   style={!editIsQuantifiable ? { backgroundColor: editColor, borderColor: editColor } : {}}
+                 >
+                   Simple
+                 </button>
+                 <button
+                   type="button"
+                   className={`tracking-option ${editIsQuantifiable ? 'active' : ''}`}
+                   onClick={() => setEditIsQuantifiable(true)}
+                   style={editIsQuantifiable ? { backgroundColor: editColor, borderColor: editColor } : {}}
+                 >
+                   Numbers
+                 </button>
+               </div>
+             </div>
+            {editIsQuantifiable && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="edit-target-value">Daily Target</label>
+                  <input
+                    id="edit-target-value"
+                    type="number"
+                    value={editTargetValue}
+                    onChange={(e) => setEditTargetValue(e.target.value)}
+                    placeholder="e.g., 8, 30, 2"
+                    min="0"
+                    step="0.1"
+                    className="edit-input"
+                    required
+                  />
+                </div>
+                                 <div className="form-group">
+                   <label htmlFor="edit-metric-unit">Unit of Measurement</label>
+                   <input
+                     id="edit-metric-unit"
+                     type="text"
+                     value={editMetricUnit}
+                     onChange={(e) => setEditMetricUnit(e.target.value)}
+                     placeholder="e.g., times, minutes, pages, cups"
+                     className="edit-input"
+                     required
+                   />
+                 </div>
+              </>
+            )}
             <div className="dialog-buttons">
               <button onClick={handleEdit}>Save</button>
               <button onClick={() => setIsEditOpen(false)}>Cancel</button>

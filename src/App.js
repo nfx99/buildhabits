@@ -62,7 +62,7 @@ function App() {
   }, []);
 
   const handleGetStarted = () => {
-    window.location.href = '/signin';
+    window.location.href = '/signin?signup=true';
   };
 
   return (

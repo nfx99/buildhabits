@@ -74,8 +74,8 @@
 }
 
 .drag-handle:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--accent-hover);
+  color: white;
 }
 
 .drag-handle:active {
@@ -165,8 +165,8 @@
 }
 
 .more-button:hover {
-  background: var(--border-primary);
-  color: var(--text-primary);
+  background: var(--accent-hover);
+  color: white;
 }
 
 /* More menu styles */
@@ -214,7 +214,8 @@
 }
 
 .menu-item:hover {
-  background: var(--bg-secondary);
+  background: var(--accent-hover);
+  color: white;
   transform: translateY(-1px);
 }
 
@@ -265,7 +266,8 @@
 }
 
 .dropdown-item:hover {
-  background: var(--bg-secondary);
+  background: var(--accent-hover);
+  color: white;
 }
 
 .dropdown-item.delete-item:hover {
@@ -294,6 +296,189 @@
   border-color: #3b82f6;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
   background: var(--bg-primary);
+}
+
+/* Checkbox styling */
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  padding: 0.5rem 0;
+  line-height: 1.4;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border-primary);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+.checkbox-label input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(58, 79, 65, 0.1);
+}
+
+.checkbox-text {
+  flex: 1;
+  user-select: none;
+}
+
+/* Quantifiable checkbox styling */
+.quantifiable-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  padding: 0.25rem 0;
+}
+
+.quantifiable-checkbox {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--border-primary);
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.quantifiable-checkbox:checked {
+  border-color: inherit;
+  background-color: inherit;
+}
+
+.quantifiable-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.quantifiable-checkbox:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.quantifiable-text {
+  user-select: none;
+  font-size: 0.875rem;
+}
+
+/* Tracking type toggle */
+.tracking-type-toggle {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.tracking-option {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-right: 1px solid var(--border-primary);
+}
+
+.tracking-option:last-child {
+  border-right: none;
+}
+
+.tracking-option:hover:not(.active) {
+  background: var(--bg-primary);
+}
+
+.tracking-option.active {
+  color: white;
+  font-weight: 600;
+}
+
+/* Color picker styles */
+.color-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.color-option {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.color-option:hover {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8), 0 0 12px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.1);
+}
+
+.color-option.selected {
+  border-color: var(--text-primary);
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--text-primary);
+}
+
+.color-option.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  font-size: 0.75rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .heatmap-container {
@@ -490,7 +675,8 @@
 }
 
 .habit-card .dialog-buttons button:last-child:hover {
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  background: var(--accent-hover);
+  color: white;
   transform: translateY(-1px);
 }
 

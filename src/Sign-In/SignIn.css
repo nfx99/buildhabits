@@ -1,29 +1,70 @@
+/* Import theme variables from main page */
+@import url('../MainPage/MainPage.css');
+
 .sign-in-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* Subtle animated background */
+.sign-in-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, var(--accent-primary) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, var(--accent-secondary) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, var(--success) 0%, transparent 50%);
+  filter: blur(100px);
+  opacity: 0.03;
+  animation: bgAnimation 20s ease infinite alternate;
+  z-index: 0;
+}
+
+@keyframes bgAnimation {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 .sign-in-box {
-  background: var(--bg-primary, #fff);
-  padding: 2.5rem 2rem 2rem 2rem;
-  border-radius: 18px;
-  box-shadow: 0 8px 32px rgba(30, 64, 175, 0.18), 0 2px 8px rgba(0,0,0,0.08);
+  background: var(--bg-card);
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-primary);
+  border: 1px solid var(--border-primary);
   width: 100%;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  max-width: 400px;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .sign-in-box h2 {
+  font-family: 'Leckerli One', cursive;
   font-size: 2rem;
-  font-weight: 800;
-  color: var(--text-primary, #1e293b);
+  font-weight: 400;
+  color: var(--text-primary);
   margin-bottom: 1.5rem;
-  letter-spacing: -0.02em;
+  text-align: center;
+  letter-spacing: 0;
 }
 
 .form-group {
@@ -34,53 +75,57 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--text-primary, #1e293b);
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.875rem;
 }
 
 .form-group input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid var(--border-primary, #e2e8f0);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  font-size: 1rem;
-  background: var(--bg-secondary, #f8fafc);
-  color: var(--text-primary, #1e293b);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 0.95rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-  background: var(--bg-primary, #fff);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  background: var(--bg-primary);
 }
 
 .sign-in-container button[type="submit"] {
   width: 100%;
-  padding: 0.85rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
   margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.10);
-  transition: background 0.2s, transform 0.1s;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+  transition: all 0.2s ease;
 }
 
 .sign-in-container button[type="submit"]:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  transform: translateY(-2px) scale(1.01);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(58, 79, 65, 0.4);
 }
 
 .sign-in-container button[type="submit"]:disabled {
-  background: #b6c3e0;
-  color: #f1f5f9;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .forgot-password-link {
@@ -102,46 +147,116 @@
 .toggle-auth {
   background: none;
   border: none;
-  color: #3b82f6;
+  color: var(--accent-primary);
   padding: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  width: auto;
   font-weight: 600;
-  transition: color 0.2s;
+  transition: color 0.2s ease;
 }
 
 .toggle-auth:hover {
+  color: var(--accent-secondary);
   text-decoration: underline;
-  color: #1e40af;
   background: none;
 }
 
 .sign-in-box p {
   margin-top: 1.25rem;
-  color: var(--text-secondary, #6b7280);
-  font-size: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
 }
-
-
 
 .back-button {
   position: absolute;
   top: 1.5rem;
   left: 1.5rem;
-  background: none;
-  border: none;
-  color: white;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
   padding: 0.5rem 1rem;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
-  transition: transform 0.2s ease;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-primary);
 }
 
 .back-button:hover {
-  transform: translateX(-4px);
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+  transform: translateX(-2px);
+}
+
+/* Toast styles */
+.toast-root {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  box-shadow: var(--shadow-hover);
+  padding: 1rem;
+  max-width: 350px;
+}
+
+.toast-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.toast-description {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.toast-action {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.toast-action:hover {
+  background: var(--accent-hover);
+  color: white;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sign-in-container {
+    padding: 1rem;
+  }
+
+  .sign-in-box {
+    padding: 2rem 1.5rem;
+    max-width: none;
+  }
+
+  .back-button {
+    top: 1rem;
+    left: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sign-in-box {
+    padding: 1.5rem 1rem;
+  }
+
+  .sign-in-box h2 {
+    font-size: 1.75rem;
+  }
 } 

@@ -108,7 +108,11 @@ const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  // Check URL parameter to determine if should start in signup mode
+  const [isSignUp, setIsSignUp] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('signup') === 'true';
+  });
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
