@@ -6,6 +6,20 @@ import * as Toast from '@radix-ui/react-toast';
 import './MainPage.css';
 import { loadStripe } from '@stripe/stripe-js';
 import { format, startOfDay, addDays } from 'date-fns';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 const MainPage = ({ session }) => {
   const [habits, setHabits] = useState([]);
@@ -22,6 +36,14 @@ const MainPage = ({ session }) => {
   const [username, setUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [editingUsername, setEditingUsername] = useState('');
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const checkPaymentStatus = useCallback(async () => {
     try {
@@ -117,13 +139,20 @@ const MainPage = ({ session }) => {
           habit_completions(*)
         `)
         .eq('user_id', session.user.id)
+        .order('order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (error) {
         throw error;
       }
       
-      setHabits(data || []);
+      // If habits don't have order set, assign them based on current order
+      const habitsWithOrder = (data || []).map((habit, index) => ({
+        ...habit,
+        order: habit.order !== null ? habit.order : index
+      }));
+      
+      setHabits(habitsWithOrder);
     } catch (error) {
       setToastMessage('Error fetching habits');
       setShowToast(true);
@@ -168,8 +197,6 @@ const MainPage = ({ session }) => {
     initialize();
   }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits]);
 
-
-
   const handleCreateHabit = async (e) => {
     e.preventDefault();
     
@@ -193,6 +220,7 @@ const MainPage = ({ session }) => {
           {
             name: sanitizedName,
             user_id: session.user.id,
+            order: habits.length,
           },
         ])
         .select()
@@ -495,6 +523,44 @@ const MainPage = ({ session }) => {
     }
   };
 
+  const handleDragEnd = useCallback(async (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = habits.findIndex((habit) => habit.id === active.id);
+      const newIndex = habits.findIndex((habit) => habit.id === over.id);
+
+      const newHabits = arrayMove(habits, oldIndex, newIndex);
+      setHabits(newHabits);
+
+      // Update the order in the database
+      try {
+        const updates = newHabits.map((habit, index) => ({
+          id: habit.id,
+          order: index
+        }));
+
+        // Update each habit's order
+        for (const update of updates) {
+          const { error } = await supabase
+            .from('habits')
+            .update({ order: update.order })
+            .eq('id', update.id);
+
+          if (error) {
+            console.error('Error updating habit order:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating habit order:', error);
+        setToastMessage('Error updating habit order');
+        setShowToast(true);
+        // Revert to original order on error
+        fetchHabits();
+      }
+    }
+  }, [habits, fetchHabits]);
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -526,17 +592,28 @@ const MainPage = ({ session }) => {
           Create New Habit
         </button>
 
-        <div className="habits-grid">
-          {habits.map((habit) => (
-            <HabitCard
-              key={habit.id}
-              habit={habit}
-              onComplete={handleCompleteHabit}
-              onDelete={handleDeleteHabit}
-              onEdit={handleEditHabit}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={habits.map(habit => habit.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="habits-grid">
+              {habits.map((habit) => (
+                <HabitCard
+                  key={habit.id}
+                  habit={habit}
+                  onComplete={handleCompleteHabit}
+                  onDelete={handleDeleteHabit}
+                  onEdit={handleEditHabit}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
 
       <Dialog.Root open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

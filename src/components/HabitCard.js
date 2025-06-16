@@ -3,8 +3,25 @@ import ReactDOM from 'react-dom';
 import { format, getDay, startOfYear, endOfYear, eachDayOfInterval, getYear, addDays } from 'date-fns';
 import * as Dialog from '@radix-ui/react-dialog';
 import './HabitCard.css';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: habit.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   const [isOpen, setIsOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -230,9 +247,23 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
   };
 
   return (
-    <div className="habit-card">
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className="habit-card"
+    >
       <div className="habit-header">
-        <h3>{habit.name}</h3>
+        <div className="habit-title-section">
+          <button 
+            className="drag-handle"
+            {...attributes}
+            {...listeners}
+            aria-label="Drag to reorder"
+          >
+            ⋮⋮
+          </button>
+          <h3>{habit.name}</h3>
+        </div>
         <div className="habit-actions">
           <button className="log-button" onClick={handleLogToday}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
