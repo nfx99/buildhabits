@@ -582,7 +582,7 @@ const MainPage = ({ session }) => {
       <header className="header">
         <div className="header-left">
         </div>
-        <h1>{username ? `${username} Habits` : 'Build Habits'}</h1>
+        <h1> {'Build Habits'}</h1>
         <div className="header-right">
           <button onClick={toggleTheme} className="theme-toggle" title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
             {theme === 'light' ? '🌙' : '☀️'}
