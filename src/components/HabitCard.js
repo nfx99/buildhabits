@@ -4,7 +4,7 @@ import { format, getDay, startOfYear, endOfYear, eachDayOfInterval, getYear, add
 import * as Dialog from '@radix-ui/react-dialog';
 import './HabitCard.css';
 
-const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
+const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -120,7 +120,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
       // If already completed today, undo it. Otherwise, complete it.
       await onComplete(habit.id, today, isCompleted);
     } catch (error) {
-      console.error('Error logging habit:', error);
+      // Error is handled by parent component
     }
   };
 
@@ -129,7 +129,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
       await onComplete(habit.id, selectedDate);
       setIsOpen(false);
     } catch (error) {
-      console.error('Error completing habit:', error);
+      // Error is handled by parent component
     }
   };
 
@@ -138,7 +138,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
       await onComplete(habit.id, selectedDate, true);
       setIsOpen(false);
     } catch (error) {
-      console.error('Error undoing habit:', error);
+      // Error is handled by parent component
     }
   };
 
@@ -147,7 +147,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
       await onDelete(habit.id);
       setIsDeleteOpen(false);
     } catch (error) {
-      console.error('Error deleting habit:', error);
+      // Error is handled by parent component
     }
   };
 
@@ -156,7 +156,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
       await onEdit(habit.id, editName);
       setIsEditOpen(false);
     } catch (error) {
-      console.error('Error editing habit:', error);
+      // Error is handled by parent component
     }
   };
 
@@ -218,7 +218,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, theme }) => {
   };
 
   return (
-    <div className="habit-card" data-theme={theme}>
+    <div className="habit-card">
       <div className="habit-header">
         <h3>{habit.name}</h3>
         <div className="habit-actions">

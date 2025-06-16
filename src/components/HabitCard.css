@@ -1,50 +1,35 @@
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-card: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  --text-primary: #1e293b;
+  --bg-secondary: #f9fafb;
+  --bg-card: #ffffff;
+  --text-primary: #374151;
   --text-secondary: #6b7280;
-  --border-primary: #e2e8f0;
-  --border-secondary: #cbd5e1;
-  --shadow-primary: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 16px -8px rgba(0, 0, 0, 0.1);
-  --shadow-hover: 0 20px 40px -5px rgba(0, 0, 0, 0.12), 0 16px 24px -8px rgba(0, 0, 0, 0.08);
-  --cell-empty: #f1f5f9;
-  --cell-completed: #22c55e;
-  --cell-border: #e2e8f0;
+  --border-primary: #f3f4f6;
+  --border-secondary: #e5e7eb;
+  --shadow-primary: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --cell-empty: #f9fafb;
+  --cell-completed: #059669;
+  --cell-border: #f3f4f6;
   --tooltip-x: 0px;
   --tooltip-y: 0px;
 }
 
-[data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-card: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --border-primary: #334155;
-  --border-secondary: #475569;
-  --shadow-primary: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 16px -8px rgba(0, 0, 0, 0.2);
-  --shadow-hover: 0 20px 40px -5px rgba(0, 0, 0, 0.4), 0 16px 24px -8px rgba(0, 0, 0, 0.3);
-  --cell-empty: #334155;
-  --cell-completed: #22c55e;
-  --cell-border: #475569;
-}
+
 
 .habit-card {
   background: var(--bg-card);
-  border-radius: 16px;
-  padding: 2rem;
+  border-radius: 8px;
+  padding: 1.5rem;
   box-shadow: var(--shadow-primary);
-  margin: 1.5rem;
+  margin: 1rem;
   width: 100%;
   max-width: 1200px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   border: 1px solid var(--border-primary);
   overflow: visible;
 }
 
 .habit-card:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-hover);
 }
 
@@ -90,29 +75,26 @@
 }
 
 .log-button {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  background: var(--accent-primary);
   border: none;
   color: white;
   padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
   flex-shrink: 0;
-  min-height: 42px;
+  min-height: 36px;
   width: auto;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .log-button:hover {
-  background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent-secondary) 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+  background: var(--accent-hover);
 }
 
 .log-button svg {
@@ -122,20 +104,19 @@
 
 .more-button {
   background: var(--bg-secondary);
-  border: 1px solid var(--border-secondary);
+  border: 1px solid var(--border-primary);
   color: var(--text-secondary);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   cursor: pointer;
-  padding: 0.3rem;
-  border-radius: 8px;
+  padding: 0.25rem;
+  border-radius: 6px;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   line-height: 1;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 2;
 }
@@ -143,8 +124,6 @@
 .more-button:hover {
   background: var(--border-primary);
   color: var(--text-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* More menu styles */

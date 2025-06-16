@@ -60,8 +60,7 @@ const LandingPage = ({ onGetStarted }) => {
   };
 
   const handleEdit = (habitId, newName) => {
-    // Since we're not storing the habit name in state, we can just log it
-    console.log('Demo edit:', { habitId, newName });
+    // Demo function - no actual editing in landing page
   };
 
   return (
@@ -84,9 +83,8 @@ const LandingPage = ({ onGetStarted }) => {
         <HabitCard
           habit={createDemoHabit(demoCompletions)}
           onComplete={handleComplete}
-          onDelete={handleDelete}
-          onEdit={handleEdit}
-          theme="dark"
+                      onDelete={handleDelete}
+            onEdit={handleEdit}
         />
       </section>
     </div>

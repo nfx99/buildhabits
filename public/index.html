@@ -31,20 +31,7 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     
-    <!-- Immediate theme detection to prevent FOUC -->
-    <script>
-      (function() {
-        try {
-          const savedTheme = localStorage.getItem('theme');
-          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-          document.documentElement.setAttribute('data-theme', theme);
-        } catch (e) {
-          // Fallback to light theme if localStorage is not available
-          document.documentElement.setAttribute('data-theme', 'light');
-        }
-      })();
-    </script>
+
     
     <title>Build Habits</title>
   </head>

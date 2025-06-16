@@ -5,6 +5,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import * as Toast from '@radix-ui/react-toast';
 import './MainPage.css';
 import { loadStripe } from '@stripe/stripe-js';
+import { format } from 'date-fns';
 
 const MainPage = ({ session }) => {
   const [habits, setHabits] = useState([]);
@@ -17,60 +18,27 @@ const MainPage = ({ session }) => {
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [theme, setTheme] = useState(() => {
-    // Get theme from document attribute (set by HTML script) or fallback to localStorage/default
-    const documentTheme = document.documentElement.getAttribute('data-theme');
-    return documentTheme || localStorage.getItem('theme') || 'light';
-  });
+
   const [username, setUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [editingUsername, setEditingUsername] = useState('');
 
-  // Define functions before useEffect hooks to avoid use-before-define warnings
   const checkPaymentStatus = useCallback(async () => {
     try {
-      console.log('Checking payment status for user:', session.user.id);
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('is_premium, premium_since, username')
+        .select('username, is_premium')
         .eq('user_id', session.user.id)
-        .maybeSingle();
+        .single();
 
       if (error) {
-        console.error('Supabase error details:', error);
         throw error;
       }
       
-      console.log('User profile data:', data);
-      
-      // If no profile exists, create one with a generated username
       if (!data) {
-        console.log('No user profile found, creating one...');
         try {
-          // Import the username generation functions here
-          const generateUsername = () => {
-            const adjectives = [
-              'Bold', 'Bright', 'Calm', 'Clever', 'Cool', 'Creative', 'Daring', 'Dynamic',
-              'Epic', 'Focused', 'Gentle', 'Happy', 'Inspired', 'Joyful', 'Kind', 'Lively',
-              'Mindful', 'Natural', 'Optimistic', 'Peaceful', 'Quick', 'Radiant', 'Strong',
-              'Thoughtful', 'Unique', 'Vibrant', 'Wise', 'Zen'
-            ];
-            
-            const nouns = [
-              'Achiever', 'Builder', 'Creator', 'Dreamer', 'Explorer', 'Finisher', 'Grower',
-              'Helper', 'Innovator', 'Journeyer', 'Keeper', 'Learner', 'Maker', 'Navigator',
-              'Organizer', 'Pioneer', 'Questioner', 'Runner', 'Seeker', 'Tracker', 'Uniter',
-              'Visionary', 'Walker', 'Xplorer', 'Yearner', 'Zoner'
-            ];
-
-            const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-            const noun = nouns[Math.floor(Math.random() * nouns.length)];
-            const number = Math.floor(Math.random() * 999) + 1;
-            
-            return `${adjective}${noun}${number}`;
-          };
-
-          const newUsername = generateUsername();
+          const newUsername = `User${Math.floor(Math.random() * 10000)}`;
+          
           const { data: newProfile, error: createError } = await supabase
             .from('user_profiles')
             .insert([
@@ -84,15 +52,14 @@ const MainPage = ({ session }) => {
             .single();
 
           if (createError) {
-            console.error('Error creating user profile:', createError);
+            return false;
           } else {
-            console.log('Created new user profile:', newProfile);
             setUsername(newProfile.username);
             setHasPaid(false);
             return false;
           }
         } catch (createError) {
-          console.error('Failed to create user profile:', createError);
+          return false;
         }
       } else {
         const isPremium = data.is_premium || false;
@@ -100,7 +67,6 @@ const MainPage = ({ session }) => {
         setUsername(data.username || '');
         
         if (isPremium && !hasPaid) {
-          // Premium status was just detected, show a success message
           setToastMessage('🎉 Premium upgrade successful! You now have unlimited habits.');
           setShowToast(true);
         }
@@ -110,139 +76,103 @@ const MainPage = ({ session }) => {
       
       return false;
     } catch (error) {
-      console.error('Error checking payment status:', error);
       return false;
     }
   }, [session.user.id, hasPaid]);
 
-  // Backup function to verify payment via Stripe session ID
   const verifyPaymentWithStripe = useCallback(async (sessionId) => {
     try {
-      console.log('Verifying payment with Stripe session:', sessionId);
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sessionId: sessionId,
+          sessionId,
           userId: session.user.id
-        }),
+        })
       });
-
+      
       const result = await response.json();
-      console.log('Stripe verification result:', result);
-
-      if (result.success && result.isPaid) {
-        // Payment was successful, refresh status
-        await checkPaymentStatus();
+      
+      if (result.success && result.isPremium) {
+        setHasPaid(true);
+        setToastMessage('🎉 Payment verified! You now have premium access.');
+        setShowToast(true);
         return true;
       }
       
       return false;
     } catch (error) {
-      console.error('Error verifying payment with Stripe:', error);
       return false;
     }
-  }, [session.user.id, checkPaymentStatus]);
+  }, [session.user.id]);
 
   const fetchHabits = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('habits')
         .select(`
-          id,
-          name,
-          created_at,
-          user_id,
-          habit_completions (
-            id,
-            date,
-            created_at
-          )
+          *,
+          habit_completions (*)
         `)
+        .eq('user_id', session.user.id.toString())
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase error details:', error);
         throw error;
       }
+      
       setHabits(data || []);
     } catch (error) {
-      console.error('Error fetching habits:', error);
-    } finally {
-      setLoading(false);
+      setToastMessage('Error fetching habits');
+      setShowToast(true);
     }
-  }, []);
+  }, [session.user.id]);
 
   useEffect(() => {
-    fetchHabits();
-    checkPaymentStatus();
-  }, [session, checkPaymentStatus, fetchHabits]);
-
-  // Check payment status when user returns from payment
-  useEffect(() => {
-    const handlePaymentReturn = () => {
+    const initialize = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('session_id');
-      const paymentCompleted = localStorage.getItem('payment-completed');
       
-      if (sessionId || paymentCompleted) {
-        // User returned from Stripe checkout, refresh payment status
-        console.log('User returned from payment, checking status...');
+      if (sessionId) {
+        let attempts = 0;
+        const maxAttempts = 5;
+        const delayMs = 2000;
         
-        // Clear the flag
-        localStorage.removeItem('payment-completed');
-        
-        // Add multiple checks with delays to ensure webhook has processed
-        const checkMultipleTimes = async () => {
-          for (let i = 0; i < 5; i++) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
-            console.log(`Payment status check attempt ${i + 1}`);
-            const isPremium = await checkPaymentStatus();
-            
-            // If still not premium after 3 attempts and we have a session ID, try Stripe verification
-            if (!isPremium && i >= 2 && sessionId) {
-              console.log('Webhook may have failed, trying Stripe verification...');
-              const stripeResult = await verifyPaymentWithStripe(sessionId);
-              if (stripeResult) {
-                console.log('Stripe verification successful, breaking loop');
-                break;
-              }
-            }
-            
-            if (isPremium) {
-              console.log('Premium status confirmed, breaking loop');
+        while (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+          
+          const paymentConfirmed = await checkPaymentStatus();
+          if (!paymentConfirmed) {
+            const stripeVerified = await verifyPaymentWithStripe(sessionId);
+            if (stripeVerified) {
               break;
             }
+          } else {
+            break;
           }
-        };
+          
+          attempts++;
+        }
         
-        checkMultipleTimes();
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        await checkPaymentStatus();
       }
+      
+      await fetchHabits();
+      setLoading(false);
     };
 
-    handlePaymentReturn();
-  }, [checkPaymentStatus, verifyPaymentWithStripe]);
-
-  useEffect(() => {
-    localStorage.setItem('theme', theme);
-    // Only set if different to avoid unnecessary DOM updates
-    if (document.documentElement.getAttribute('data-theme') !== theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
+    initialize();
+  }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits]);
 
 
 
   const handleCreateHabit = async (e) => {
     e.preventDefault();
     
-    // Sanitize input
     const sanitizedName = newHabitName.trim();
     if (!sanitizedName) {
       setToastMessage('Please enter a valid habit name');
@@ -269,7 +199,6 @@ const MainPage = ({ session }) => {
         .single();
 
       if (error) {
-        console.error('Supabase error details:', error);
         throw error;
       }
       
@@ -281,7 +210,6 @@ const MainPage = ({ session }) => {
       setNewHabitName('');
       setIsCreateDialogOpen(false);
     } catch (error) {
-      console.error('Error creating habit:', error);
       setToastMessage(error.message || 'Error creating habit. Please try again.');
       setShowToast(true);
     }
@@ -290,47 +218,47 @@ const MainPage = ({ session }) => {
   const handleCompleteHabit = async (habitId, date, isUndo = false) => {
     try {
       if (isUndo) {
-        // Delete the completion record
+        // Delete the completion
         const { error } = await supabase
           .from('habit_completions')
           .delete()
           .eq('habit_id', habitId)
-          .eq('date', date.toISOString().split('T')[0]);
+          .eq('user_id', session.user.id.toString())
+          .eq('date', format(new Date(date), 'yyyy-MM-dd'));
 
         if (error) throw error;
       } else {
-        // Insert a new completion record
+        // Insert new completion
         const { error } = await supabase
           .from('habit_completions')
           .insert([
             {
               habit_id: habitId,
-              date: date.toISOString().split('T')[0],
+              date: format(new Date(date), 'yyyy-MM-dd'),
+              user_id: session.user.id.toString(),
             },
           ]);
 
         if (error) throw error;
       }
-      
+
       fetchHabits();
     } catch (error) {
-      console.error('Error completing habit:', error);
-      setToastMessage(isUndo ? 'Error undoing habit' : 'Error completing habit');
+      setToastMessage(isUndo ? 'Error removing habit completion' : 'Error completing habit');
       setShowToast(true);
     }
   };
 
-  const handlePayment = async () => {
-    setIsPaymentLoading(true);
+  const handleUpgrade = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.error('No active session found');
+      if (!session || !session.user) {
+        setToastMessage('Please sign in to upgrade');
+        setShowToast(true);
         return;
       }
 
-      console.log('Creating checkout session for user:', session.user.id);
-      
+      setIsPaymentLoading(true);
+
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -338,95 +266,72 @@ const MainPage = ({ session }) => {
         },
         body: JSON.stringify({
           userId: session.user.id,
-          priceId: 'price_1RXMtIEVtge1S4ocSIFIGoG1'
+          priceId: 'price_1QSeUIEeZvKYlo2CaFLjkmGF',
         }),
       });
 
-      const { sessionId, message, error } = await response.json();
-      console.log('Checkout session created:', sessionId);
+      const { sessionId, error, message } = await response.json();
 
-      if (!sessionId) {
-        console.error('Failed to create checkout session:', message, error);
-        setToastMessage('Failed to create checkout session. Please try again.');
+      if (error) {
+        setToastMessage(message || 'Failed to create checkout session');
         setShowToast(true);
         return;
       }
 
       const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+      
       if (!stripe) {
-        console.error('Stripe failed to load');
-        setToastMessage('Stripe failed to load. Please refresh and try again.');
+        setToastMessage('Payment system unavailable');
         setShowToast(true);
         return;
       }
 
-      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+      const { error: stripeError } = await stripe.redirectToCheckout({
+        sessionId,
+      });
+
       if (stripeError) {
-        console.error('Stripe redirect error:', stripeError);
-        setToastMessage('Stripe redirect error. Please try again.');
+        setToastMessage('Payment redirect failed');
         setShowToast(true);
       }
     } catch (error) {
-      console.error('Error creating checkout session:', error);
-      setToastMessage('Error creating checkout session. Please try again.');
+      setToastMessage('Error creating checkout session');
       setShowToast(true);
     } finally {
       setIsPaymentLoading(false);
     }
   };
 
-  const handleUpgrade = () => {
-    setIsProfileDialogOpen(false);
-    handlePayment();
-  };
-
   const handleSignOut = async () => {
     try {
-      console.log('Starting sign out process...');
-      setToastMessage('Signing out...');
-      setShowToast(true);
+      const { data: currentSession } = await supabase.auth.getSession();
       
-      // Check if there's an active session first
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      console.log('Current session:', currentSession);
-      
-      if (currentSession) {
-        // Only try to sign out if there's an active session
-        const { error } = await supabase.auth.signOut();
-        console.log('Sign out response:', { error });
-        
-        if (error) {
-          console.error('Sign out error:', error);
-          throw error;
-        }
-      } else {
-        console.log('No active session found, proceeding with local cleanup');
+      if (!currentSession.session) {
+        setHabits([]);
+        setHasPaid(false);
+        setToastMessage('Signed out successfully');
+        setShowToast(true);
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+        return;
       }
+
+      const { error } = await supabase.auth.signOut();
       
-      console.log('Sign out successful, clearing state...');
+      if (error) throw error;
       
-      // Clear any local state
       setHabits([]);
       setHasPaid(false);
-      
-      // Show success message briefly then redirect
       setToastMessage('Signed out successfully');
       setShowToast(true);
       
-      console.log('Redirecting to home page...');
-      
-      // Force navigation to home page after a brief delay
       setTimeout(() => {
-        console.log('Executing redirect...');
         window.location.href = '/';
       }, 1000);
       
     } catch (error) {
-      console.error('Error signing out:', error);
-      
-      // If it's a session missing error, still proceed with local cleanup and redirect
       if (error.message.includes('Auth session missing')) {
-        console.log('Session already missing, proceeding with cleanup...');
         setHabits([]);
         setHasPaid(false);
         setToastMessage('Signed out successfully');
@@ -435,7 +340,6 @@ const MainPage = ({ session }) => {
           window.location.href = '/';
         }, 1000);
       } else {
-        // For other errors, show the error message
         setToastMessage(`Failed to sign out: ${error.message}`);
         setShowToast(true);
       }
@@ -451,10 +355,8 @@ const MainPage = ({ session }) => {
 
       if (error) throw error;
 
-      // Refresh habits after deletion
       fetchHabits();
     } catch (error) {
-      console.error('Error deleting habit:', error);
       setToastMessage('Failed to delete habit. Please try again.');
       setShowToast(true);
     }
@@ -462,7 +364,6 @@ const MainPage = ({ session }) => {
 
   const handleEditHabit = async (habitId, newName) => {
     try {
-      // Sanitize input
       const sanitizedName = newName.trim();
       if (!sanitizedName) {
         setToastMessage('Please enter a valid habit name');
@@ -477,10 +378,8 @@ const MainPage = ({ session }) => {
 
       if (error) throw error;
 
-      // Refresh habits after editing
       fetchHabits();
     } catch (error) {
-      console.error('Error editing habit:', error);
       setToastMessage('Error editing habit');
       setShowToast(true);
     }
@@ -500,64 +399,64 @@ const MainPage = ({ session }) => {
     const sanitizedUsername = editingUsername.trim();
     
     if (!sanitizedUsername) {
-      setToastMessage('Please enter a valid username');
+      setToastMessage('Username cannot be empty');
       setShowToast(true);
       return;
     }
 
-    if (sanitizedUsername === username) {
-      setIsEditingUsername(false);
+    if (sanitizedUsername.length < 2) {
+      setToastMessage('Username must be at least 2 characters');
+      setShowToast(true);
+      return;
+    }
+
+    if (sanitizedUsername.length > 20) {
+      setToastMessage('Username must be less than 20 characters');
+      setShowToast(true);
       return;
     }
 
     try {
-      console.log('Saving username:', sanitizedUsername, 'for user:', session.user.id);
-      
-      // Check if username already exists (excluding current user)
-      const { data: existingUser, error: checkError } = await supabase
+      const { data: existingUser } = await supabase
         .from('user_profiles')
-        .select('username')
+        .select('user_id')
         .eq('username', sanitizedUsername)
         .neq('user_id', session.user.id)
-        .maybeSingle();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        // PGRST116 is "not found" which is expected when no duplicate exists
-        console.error('Error checking username:', checkError);
-        throw checkError;
-      }
+        .single();
 
       if (existingUser) {
-        setToastMessage('Username already taken. Please choose another one.');
+        setToastMessage('Username already taken. Please choose another.');
         setShowToast(true);
         return;
       }
+    } catch (checkError) {
+      if (checkError.code !== 'PGRST116') {
+        setToastMessage('Error checking username availability');
+        setShowToast(true);
+        return;
+      }
+    }
 
-      // Use upsert to handle both update and insert cases
+    try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .upsert(
+        .upsert([
           {
             user_id: session.user.id,
             username: sanitizedUsername,
-            is_premium: false // Default value, will be overridden if record exists
-          },
-          {
-            onConflict: 'user_id',
-            ignoreDuplicates: false
+            is_premium: hasPaid
           }
-        )
-        .select();
-
-      console.log('Upsert result:', { data, error });
+        ])
+        .select()
+        .single();
 
       if (error) {
-        console.error('Database error details:', error);
+        if (error.code === '23505') {
+          setToastMessage('Username already taken. Please choose another.');
+          setShowToast(true);
+          return;
+        }
         throw error;
-      }
-
-      if (!data || data.length === 0) {
-        throw new Error('No data returned from username update');
       }
 
       setUsername(sanitizedUsername);
@@ -565,9 +464,7 @@ const MainPage = ({ session }) => {
       setToastMessage('Username updated successfully!');
       setShowToast(true);
       
-      console.log('Username successfully saved to database');
     } catch (error) {
-      console.error('Error updating username:', error);
       setToastMessage(`Error updating username: ${error.message}`);
       setShowToast(true);
     }
@@ -578,15 +475,12 @@ const MainPage = ({ session }) => {
   }
 
   return (
-    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen) ? 'dialog-active' : ''}`} data-theme={theme}>
+    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen) ? 'dialog-active' : ''}`}>
       <header className="header">
         <div className="header-left">
         </div>
         <h1> {'Build Habits'}</h1>
         <div className="header-right">
-          <button onClick={toggleTheme} className="theme-toggle" title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
-            {theme === 'light' ? '🌙' : '☀️'}
-          </button>
           <button className="profile-button" onClick={() => setIsProfileDialogOpen(true)}>
             Profile
           </button>
@@ -615,7 +509,6 @@ const MainPage = ({ session }) => {
               onComplete={handleCompleteHabit}
               onDelete={handleDeleteHabit}
               onEdit={handleEditHabit}
-              theme={theme}
             />
           ))}
         </div>
@@ -655,21 +548,19 @@ const MainPage = ({ session }) => {
         <Dialog.Portal>
           <Dialog.Overlay className="dialog-overlay" />
           <Dialog.Content className="dialog-content payment-dialog">
-            <Dialog.Title>🚀 Unlock Unlimited Habits</Dialog.Title>
+            <Dialog.Title>Upgrade to Premium</Dialog.Title>
             <Dialog.Description>
               <div className="payment-content">
-                <h3>Ready to build more habits?</h3>
-                <p>You've created your first 2 habits! Unlock unlimited habit tracking with a one-time payment.</p>
+                <h3>🚀 Go Premium!</h3>
+                <p>Unlock unlimited habits and advanced features to supercharge your habit building journey.</p>
+                
                 <button 
                   className="payment-price-button"
-                  onClick={() => {
-                    setIsPaymentDialogOpen(false);
-                    handlePayment();
-                  }}
+                  onClick={handleUpgrade}
                   disabled={isPaymentLoading}
                 >
-                  <span className="price">$4.99</span>
-                  <span className="price-note">{isPaymentLoading ? 'Processing...' : 'One-time payment'}</span>
+                  <div className="price">$4.99</div>
+                  <div className="price-note">One-time payment</div>
                 </button>
               </div>
             </Dialog.Description>
@@ -777,9 +668,7 @@ const MainPage = ({ session }) => {
             <div className="dialog-buttons">
               <button 
                 onClick={async () => {
-                  // Close dialog first
                   setIsProfileDialogOpen(false);
-                  // Then handle sign out
                   await handleSignOut();
                 }}
                 className="sign-out-button"
@@ -798,6 +687,7 @@ const MainPage = ({ session }) => {
         className="toast-root"
         open={showToast}
         onOpenChange={setShowToast}
+        duration={3000}
       >
         <Toast.Title className="toast-title">Notification</Toast.Title>
         <Toast.Description className="toast-description">

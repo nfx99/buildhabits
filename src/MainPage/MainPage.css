@@ -1,29 +1,28 @@
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-card: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --border-primary: #e2e8f0;
-  --border-secondary: #cbd5e1;
-  --shadow-primary: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 16px -8px rgba(0, 0, 0, 0.1);
-  --shadow-hover: 0 20px 40px -5px rgba(0, 0, 0, 0.12), 0 16px 24px -8px rgba(0, 0, 0, 0.08);
-  --accent-primary: #3b82f6;
-  --accent-secondary: #1d4ed8;
-  --accent-hover: #2563eb;
-  --success: #10b981;
-  --success-hover: #059669;
-  --warning: #f59e0b;
-  --warning-hover: #d97706;
-  --error: #ef4444;
-  --error-hover: #dc2626;
+  --bg-secondary: #f9fafb;
+  --bg-card: #ffffff;
+  --text-primary: #374151;
+  --text-secondary: #6b7280;
+  --border-primary: #f3f4f6;
+  --border-secondary: #e5e7eb;
+  --shadow-primary: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --accent-primary: #4f46e5;
+  --accent-secondary: #4338ca;
+  --accent-hover: #3730a3;
+  --success: #059669;
+  --success-hover: #047857;
+  --warning: #d97706;
+  --warning-hover: #b45309;
+  --error: #dc2626;
+  --error-hover: #b91c1c;
 }
 
-/* Ensure smooth theme transitions and prevent FOUC */
+/* Optimized theme transitions */
 html {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.05s ease, color 0.05s ease;
 }
 
 body {
@@ -31,84 +30,24 @@ body {
   padding: 0;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.05s ease, color 0.05s ease;
 }
 
-/* Ensure all themed elements transition quickly */
-* {
-  transition-duration: 0.05s !important;
-}
 
-/* Reset transition duration for interactive elements that need slower transitions */
-button, .habit-card, .dialog-content {
-  transition-duration: 0.2s !important;
-}
-
-[data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-card: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --border-primary: #334155;
-  --border-secondary: #475569;
-  --shadow-primary: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 16px -8px rgba(0, 0, 0, 0.2);
-  --shadow-hover: 0 20px 40px -5px rgba(0, 0, 0, 0.4), 0 16px 24px -8px rgba(0, 0, 0, 0.3);
-  --accent-primary: #3b82f6;
-  --accent-secondary: #1d4ed8;
-  --accent-hover: #2563eb;
-  --success: #10b981;
-  --success-hover: #059669;
-  --warning: #f59e0b;
-  --warning-hover: #d97706;
-  --error: #ef4444;
-  --error-hover: #dc2626;
-}
-
-[data-theme="dark"] .header h1 {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Enhanced dark mode text visibility */
-[data-theme="dark"] .dialog-content h2 {
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="dark"] .dialog-content p {
-  color: #e2e8f0;
-}
-
-[data-theme="dark"] .form-group label {
-  color: #ffffff;
-  font-weight: 600;
-}
-
-[data-theme="dark"] .stat-number {
-  color: #ffffff;
-}
 
 .main-page {
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
   padding: 0;
-  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem;
+  padding: 1.5rem 2rem;
   background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-primary);
-  margin-bottom: 2rem;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  margin-bottom: 1rem;
 }
 
 .header h1 {
@@ -118,13 +57,8 @@ button, .habit-card, .dialog-content {
   left: 50%;
   transform: translateX(-50%);
   font-family: 'Leckerli One', cursive;
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 400;
-  letter-spacing: -0.025em;
-  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none;
 }
 
 .header-left,
@@ -140,49 +74,27 @@ button, .habit-card, .dialog-content {
   justify-content: flex-end;
 }
 
-.theme-toggle {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-secondary);
-  color: var(--text-primary);
-  padding: 0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-}
 
-.theme-toggle:hover {
-  background: var(--bg-secondary);
-  transform: translateY(-1px);
-}
 
 .profile-button {
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-  border: 1px solid var(--border-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   color: var(--text-primary);
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .profile-button:hover {
-  background: var(--bg-secondary);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-color: var(--border-primary);
+  background: var(--border-primary);
+  border-color: var(--border-secondary);
 }
 
 .habits-container {
@@ -192,30 +104,27 @@ button, .habit-card, .dialog-content {
 }
 
 .create-habit-button {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   width: auto;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  padding: 0.625rem 1.25rem;
+  background: var(--accent-primary);
   border: none;
   color: white;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
   flex-shrink: 0;
-  min-height: 42px;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  min-height: 40px;
 }
 
 .create-habit-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent-secondary) 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+  background: var(--accent-hover);
 }
 
 .create-habit-button:disabled {
@@ -256,7 +165,7 @@ button, .habit-card, .dialog-content {
 .dialog-content {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: var(--shadow-primary);
   position: fixed;
   top: 50%;
@@ -265,7 +174,7 @@ button, .habit-card, .dialog-content {
   width: 90vw;
   max-width: 450px;
   max-height: 85vh;
-  padding: 25px;
+  padding: 1.5rem;
   animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 51;
 }
@@ -719,7 +628,6 @@ button, .habit-card, .dialog-content {
 }
 
 /* Dim header buttons when dialog is active */
-.main-page.dialog-active .theme-toggle,
 .main-page.dialog-active .profile-button {
   opacity: 0.6;
   background: var(--bg-secondary);
@@ -734,7 +642,6 @@ button, .habit-card, .dialog-content {
   pointer-events: none;
 }
 
-.main-page:has(.dialog-overlay) .theme-toggle,
 .main-page:has(.dialog-overlay) .profile-button {
   opacity: 0.6;
   background: var(--bg-secondary);

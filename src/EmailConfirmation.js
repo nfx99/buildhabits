@@ -23,13 +23,12 @@ const EmailConfirmation = () => {
           });
 
           if (error) {
-            console.error('Error setting session:', error);
+            // Session establishment failed
           } else {
-            console.log('Session established successfully');
             setSessionEstablished(true);
           }
         } catch (error) {
-          console.error('Error processing tokens:', error);
+          // Token processing failed
         }
       } else {
         // If no tokens, check if session already exists
