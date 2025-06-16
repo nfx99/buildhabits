@@ -16,6 +16,9 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
   const moreButtonRef = React.useRef(null);
   const tooltipRef = React.useRef(null);
 
+  // Cache current year for performance
+  const currentYear = React.useMemo(() => new Date().getFullYear(), []);
+
   const heatmapData = React.useMemo(() => {
     const startDate = startOfYear(new Date());
     const endDate = endOfYear(new Date());
@@ -30,9 +33,17 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
   }, [habit.habit_completions]);
 
   const dateGrid = React.useMemo(() => {
-    const startDate = startOfYear(new Date());
-    const endDate = endOfYear(new Date());
+    const now = new Date();
+    const currentYear = getYear(now);
+    const startDate = startOfYear(now);
+    const endDate = endOfYear(now);
     const grid = [];
+    
+    // Create a map for faster lookups
+    const completionMap = new Map();
+    heatmapData.forEach(d => {
+      completionMap.set(format(d.date, 'yyyy-MM-dd'), d);
+    });
     
     for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
       const row = [];
@@ -40,16 +51,15 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
       
       for (let week = 0; week < 53; week++) {
         const cellDate = addDays(date, week * 7);
-        const isInCurrentYear = getYear(cellDate) === getYear(new Date());
+        const isInCurrentYear = getYear(cellDate) === currentYear;
         const isBeforeStart = isInCurrentYear && cellDate < startDate;
         const isAfterEnd = isInCurrentYear && cellDate > endDate;
         
         if (isBeforeStart || isAfterEnd) {
           row.push({ date: null, completed: false });
         } else {
-          const dayData = heatmapData.find(d => 
-            format(d.date, 'yyyy-MM-dd') === format(cellDate, 'yyyy-MM-dd')
-          );
+          const cellDateStr = format(cellDate, 'yyyy-MM-dd');
+          const dayData = completionMap.get(cellDateStr);
           row.push(dayData || { date: cellDate, completed: false });
         }
       }
@@ -63,7 +73,9 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
 
   const monthLabels = React.useMemo(() => {
     const months = [];
-    const startDate = startOfYear(new Date());
+    const now = new Date();
+    const currentYear = getYear(now);
+    const startDate = startOfYear(now);
     let currentMonth = '';
     
     for (let week = 0; week < 53; week++) {
@@ -71,7 +83,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
       const monthName = format(weekDate, 'MMM');
       
       // Only show the month label if it's a new month and not December from previous year
-      const shouldShowLabel = monthName !== currentMonth && getYear(weekDate) === getYear(new Date());
+      const shouldShowLabel = monthName !== currentMonth && getYear(weekDate) === currentYear;
       
       months.push({
         week,
@@ -99,13 +111,13 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
       }
     ) || false;
     
-    // Still use adjusted date for the dialog (to fix the display offset)
-    setSelectedDate(addDays(date, 1));
+    // Use the original date - no adjustment needed
+    setSelectedDate(date);
     setIsDateCompleted(isCompleted);
     setIsOpen(true);
   };
 
-  const handleLogToday = async () => {
+  const handleLogToday = React.useCallback(async () => {
     const today = new Date();
     
     const isCompleted = habit.habit_completions?.some(
@@ -122,43 +134,43 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
     } catch (error) {
       // Error is handled by parent component
     }
-  };
+  }, [habit.id, habit.habit_completions, onComplete]);
 
-  const handleComplete = async () => {
+  const handleComplete = React.useCallback(async () => {
     try {
       await onComplete(habit.id, selectedDate);
       setIsOpen(false);
     } catch (error) {
       // Error is handled by parent component
     }
-  };
+  }, [habit.id, selectedDate, onComplete]);
 
-  const handleUndo = async () => {
+  const handleUndo = React.useCallback(async () => {
     try {
       await onComplete(habit.id, selectedDate, true);
       setIsOpen(false);
     } catch (error) {
       // Error is handled by parent component
     }
-  };
+  }, [habit.id, selectedDate, onComplete]);
 
-  const handleDelete = async () => {
+  const handleDelete = React.useCallback(async () => {
     try {
       await onDelete(habit.id);
       setIsDeleteOpen(false);
     } catch (error) {
       // Error is handled by parent component
     }
-  };
+  }, [habit.id, onDelete]);
 
-  const handleEdit = async () => {
+  const handleEdit = React.useCallback(async () => {
     try {
       await onEdit(habit.id, editName);
       setIsEditOpen(false);
     } catch (error) {
       // Error is handled by parent component
     }
-  };
+  }, [habit.id, editName, onEdit]);
 
   const showTooltip = (event) => {
     if (!tooltipRef.current) return;
@@ -295,16 +307,16 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
                   if (!cell.date) {
                     return <div key={`${weekday}-${weekIndex}`} className="heatmap-cell empty" />;
                   }
-                  const isIn2025 = getYear(cell.date) === 2025;
-                  const dayName = format(cell.date, 'EEEE');
-                  const dateStr = format(cell.date, 'MMMM dd, yyyy');
+                  const isInCurrentYear = getYear(cell.date) === currentYear;
+                  const dayName = isInCurrentYear ? format(cell.date, 'EEEE') : '';
+                  const dateStr = isInCurrentYear ? format(cell.date, 'MMMM dd, yyyy') : '';
                   return (
                     <div
                       key={`${weekday}-${weekIndex}`}
-                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!isIn2025 ? 'empty' : ''}`}
-                      onClick={() => isIn2025 && handleDateClick(cell.date)}
-                      data-tooltip={isIn2025 ? `${dayName}, ${dateStr}` : ''}
-                      onMouseEnter={(e) => isIn2025 && showTooltip(e)}
+                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!isInCurrentYear ? 'empty' : ''}`}
+                      onClick={() => isInCurrentYear && handleDateClick(cell.date)}
+                      data-tooltip={isInCurrentYear ? `${dayName}, ${dateStr}` : ''}
+                      onMouseEnter={(e) => isInCurrentYear && showTooltip(e)}
                       onMouseLeave={hideTooltip}
                     >
                     </div>

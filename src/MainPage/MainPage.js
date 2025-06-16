@@ -5,7 +5,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import * as Toast from '@radix-ui/react-toast';
 import './MainPage.css';
 import { loadStripe } from '@stripe/stripe-js';
-import { format } from 'date-fns';
+import { format, startOfDay, addDays } from 'date-fns';
 
 const MainPage = ({ session }) => {
   const [habits, setHabits] = useState([]);
@@ -114,9 +114,9 @@ const MainPage = ({ session }) => {
         .from('habits')
         .select(`
           *,
-          habit_completions (*)
+          habit_completions(*)
         `)
-        .eq('user_id', session.user.id.toString())
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -192,7 +192,7 @@ const MainPage = ({ session }) => {
         .insert([
           {
             name: sanitizedName,
-            user_id: session.user.id.toString(),
+            user_id: session.user.id,
           },
         ])
         .select()
@@ -217,32 +217,57 @@ const MainPage = ({ session }) => {
 
   const handleCompleteHabit = async (habitId, date, isUndo = false) => {
     try {
+      // Use the exact date format that's stored in the database
+      const targetDate = format(date, 'yyyy-MM-dd');
+      
       if (isUndo) {
-        // Delete the completion
+        // For undo, delete using date range (faster than fetching all completions)
         const { error } = await supabase
           .from('habit_completions')
           .delete()
           .eq('habit_id', habitId)
-          .eq('user_id', session.user.id.toString())
-          .eq('date', format(new Date(date), 'yyyy-MM-dd'));
+          .gte('date', targetDate + 'T00:00:00.000Z')
+          .lte('date', targetDate + 'T23:59:59.999Z');
 
         if (error) throw error;
       } else {
-        // Insert new completion
+        // For new completion, store as ISO timestamp to match existing format
         const { error } = await supabase
           .from('habit_completions')
-          .insert([
-            {
-              habit_id: habitId,
-              date: format(new Date(date), 'yyyy-MM-dd'),
-              user_id: session.user.id.toString(),
-            },
-          ]);
+          .insert({
+            habit_id: habitId,
+            date: new Date(targetDate + 'T12:00:00.000Z').toISOString(),
+          });
 
         if (error) throw error;
       }
 
-      fetchHabits();
+      // Optimistically update the UI instead of refetching all data
+      setHabits(prevHabits => 
+        prevHabits.map(habit => {
+          if (habit.id === habitId) {
+            const updatedCompletions = isUndo
+              ? habit.habit_completions?.filter(completion => 
+                  format(new Date(completion.date), 'yyyy-MM-dd') !== targetDate
+                ) || []
+              : [
+                  ...(habit.habit_completions || []),
+                  {
+                    id: `temp-${Date.now()}`,
+                    habit_id: habitId,
+                    date: new Date(targetDate + 'T12:00:00.000Z').toISOString(),
+                    created_at: new Date().toISOString()
+                  }
+                ];
+            
+            return {
+              ...habit,
+              habit_completions: updatedCompletions
+            };
+          }
+          return habit;
+        })
+      );
     } catch (error) {
       setToastMessage(isUndo ? 'Error removing habit completion' : 'Error completing habit');
       setShowToast(true);
@@ -702,3 +727,4 @@ const MainPage = ({ session }) => {
 };
 
 export default MainPage; 
+
