@@ -630,19 +630,31 @@ const MainPage = ({ session }) => {
       return;
     }
 
+    console.log('🔍 Searching for users with query:', query);
+    console.log('👤 Current user ID:', session.user.id);
+    
     setIsSearchingUsers(true);
     try {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('user_id, username')
+        .not('username', 'is', null)
         .ilike('username', `%${query}%`)
-        .neq('user_id', session.user.id)
         .limit(10);
 
-      if (error) throw error;
+      console.log('📊 Raw search results:', { data, error, query });
+      console.log('📊 Data length:', data?.length);
+      console.log('📊 First few results:', data?.slice(0, 3));
+
+      if (error) {
+        console.error('❌ Database error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Setting search results:', data || []);
       setSearchResults(data || []);
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error('💥 Error searching users:', error);
       setToastMessage('Error searching users');
       setShowToast(true);
       setSearchResults([]);
