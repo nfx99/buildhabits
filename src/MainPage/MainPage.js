@@ -31,6 +31,7 @@ const MainPage = ({ session }) => {
   const [isQuantifiable, setIsQuantifiable] = useState(false);
   const [targetValue, setTargetValue] = useState('');
   const [metricUnit, setMetricUnit] = useState('times');
+  const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
@@ -252,6 +253,7 @@ const MainPage = ({ session }) => {
         order: habits.length,
         color: newHabitColor,
         is_quantifiable: isQuantifiable,
+        is_private: isPrivate,
       };
 
       if (isQuantifiable) {
@@ -279,6 +281,7 @@ const MainPage = ({ session }) => {
       setIsQuantifiable(false);
       setTargetValue('');
       setMetricUnit('times');
+      setIsPrivate(false);
       setIsCreateDialogOpen(false);
     } catch (error) {
       setToastMessage(error.message || 'Error creating habit. Please try again.');
@@ -478,7 +481,8 @@ const MainPage = ({ session }) => {
         color: editData.color,
         is_quantifiable: editData.is_quantifiable,
         target_value: editData.target_value,
-        metric_unit: editData.metric_unit
+        metric_unit: editData.metric_unit,
+        is_private: editData.is_private
       };
 
       const { error } = await supabase
@@ -630,9 +634,6 @@ const MainPage = ({ session }) => {
       return;
     }
 
-    console.log('🔍 Searching for users with query:', query);
-    console.log('👤 Current user ID:', session.user.id);
-    
     setIsSearchingUsers(true);
     try {
       const { data, error } = await supabase
@@ -642,19 +643,10 @@ const MainPage = ({ session }) => {
         .ilike('username', `%${query}%`)
         .limit(10);
 
-      console.log('📊 Raw search results:', { data, error, query });
-      console.log('📊 Data length:', data?.length);
-      console.log('📊 First few results:', data?.slice(0, 3));
-
-      if (error) {
-        console.error('❌ Database error:', error);
-        throw error;
-      }
-      
-      console.log('✅ Setting search results:', data || []);
+      if (error) throw error;
       setSearchResults(data || []);
     } catch (error) {
-      console.error('💥 Error searching users:', error);
+      console.error('Error searching users:', error);
       setToastMessage('Error searching users');
       setShowToast(true);
       setSearchResults([]);
@@ -697,7 +689,15 @@ const MainPage = ({ session }) => {
                   <div className="search-loading">Searching...</div>
                 ) : searchResults.length > 0 ? (
                   searchResults.map((user) => (
-                    <div key={user.user_id} className="user-result">
+                    <div 
+                      key={user.user_id} 
+                      className="user-result"
+                      onClick={() => {
+                        window.location.href = `/user/${user.user_id}`;
+                        setUserSearchQuery('');
+                        setSearchResults([]);
+                      }}
+                    >
                       <span className="user-result-name">{user.username}</span>
                     </div>
                   ))
@@ -858,6 +858,30 @@ const MainPage = ({ session }) => {
                     </div>
                   </>
                 )}
+                <div className="form-group">
+                  <label>Privacy Setting</label>
+                  <div className="privacy-toggle">
+                    <button
+                      type="button"
+                      className={`privacy-option ${!isPrivate ? 'active' : ''}`}
+                      onClick={() => setIsPrivate(false)}
+                      style={!isPrivate ? { backgroundColor: newHabitColor, borderColor: newHabitColor } : {}}
+                    >
+                      Public
+                    </button>
+                    <button
+                      type="button"
+                      className={`privacy-option ${isPrivate ? 'active' : ''}`}
+                      onClick={() => setIsPrivate(true)}
+                      style={isPrivate ? { backgroundColor: newHabitColor, borderColor: newHabitColor } : {}}
+                    >
+                      Private
+                    </button>
+                  </div>
+                  <p className="privacy-description">
+                    Private habits are only visible to you. Public habits can be viewed by other users.
+                  </p>
+                </div>
               <div className="dialog-buttons">
                 <button type="submit">Create</button>
                 <button

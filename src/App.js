@@ -4,6 +4,7 @@ import * as Toast from '@radix-ui/react-toast';
 import SignIn from './Sign-In/SignIn';
 import MainPage from './MainPage/MainPage';
 import LandingPage from './LandingPage/LandingPage';
+import UserProfile from './UserProfile/UserProfile';
 import PaymentSuccess from './PaymentSuccess';
 import PaymentCancelled from './PaymentCancelled';
 import EmailConfirmation from './EmailConfirmation';
@@ -82,6 +83,10 @@ function App() {
           <Route
             path="/signin"
             element={session ? <Navigate to="/" /> : <SignIn />}
+          />
+          <Route 
+            path="/user/:userId" 
+            element={<UserProfile session={session} />} 
           />
           <Route path="/email-confirmed" element={<EmailConfirmation />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />

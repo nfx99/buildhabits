@@ -6,7 +6,7 @@ import './HabitCard.css';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
+const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) => {
   const {
     attributes,
     listeners,
@@ -34,6 +34,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
   const [editIsQuantifiable, setEditIsQuantifiable] = React.useState(habit.is_quantifiable || false);
   const [editTargetValue, setEditTargetValue] = React.useState(habit.target_value || '');
   const [editMetricUnit, setEditMetricUnit] = React.useState(habit.metric_unit || 'times');
+  const [editIsPrivate, setEditIsPrivate] = React.useState(habit.is_private || false);
   const [quantifiableValue, setQuantifiableValue] = React.useState('');
 
   // Update state when habit changes
@@ -43,7 +44,8 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
     setEditIsQuantifiable(habit.is_quantifiable || false);
     setEditTargetValue(habit.target_value || '');
     setEditMetricUnit(habit.metric_unit || 'times');
-  }, [habit.name, habit.color, habit.is_quantifiable, habit.target_value, habit.metric_unit]);
+    setEditIsPrivate(habit.is_private || false);
+  }, [habit.name, habit.color, habit.is_quantifiable, habit.target_value, habit.metric_unit, habit.is_private]);
   const moreButtonRef = React.useRef(null);
   const tooltipRef = React.useRef(null);
 
@@ -276,14 +278,15 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
         color: editColor,
         is_quantifiable: editIsQuantifiable,
         target_value: editIsQuantifiable ? parseFloat(editTargetValue) || 1 : null,
-        metric_unit: editIsQuantifiable ? editMetricUnit : null
+        metric_unit: editIsQuantifiable ? editMetricUnit : null,
+        is_private: editIsPrivate
       };
       await onEdit(habit.id, editData);
       setIsEditOpen(false);
     } catch (error) {
       // Error is handled by parent component
     }
-  }, [habit.id, editName, editColor, editIsQuantifiable, editTargetValue, editMetricUnit, onEdit]);
+  }, [habit.id, editName, editColor, editIsQuantifiable, editTargetValue, editMetricUnit, editIsPrivate, onEdit]);
 
   const showTooltip = (event) => {
     if (!tooltipRef.current) return;
@@ -350,66 +353,83 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
     >
       <div className="habit-header">
         <div className="habit-title-section">
-          <button 
-            className="drag-handle"
-            {...attributes}
-            {...listeners}
-            aria-label="Drag to reorder"
-          >
-            ⋮⋮
-          </button>
-          <h3>{habit.name}</h3>
+          {!isReadOnly && (
+            <button 
+              className="drag-handle"
+              {...attributes}
+              {...listeners}
+              aria-label="Drag to reorder"
+            >
+              ⋮⋮
+            </button>
+          )}
+          <h3>
+            {habit.name}
+            {habit.is_private && (
+              <span className="privacy-indicator" title="Private habit">
+                🔒
+              </span>
+            )}
+          </h3>
         </div>
         <div className="habit-actions">
-          <button className="log-button" onClick={handleLogToday}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M2 12h20" />
-            </svg>
-            Log Today
-          </button>
-          <Dialog.Root open={isMoreOpen} onOpenChange={setIsMoreOpen}>
-            <Dialog.Trigger asChild>
+          {!isReadOnly && (
+            <>
               <button 
-                className="more-button" 
-                onClick={handleMoreClick}
-                ref={moreButtonRef}
-                aria-label="More options"
+                className="log-button" 
+                onClick={handleLogToday}
+                style={{ backgroundColor: habit.color || '#3A4F41' }}
               >
-                ⋮
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v20M2 12h20" />
+                </svg>
+                Log Today
               </button>
-            </Dialog.Trigger>
-            <Dialog.Portal>
-              <Dialog.Overlay className="dialog-overlay" />
-              <Dialog.Content 
-                className="more-menu"
-                style={{
-                  position: 'fixed',
-                  top: menuPosition.top,
-                  right: menuPosition.right,
-                  transform: 'none'
-                }}
-              >
-                <button 
-                  className="menu-item" 
-                  onClick={() => {
-                    setIsMoreOpen(false);
-                    setIsEditOpen(true);
-                  }}
-                >
-                  Edit
-                </button>
-                <button 
-                  className="menu-item delete" 
-                  onClick={() => {
-                    setIsMoreOpen(false);
-                    setIsDeleteOpen(true);
-                  }}
-                >
-                  Delete
-                </button>
-              </Dialog.Content>
-            </Dialog.Portal>
-          </Dialog.Root>
+              <Dialog.Root open={isMoreOpen} onOpenChange={setIsMoreOpen}>
+                <Dialog.Trigger asChild>
+                  <button 
+                    className="more-button" 
+                    onClick={handleMoreClick}
+                    ref={moreButtonRef}
+                    aria-label="More options"
+                  >
+                    ⋮
+                  </button>
+                </Dialog.Trigger>
+                <Dialog.Portal>
+                  <Dialog.Overlay className="dialog-overlay" />
+                  <Dialog.Content 
+                    className="more-menu"
+                    style={{
+                      position: 'fixed',
+                      top: menuPosition.top,
+                      right: menuPosition.right,
+                      transform: 'none'
+                    }}
+                  >
+                    <button 
+                      className="menu-item" 
+                      onClick={() => {
+                        setIsMoreOpen(false);
+                        setIsEditOpen(true);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      className="menu-item delete" 
+                      onClick={() => {
+                        setIsMoreOpen(false);
+                        setIsDeleteOpen(true);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </Dialog.Content>
+                </Dialog.Portal>
+              </Dialog.Root>
+            </>
+          )}
         </div>
       </div>
       <div className="heatmap-container">
@@ -461,7 +481,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
                       key={`${weekday}-${weekIndex}`}
                       className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!isInCurrentYear ? 'empty' : ''} ${habit.is_quantifiable && cell.progress > 0 && cell.progress < 1 ? 'partial' : ''}`}
                       style={cellStyle}
-                      onClick={() => isInCurrentYear && handleDateClick(cell.date)}
+                      onClick={() => !isReadOnly && isInCurrentYear && handleDateClick(cell.date)}
                       data-tooltip={tooltipText}
                       onMouseEnter={(e) => isInCurrentYear && showTooltip(e)}
                       onMouseLeave={hideTooltip}
@@ -643,6 +663,30 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit }) => {
                  </div>
               </>
             )}
+            <div className="form-group">
+              <label>Privacy Setting</label>
+              <div className="privacy-toggle">
+                <button
+                  type="button"
+                  className={`privacy-option ${!editIsPrivate ? 'active' : ''}`}
+                  onClick={() => setEditIsPrivate(false)}
+                  style={!editIsPrivate ? { backgroundColor: editColor, borderColor: editColor } : {}}
+                >
+                  Public
+                </button>
+                <button
+                  type="button"
+                  className={`privacy-option ${editIsPrivate ? 'active' : ''}`}
+                  onClick={() => setEditIsPrivate(true)}
+                  style={editIsPrivate ? { backgroundColor: editColor, borderColor: editColor } : {}}
+                >
+                  Private
+                </button>
+              </div>
+              <p className="privacy-description">
+                Private habits are only visible to you. Public habits can be viewed by other users.
+              </p>
+            </div>
             <div className="dialog-buttons">
               <button onClick={handleEdit}>Save</button>
               <button onClick={() => setIsEditOpen(false)}>Cancel</button>

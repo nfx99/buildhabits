@@ -1024,6 +1024,49 @@ body {
   font-weight: 600;
 }
 
+/* Privacy toggle styles */
+.privacy-toggle {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.privacy-option {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-right: 1px solid var(--border-primary);
+}
+
+.privacy-option:last-child {
+  border-right: none;
+}
+
+.privacy-option:hover:not(.active) {
+  background: var(--bg-primary);
+}
+
+.privacy-option.active {
+  background: var(--accent-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.privacy-description {
+  margin: 0.5rem 0 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .header {

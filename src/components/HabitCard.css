@@ -88,6 +88,14 @@
   font-weight: 600;
   color: var(--text-primary);
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.privacy-indicator {
+  font-size: 0.8rem;
+  opacity: 0.7;
 }
 
 .habit-actions {
@@ -118,7 +126,6 @@
 }
 
 .log-button {
-  background: var(--accent-primary);
   border: none;
   color: white;
   padding: 0.5rem 0.75rem;
@@ -137,7 +144,8 @@
 }
 
 .log-button:hover {
-  background: var(--accent-hover);
+  filter: brightness(0.9);
+  transform: translateY(-1px);
 }
 
 .log-button svg {
