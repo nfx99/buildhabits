@@ -87,6 +87,12 @@ const LandingPage = ({ onGetStarted }) => {
           <button className="landing-cta" onClick={onGetStarted}>
             Get Started Free
           </button>
+          <p className="landing-login-link">
+            Already have an account?{' '}
+            <a href="/signin" className="login-link">
+              Sign In
+            </a>
+          </p>
         </div>
       </header>
 
@@ -94,8 +100,9 @@ const LandingPage = ({ onGetStarted }) => {
         <HabitCard
           habit={createDemoHabit(demoCompletions)}
           onComplete={handleComplete}
-                      onDelete={handleDelete}
-            onEdit={handleEdit}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          isReadOnly={true}
         />
       </section>
     </div>

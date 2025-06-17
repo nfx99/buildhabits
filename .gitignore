@@ -63,7 +63,7 @@ out/
 
 # Temporary folders
 tmp/
-temp/
+temp/  
 
 # Local database files (if any)
 *.db
@@ -79,3 +79,4 @@ temp/
 *.njsproj
 *.sln
 *.sw?
+*.mdc

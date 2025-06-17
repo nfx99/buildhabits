@@ -45,7 +45,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6rem 2rem;
+  padding: 4rem 2rem 2rem;
   text-align: center;
   position: relative;
   z-index: 1;
@@ -78,7 +78,7 @@
 }
 
 .landing-cta {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  background: #000000;
   color: white;
   font-size: 1.25rem;
   font-weight: 700;
@@ -97,10 +97,30 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
+.landing-login-link {
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.login-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.login-link:hover {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
 .demo-section {
   width: 100%;
   max-width: 1200px;
-  padding: 2rem;
+  padding: 1rem 2rem 2rem;
   position: relative;
   z-index: 1;
 }
@@ -120,11 +140,25 @@
 
   .landing-subtitle {
     font-size: 1.2rem;
+    margin: 1.5rem 0 2.5rem;
   }
 
   .landing-cta {
     font-size: 1.1rem;
     padding: 1rem 2.5rem;
+    min-height: 48px; /* Touch-friendly */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .demo-section {
+    padding: 0.75rem 1.5rem 1.5rem;
+  }
+
+  .landing-login-link {
+    margin-top: 1.25rem;
+    font-size: 0.95rem;
   }
 }
 
@@ -135,13 +169,51 @@
 
   .landing-hero h1 {
     font-size: 2.75rem;
+    line-height: 1.2;
   }
 
   .landing-subtitle {
     font-size: 1.1rem;
+    margin: 1rem 0 2rem;
+  }
+
+  .landing-cta {
+    font-size: 1rem;
+    padding: 0.875rem 2rem;
+    width: 100%;
+    max-width: 280px;
   }
 
   .demo-section {
-    padding: 1rem;
+    padding: 0.5rem 1rem 1rem;
+  }
+
+  .landing-login-link {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Touch-friendly hover states for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .landing-cta:hover {
+    transform: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Very small screens */
+@media (max-width: 320px) {
+  .landing-hero h1 {
+    font-size: 2.25rem;
+  }
+
+  .landing-subtitle {
+    font-size: 1rem;
+  }
+
+  .landing-cta {
+    font-size: 0.95rem;
+    padding: 0.75rem 1.5rem;
   }
 } 

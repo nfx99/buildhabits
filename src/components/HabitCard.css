@@ -450,7 +450,7 @@
 /* Color picker styles */
 .color-picker {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
@@ -785,10 +785,340 @@
 }
 
 .year-display-inline {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  min-width: 32px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 60px;
   text-align: center;
-  padding: 0 0.25rem;
+}
+
+/* Mobile responsiveness for habit cards */
+@media (max-width: 1200px) {
+  .habit-card {
+    margin: 0.5rem auto;
+    padding: 0.75rem;
+    border-radius: 6px;
+    max-width: 92vw;
+    width: 100%;
+    max-height: 85vh; /* Ensure card fits on screen */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .habit-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-shrink: 0; /* Don't shrink header */
+  }
+
+  .habit-title-section {
+    flex: 1;
+    justify-content: flex-start;
+    min-width: 0; /* Allow text to wrap if needed */
+  }
+
+  .habit-header h3 {
+    font-size: 1rem;
+    margin-right: 0.5rem;
+  }
+
+  /* Move year navigation to top right */
+  .habit-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .drag-handle {
+    display: none; /* Hide drag handle on mobile */
+  }
+
+  /* Improve touch targets for mobile */
+  .delete-button,
+  .more-button {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+
+  /* Position log button at bottom */
+  .log-button {
+    position: absolute;
+    bottom: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    min-width: 120px;
+    max-width: 200px;
+    min-height: 44px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  /* Make room for bottom log button */
+  .habit-card {
+    position: relative;
+    padding-bottom: 4rem; /* Space for bottom button */
+  }
+
+  /* Mobile-friendly heatmap */
+  .heatmap-container {
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 8px;
+    flex: 1; /* Take available space */
+    min-height: 0; /* Allow shrinking */
+  }
+
+  .heatmap {
+    min-width: 600px; /* Keep original width for proper alignment */
+  }
+
+  /* Add bottom section for log button */
+  .habit-card::after {
+    content: '';
+    display: block;
+    padding-top: 0.75rem;
+  }
+
+  .heatmap-cell {
+    width: 15px; /* Keep original cell size for proper alignment */
+    height: 15px;
+    border-radius: 3px;
+  }
+
+  .month-label {
+    width: 15px; /* Match cell width for alignment */
+    font-size: 0.7rem;
+    padding: 2px 0;
+    text-align: center;
+  }
+
+  .day-label {
+    min-width: 40px; /* Keep original width for alignment */
+    font-size: 0.7rem;
+    text-align: right;
+  }
+
+  /* Mobile form improvements */
+  .form-group input,
+  .form-group select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 0.75rem;
+  }
+
+  .dialog-content {
+    width: 95vw;
+    max-width: 95vw;
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+
+  .dialog-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .dialog-buttons button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  /* Mobile color picker */
+  .color-picker {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .color-option {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* Mobile tracking options */
+  .tracking-type-toggle {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .tracking-option {
+    width: 100%;
+    padding: 0.75rem;
+    text-align: center;
+  }
+
+  /* Year navigation for mobile */
+  .year-navigation-inline {
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .year-nav-button-inline {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+
+  .year-display-inline {
+    font-size: 0.9rem;
+    min-width: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .habit-card {
+    margin: 0.5rem auto;
+    padding: 0.5rem;
+    max-width: 94vw;
+    padding-bottom: 3.5rem; /* Less space needed on small screens */
+    max-height: 90vh; /* More screen usage on small devices */
+  }
+
+  .habit-header h3 {
+    font-size: 0.9rem;
+  }
+
+  .habit-header {
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .habit-actions {
+    gap: 0.125rem; /* Tighter spacing on very small screens */
+  }
+
+  .drag-handle {
+    display: none; /* Hide drag handle on very small screens */
+  }
+
+  .log-button {
+    bottom: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 100px;
+    max-width: 160px;
+    min-height: 40px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .heatmap {
+    min-width: 480px; /* Slightly smaller but maintains proportions */
+  }
+
+  .heatmap-cell {
+    width: 15px; /* Keep original cell size for proper alignment */
+    height: 15px;
+  }
+
+  .month-label {
+    width: 15px; /* Match cell width for alignment */
+    font-size: 0.65rem;
+    padding: 1px 0;
+    text-align: center;
+  }
+
+  .day-label {
+    min-width: 40px; /* Keep original width for alignment */
+    font-size: 0.65rem;
+    text-align: right;
+  }
+
+  .dialog-content {
+    margin: 0.25rem;
+    padding: 0.75rem;
+  }
+
+  .more-menu {
+    width: 160px;
+    padding: 0.25rem;
+  }
+
+  .menu-item {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .delete-button,
+  .more-button {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .log-button {
+    min-height: 36px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  /* Year navigation for very small screens */
+  .year-navigation-inline {
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .year-nav-button-inline {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+
+  .year-display-inline {
+    font-size: 0.8rem;
+    min-width: 40px;
+  }
+}
+
+/* Landscape orientation optimizations for phones */
+@media (max-width: 768px) and (orientation: landscape) {
+  .habit-card {
+    padding: 0.75rem;
+  }
+
+  .habit-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .habit-actions {
+    width: auto;
+    order: 0;
+  }
+}
+
+/* Touch-friendly hover states for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .habit-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-primary);
+  }
+
+  .delete-button:hover,
+  .more-button:hover,
+  .log-button:hover {
+    transform: none;
+  }
+
+  .heatmap-cell:hover:not(.empty) {
+    transform: none;
+    opacity: 0.8;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .heatmap-cell {
+    border-width: 0.5px;
+  }
 } 

@@ -50,19 +50,16 @@ const MainPage = ({ session }) => {
 
   // Predefined color options
   const colorOptions = [
-    '#000000', // Black (new default)
-    '#3A4F41', // Feldgrau
-    '#984447', // Cordovan
-    '#2563EB', // Blue
-    '#DC2626', // Red
+    '#000000', // Black
     '#059669', // Green
-    '#D97706', // Orange
-    '#7C2D92', // Purple
-    '#0891B2', // Cyan
-    '#65A30D', // Lime
+    '#DC2626', // Red
+    '#2563EB', // Blue
     '#EC4899', // Pink
-    '#374151', // Gray
-    '#0D9488', // Teal
+    '#7C2D92', // Purple
+    '#EAB308', // Yellow
+    '#8B0000', // Burgundy
+    '#EA580C', // Orange
+    '#92400E', // Brown
   ];
 
 
