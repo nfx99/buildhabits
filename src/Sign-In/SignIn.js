@@ -27,7 +27,42 @@ const generateUsername = () => {
 };
 
 const createUserProfile = async (userId) => {
-  // Generate a unique username
+  // First, check if there's already a profile for this user_id (from a previous account)
+  try {
+    const { data: existingProfile } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (existingProfile) {
+      // Profile already exists (maybe from a deleted account that wasn't fully cleaned up)
+      // Update it instead of creating a new one
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({
+          username: existingProfile.username, // Keep existing username
+          is_premium: false,
+          deleted_at: null // Clear deletion marker if it exists
+        })
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+    }
+  } catch (error) {
+    // If no existing profile found (PGRST116), continue with creating new one
+    if (error.code !== 'PGRST116') {
+      throw error;
+    }
+  }
+
+  // Generate a unique username for new profile
   let username = generateUsername();
   let attempts = 0;
   const maxAttempts = 10;
@@ -160,8 +195,13 @@ const SignIn = () => {
             setToastMessage('Check your email for the confirmation link!');
             setShowToast(true);
           } catch (profileError) {
-            if (profileError.status === 406 || profileError.code === 406 || 
-                profileError.status === 401 || profileError.code === 401) {
+            console.log('Profile creation error:', profileError);
+            
+            // Only show "email taken" message for specific duplicate key violations
+            // that indicate the user_id already exists (not just any constraint error)
+            if (profileError.code === '23505' && profileError.message.includes('user_id')) {
+              // This means there's already a profile with this user_id, which shouldn't happen
+              // for a fresh signup, so this is a real duplicate
               setToastMessage('This email is already registered. Please sign in instead.');
               setShowToast(true);
               setTimeout(() => {
@@ -170,21 +210,18 @@ const SignIn = () => {
               return;
             }
             
-            if (
-              (profileError.code === '42501' && profileError.message.includes('row-level security policy')) ||
-              (profileError.code === '23505') ||
-              profileError.message.toLowerCase().includes('already exists') ||
-              profileError.message.toLowerCase().includes('duplicate')
-            ) {
-              setToastMessage('This email is already registered. Please sign in instead.');
+            // For other errors, try to handle gracefully or show a different message
+            if (profileError.code === '42501' && profileError.message.includes('row-level security policy')) {
+              // RLS policy error - this might be due to deleted user data
+              // Try to proceed anyway since auth signup was successful
+              setToastMessage('Account created successfully! Check your email for the confirmation link.');
               setShowToast(true);
-              setTimeout(() => {
-                setIsSignUp(false);
-              }, 1500);
               return;
             }
             
-            setToastMessage('An error occurred while creating your profile. Please try again.');
+            // For any other profile creation error, still show success since auth signup worked
+            console.warn('Profile creation failed but auth signup succeeded:', profileError);
+            setToastMessage('Account created! Check your email for the confirmation link.');
             setShowToast(true);
           }
         } else {

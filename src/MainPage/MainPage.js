@@ -632,35 +632,66 @@ const MainPage = ({ session }) => {
   const handleDeleteAccount = async () => {
     try {
       // Get the current session for authorization
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Failed to get session');
+      }
       
       if (!currentSession) {
         throw new Error('No active session');
       }
 
+      console.log('Session info:', {
+        userId: currentSession.user?.id,
+        hasAccessToken: !!currentSession.access_token,
+        tokenLength: currentSession.access_token?.length
+      });
+
+      // Try refreshing the session first
+      const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+      
+      const sessionToUse = refreshedSession || currentSession;
+      
+      if (refreshError) {
+        console.warn('Could not refresh session, using current session:', refreshError);
+      }
+
       // Call the Edge Function to completely delete the account
-      const { data, error } = await supabase.functions.invoke('delete-account', {
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/delete-account`, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${currentSession.access_token}`,
+          'Authorization': `Bearer ${sessionToUse.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
         },
       });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Edge function response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText
+        });
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      if (data && !data.success) {
+      const data = await response.json();
+
+      if (!data.success) {
         throw new Error(data.error || 'Failed to delete account');
       }
 
       // Show success message
-      setToastMessage('Account completely deleted. You will be signed out.');
+      setToastMessage('Account completely deleted. Redirecting...');
       setShowToast(true);
       
       // Wait a moment for the toast to show, then reload page
       // The user will be automatically signed out since their auth record no longer exists
       setTimeout(() => {
-        window.location.reload();
+        window.location.href = '/';
       }, 2000);
       
     } catch (error) {
