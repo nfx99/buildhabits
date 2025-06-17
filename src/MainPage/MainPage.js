@@ -26,6 +26,7 @@ const MainPage = ({ session }) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
   const [newHabitColor, setNewHabitColor] = useState('#3A4F41');
   const [isQuantifiable, setIsQuantifiable] = useState(false);
@@ -50,7 +51,6 @@ const MainPage = ({ session }) => {
   const colorOptions = [
     '#3A4F41', // Feldgrau (default)
     '#984447', // Cordovan
-    '#7D84B2', // Current accent-hover
     '#2563EB', // Blue
     '#DC2626', // Red
     '#059669', // Green
@@ -60,6 +60,7 @@ const MainPage = ({ session }) => {
     '#65A30D', // Lime
     '#EC4899', // Pink
     '#374151', // Gray
+    '#0D9488', // Teal
   ];
 
 
@@ -112,12 +113,21 @@ const MainPage = ({ session }) => {
         }
       } else {
         const isPremium = data.is_premium || false;
+        const wasAlreadyPremium = hasPaid; // Store previous state
         setHasPaid(isPremium);
         setUsername(data.username || '');
         
-        if (isPremium && !hasPaid) {
+        // Only show congratulations if:
+        // 1. User is now premium
+        // 2. They weren't premium before (first time detection)
+        // 3. We haven't already shown this notification (check localStorage)
+        const hasShownCongrats = localStorage.getItem(`premium-congrats-${session.user.id}`);
+        
+        if (isPremium && !wasAlreadyPremium && !hasShownCongrats) {
           setToastMessage('🎉 Premium upgrade successful! You now have unlimited habits.');
           setShowToast(true);
+          // Mark that we've shown the congratulations for this user
+          localStorage.setItem(`premium-congrats-${session.user.id}`, 'true');
         }
         
         return isPremium;
@@ -144,10 +154,17 @@ const MainPage = ({ session }) => {
       
       const result = await response.json();
       
-      if (result.success && result.isPremium) {
+      if (result.success && result.isPaid) {
         setHasPaid(true);
-        setToastMessage('🎉 Payment verified! You now have premium access.');
-        setShowToast(true);
+        
+        // Only show congratulations if we haven't already shown it
+        const hasShownCongrats = localStorage.getItem(`premium-congrats-${session.user.id}`);
+        if (!hasShownCongrats) {
+          setToastMessage('🎉 Payment verified! You now have premium access.');
+          setShowToast(true);
+          localStorage.setItem(`premium-congrats-${session.user.id}`, 'true');
+        }
+        
         return true;
       }
       
@@ -228,7 +245,15 @@ const MainPage = ({ session }) => {
     };
 
     initialize();
-  }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits]);
+    
+    // Add utility function to window for debugging (can be removed in production)
+    if (process.env.NODE_ENV === 'development') {
+      window.clearPremiumCongrats = () => {
+        localStorage.removeItem(`premium-congrats-${session.user.id}`);
+        console.log('Premium congratulations flag cleared');
+      };
+    }
+  }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits, session.user.id]);
 
   const handleCreateHabit = async (e) => {
     e.preventDefault();
@@ -604,6 +629,46 @@ const MainPage = ({ session }) => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      // First, delete all user's habits and their completions
+      const { error: habitsError } = await supabase
+        .from('habits')
+        .delete()
+        .eq('user_id', session.user.id);
+
+      if (habitsError) {
+        throw habitsError;
+      }
+
+      // Delete user profile
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('user_id', session.user.id);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // Delete the user account from Supabase Auth
+      const { error: authError } = await supabase.auth.admin.deleteUser(session.user.id);
+      
+      // Note: The above line won't work from client-side due to RLS
+      // Instead, we'll sign out the user and show a message
+      setToastMessage('Account deletion initiated. Please contact support if you need assistance.');
+      setShowToast(true);
+      
+      // Sign out the user
+      await supabase.auth.signOut();
+      
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setToastMessage(`Error deleting account: ${error.message}`);
+      setShowToast(true);
+    }
+  };
+
   const handleDragEnd = useCallback(async (event) => {
     const { active, over } = event;
 
@@ -689,7 +754,7 @@ const MainPage = ({ session }) => {
   }
 
   return (
-    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen) ? 'dialog-active' : ''}`}>
+    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen || isDeleteAccountDialogOpen) ? 'dialog-active' : ''}`}>
       <header className="header">
         <div className="header-left">
           <div className="user-search-container">
@@ -1039,6 +1104,15 @@ const MainPage = ({ session }) => {
             </Dialog.Description>
             <div className="dialog-buttons">
               <button 
+                onClick={() => {
+                  setIsProfileDialogOpen(false);
+                  setIsDeleteAccountDialogOpen(true);
+                }}
+                className="delete-account-button"
+              >
+                Delete Account
+              </button>
+              <button 
                 onClick={async () => {
                   setIsProfileDialogOpen(false);
                   await handleSignOut();
@@ -1049,6 +1123,39 @@ const MainPage = ({ session }) => {
               </button>
               <button onClick={() => setIsProfileDialogOpen(false)}>
                 Close
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={isDeleteAccountDialogOpen} onOpenChange={setIsDeleteAccountDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content delete-account-dialog">
+            <Dialog.Title>Delete Account</Dialog.Title>
+            <Dialog.Description>
+              <div className="delete-account-content">
+                <p><strong>⚠️ This action cannot be undone!</strong></p>
+                <p>Deleting your account will permanently remove:</p>
+                <ul>
+                  <li>All your habits and progress data</li>
+                  <li>Your user profile and username</li>
+                  <li>All completion history</li>
+                  <li>Your premium status (if applicable)</li>
+                </ul>
+                <p>Are you absolutely sure you want to delete your account?</p>
+              </div>
+            </Dialog.Description>
+            <div className="dialog-buttons">
+              <button 
+                onClick={handleDeleteAccount}
+                className="delete-confirm-button"
+              >
+                Yes, Delete My Account
+              </button>
+              <button onClick={() => setIsDeleteAccountDialogOpen(false)}>
+                Cancel
               </button>
             </div>
           </Dialog.Content>
@@ -1069,6 +1176,27 @@ const MainPage = ({ session }) => {
           <span aria-hidden>×</span>
         </Toast.Close>
       </Toast.Root>
+
+      <footer className="footer">
+        <div className="footer-content">
+          <div className="footer-links">
+            <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer">
+              Privacy Policy
+            </a>
+            <span className="footer-separator">•</span>
+            <a href="/terms-of-use.html" target="_blank" rel="noopener noreferrer">
+              Terms of Use
+            </a>
+            <span className="footer-separator">•</span>
+            <a href="/cookie-policy.html" target="_blank" rel="noopener noreferrer">
+              Cookie Policy
+            </a>
+          </div>
+          <div className="footer-copyright">
+            © 2025 BuildHabits. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

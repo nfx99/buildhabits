@@ -56,7 +56,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
   const colorOptions = [
     '#3A4F41', // Feldgrau (default)
     '#984447', // Cordovan
-    '#7D84B2', // Current accent-hover
     '#2563EB', // Blue
     '#DC2626', // Red
     '#059669', // Green
@@ -66,6 +65,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
     '#65A30D', // Lime
     '#EC4899', // Pink
     '#374151', // Gray
+    '#0D9488', // Teal
   ];
 
 
@@ -348,7 +348,10 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
   return (
     <div 
       ref={setNodeRef} 
-      style={style} 
+      style={{
+        ...style,
+        '--habit-color': habit.color || '#3A4F41'
+      }} 
       className="habit-card"
     >
       <div className="habit-header">
@@ -688,7 +691,18 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
               </p>
             </div>
             <div className="dialog-buttons">
-              <button onClick={handleEdit}>Save</button>
+              <button 
+                onClick={handleEdit}
+                style={{ 
+                  backgroundColor: editColor, 
+                  borderColor: editColor,
+                  boxShadow: 'none',
+                  transform: 'none'
+                }}
+                className="save-button"
+              >
+                Save
+              </button>
               <button onClick={() => setIsEditOpen(false)}>Cancel</button>
             </div>
           </Dialog.Content>

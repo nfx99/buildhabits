@@ -15,7 +15,6 @@
   gap: 2rem;
   padding: 2rem;
   background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-primary);
   margin-bottom: 2rem;
   position: relative;
 }

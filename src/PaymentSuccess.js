@@ -3,14 +3,27 @@ import './PaymentSuccess.css';
 
 const PaymentSuccess = () => {
   useEffect(() => {
-    // Store a flag to indicate payment was just completed
-    localStorage.setItem('payment-completed', 'true');
+    // Get the session ID from URL to pass to main page
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    
+    if (sessionId) {
+      // Store the session ID for the main page to process
+      localStorage.setItem('stripe-session-id', sessionId);
+    }
   }, []);
 
   const handleGoToDashboard = () => {
-    // Ensure the flag is set when user clicks the button
-    localStorage.setItem('payment-completed', 'true');
-    window.location.href = '/';
+    // Get the session ID from URL to pass to main page
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    
+    if (sessionId) {
+      // Redirect with session ID so main page can verify payment
+      window.location.href = `/?session_id=${sessionId}`;
+    } else {
+      window.location.href = '/';
+    }
   };
 
   return (

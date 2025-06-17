@@ -31,7 +31,7 @@
 }
 
 .habit-card:hover {
-  box-shadow: var(--shadow-hover);
+  /* No hover effects */
 }
 
 .habit-card[style*="opacity: 0.5"] {
@@ -144,8 +144,7 @@
 }
 
 .log-button:hover {
-  filter: brightness(0.9);
-  transform: translateY(-1px);
+  background-color: var(--accent-hover) !important;
 }
 
 .log-button svg {
@@ -664,13 +663,13 @@
   transition: all 0.2s ease;
 }
 
-.habit-card .dialog-buttons button:first-child {
+.habit-card .dialog-buttons button:first-child:not(.save-button) {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
 }
 
-.habit-card .dialog-buttons button:first-child:hover {
+.habit-card .dialog-buttons button:first-child:not(.save-button):hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-1px);
   box-shadow: 0 8px 15px -3px rgba(16, 185, 129, 0.4);
@@ -709,6 +708,20 @@
   background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
   transform: translateY(-1px);
   box-shadow: 0 8px 15px -3px rgba(245, 158, 11, 0.4);
+}
+
+.habit-card .dialog-buttons .save-button {
+  color: white !important;
+  box-shadow: none !important;
+  transform: none !important;
+  background: var(--habit-color, #3A4F41) !important;
+  border: 1px solid var(--habit-color, #3A4F41) !important;
+}
+
+.habit-card .dialog-buttons .save-button:hover {
+  filter: brightness(0.9) !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 @keyframes overlayShow {
