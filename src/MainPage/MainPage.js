@@ -1186,16 +1186,12 @@ const MainPage = ({ session }) => {
               Privacy Policy
             </a>
             <span className="footer-separator">•</span>
-            <a href="/terms-of-use.html" target="_blank" rel="noopener noreferrer">
-              Terms of Use
-            </a>
-            <span className="footer-separator">•</span>
             <a href="/cookie-policy.html" target="_blank" rel="noopener noreferrer">
               Cookie Policy
             </a>
             <span className="footer-separator">•</span>
             <a href="#" className="termly-display-preferences">
-              Consent Preferences
+              Cookie Preferences
             </a>
           </div>
           <div className="footer-copyright">
