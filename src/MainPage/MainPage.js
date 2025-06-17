@@ -1055,14 +1055,16 @@ const MainPage = ({ session }) => {
                         </div>
                       ) : (
                         <div className="username-display">
-                          <h3>{username || 'No username set'}</h3>
-                          <button 
-                            className="edit-username-btn"
-                            onClick={handleStartEditingUsername}
-                            title="Edit username"
-                          >
-                            ✏️
-                          </button>
+                          <h3>
+                            {username || 'No username set'}
+                            <button 
+                              className="edit-username-btn"
+                              onClick={handleStartEditingUsername}
+                              title="Edit username"
+                            >
+                              ✏️
+                            </button>
+                          </h3>
                         </div>
                       )}
                     </div>

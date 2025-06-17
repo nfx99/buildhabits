@@ -592,6 +592,9 @@ body {
 .username-display h3 {
   margin: 0;
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .edit-username-btn {
@@ -604,6 +607,8 @@ body {
   font-size: 0.875rem;
   transition: all 0.2s ease;
   opacity: 0.7;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
 }
 
 .edit-username-btn:hover {
@@ -761,22 +766,25 @@ body {
 
 /* Delete account button styles */
 .delete-account-button {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border: none;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  border: none !important;
   padding: 0.625rem 1.25rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .delete-account-button:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 /* Delete account dialog styles */
@@ -804,22 +812,44 @@ body {
 }
 
 .delete-confirm-button {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border: none;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  border: none !important;
   padding: 0.625rem 1.25rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .delete-confirm-button:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Sign out button styles */
+.sign-out-button {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.sign-out-button:hover {
+  background-color: var(--accent-hover);
+  color: white;
+  border-color: var(--accent-hover);
 }
 
 /* Dim and blur background content when dialog is active */
