@@ -191,9 +191,9 @@
 }
 
 .back-button:hover {
-  background: #64748b;
+  background: #000000;
   color: white;
-  border-color: #64748b;
+  border-color: #000000;
   transform: translateX(-2px);
 }
 

@@ -157,39 +157,6 @@ const SignIn = () => {
 
     try {
       if (isSignUp) {
-        // First, check if email already exists by attempting to sign in
-        try {
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          
-          // If sign in was successful, the email already exists
-          if (signInData?.user) {
-            setToastMessage('This email is already registered. You have been signed in.');
-            setShowToast(true);
-            return;
-          }
-        } catch (signInError) {
-          // If sign in failed, it might be because:
-          // 1. Email doesn't exist (good, we can proceed with signup)
-          // 2. Email exists but wrong password (we should tell them email is taken)
-          // 3. Other error
-          
-          if (signInError.message && 
-              (signInError.message.includes('Invalid login credentials') || 
-               signInError.message.includes('Email not confirmed'))) {
-            // Email exists but wrong password or not confirmed
-            setToastMessage('This email is already registered. Please sign in instead.');
-            setShowToast(true);
-            setTimeout(() => {
-              setIsSignUp(false);
-            }, 1500);
-            return;
-          }
-          // If it's a different error, continue with signup attempt
-        }
-        
         // Try to sign up
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -234,13 +201,22 @@ const SignIn = () => {
             return;
           }
           
+          // Check if signup returned an existing user (common Supabase behavior for security)
+          // If the user object exists but no session was created, it's likely an existing user
+          if (!data.session && data.user) {
+            setToastMessage('This email is already registered. Please sign in instead.');
+            setShowToast(true);
+            setTimeout(() => {
+              setIsSignUp(false);
+            }, 1500);
+            return;
+          }
+          
           try {
             await createUserProfile(data.user.id);
             setToastMessage('Check your email for the confirmation link!');
             setShowToast(true);
           } catch (profileError) {
-    
-            
             // Only show "email taken" message for specific duplicate key violations
             // that indicate the user_id already exists (not just any constraint error)
             if (profileError.code === '23505' && profileError.message.includes('user_id')) {
