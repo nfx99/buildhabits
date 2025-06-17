@@ -157,6 +157,39 @@ const SignIn = () => {
 
     try {
       if (isSignUp) {
+        // First, check if email already exists by attempting to sign in
+        try {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          
+          // If sign in was successful, the email already exists
+          if (signInData?.user) {
+            setToastMessage('This email is already registered. You have been signed in.');
+            setShowToast(true);
+            return;
+          }
+        } catch (signInError) {
+          // If sign in failed, it might be because:
+          // 1. Email doesn't exist (good, we can proceed with signup)
+          // 2. Email exists but wrong password (we should tell them email is taken)
+          // 3. Other error
+          
+          if (signInError.message && 
+              (signInError.message.includes('Invalid login credentials') || 
+               signInError.message.includes('Email not confirmed'))) {
+            // Email exists but wrong password or not confirmed
+            setToastMessage('This email is already registered. Please sign in instead.');
+            setShowToast(true);
+            setTimeout(() => {
+              setIsSignUp(false);
+            }, 1500);
+            return;
+          }
+          // If it's a different error, continue with signup attempt
+        }
+        
         // Try to sign up
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -189,7 +222,18 @@ const SignIn = () => {
           }
         }
         
+        // Check if user was actually created or if it's an existing user
         if (data?.user) {
+          // If user has email_confirmed_at but we just "signed up", it means they already existed
+          if (data.user.email_confirmed_at) {
+            setToastMessage('This email is already registered. Please sign in instead.');
+            setShowToast(true);
+            setTimeout(() => {
+              setIsSignUp(false);
+            }, 1500);
+            return;
+          }
+          
           try {
             await createUserProfile(data.user.id);
             setToastMessage('Check your email for the confirmation link!');

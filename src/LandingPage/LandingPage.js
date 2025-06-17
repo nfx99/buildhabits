@@ -6,20 +6,33 @@ import { startOfYear, format, addDays, startOfDay } from 'date-fns';
 const createDemoHabit = (completions) => ({
   id: 'demo',
   name: 'Morning Workout 🏃‍♂️',
-  created_at: startOfYear(new Date()).toISOString(),
-  color: '#3A4F41',
+  created_at: startOfYear(new Date(2025, 0, 1)).toISOString(),
+  color: '#000000',
   habit_completions: completions
 });
 
 const LandingPage = ({ onGetStarted }) => {
-  // Initialize demo habit with some random completions
-  const [demoCompletions, setDemoCompletions] = useState(
-    Array.from({ length: 365 }, (_, i) => ({
-      id: `demo-${i}`,
-      date: new Date(Date.now() - (Math.random() > 0.6 ? 0 : i * 24 * 60 * 60 * 1000)).toISOString(),
-      created_at: new Date().toISOString()
-    })).filter(completion => Math.random() > 0.6)
-  );
+  // Initialize demo habit with completions for the entire year 2025
+  const [demoCompletions, setDemoCompletions] = useState(() => {
+    const completions = [];
+    const startDate = new Date(2025, 0, 1); // January 1, 2025
+    
+    // Generate completions for all 365 days of 2025
+    for (let i = 0; i < 365; i++) {
+      const currentDate = addDays(startDate, i);
+      
+      // Randomly decide if this day should have a completion (about 60% chance)
+      if (Math.random() > 0.4) {
+        completions.push({
+          id: `demo-${i}`,
+          date: currentDate.toISOString(),
+          created_at: new Date().toISOString()
+        });
+      }
+    }
+    
+    return completions;
+  });
 
   const handleComplete = (habitId, date, isUndo = false) => {
     // Use the exact date format that matches the HabitCard logic

@@ -8,15 +8,15 @@
   --border-secondary: #D1D5DB;
   --shadow-primary: 0 1px 3px rgba(20, 0, 10, 0.1);
   --shadow-hover: 0 4px 6px rgba(20, 0, 10, 0.15);
-  --accent-primary: #3A4F41;
-  --accent-secondary: #984447;
-  --accent-hover: #7D84B2;
-  --success: #3A4F41;
-  --success-hover: #2A3A30;
-  --warning: #984447;
-  --warning-hover: #7A363A;
-  --error: #984447;
-  --error-hover: #7A363A;
+  --accent-primary: #000000;
+  --accent-secondary: #2D2D2D;
+  --accent-hover: #333333;
+  --success: #000000;
+  --success-hover: #2D2D2D;
+  --warning: #000000;
+  --warning-hover: #2D2D2D;
+  --error: #000000;
+  --error-hover: #2D2D2D;
 }
 
 /* Optimized theme transitions */
@@ -95,7 +95,7 @@ body {
 .user-search-input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(58, 79, 65, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
   background: var(--bg-primary);
 }
 
@@ -190,7 +190,7 @@ body {
 .habit-search-input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(58, 79, 65, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
   background: var(--bg-primary);
 }
 
@@ -403,17 +403,16 @@ body {
   color: var(--text-primary);
 }
 
-.dialog-buttons button:first-child {
+.dialog-buttons button:first-child:not(.save-button) {
   background: linear-gradient(135deg, var(--success) 0%, var(--success-hover) 100%);
   color: white;
-  border: none;
-  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
-.dialog-buttons button:first-child:hover {
+.dialog-buttons button:first-child:not(.save-button):hover {
   background: linear-gradient(135deg, var(--success-hover) 0%, var(--success) 100%);
   transform: translateY(-1px);
-  box-shadow: 0 8px 15px -3px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
 }
 
 .dialog-buttons button:last-child {
@@ -428,31 +427,31 @@ body {
   color: white;
   outline: none;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(125, 132, 178, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   border-color: var(--accent-hover);
 }
 
 .dialog-buttons .delete-confirm {
   background: linear-gradient(135deg, var(--error) 0%, var(--error-hover) 100%);
   color: white;
-  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .dialog-buttons .delete-confirm:hover {
   background: linear-gradient(135deg, var(--error-hover) 0%, var(--error) 100%);
-  box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
 }
 
 .dialog-buttons .undo-button {
   background: linear-gradient(135deg, var(--warning) 0%, var(--warning-hover) 100%);
   color: white;
-  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .dialog-buttons .undo-button:hover {
   background: linear-gradient(135deg, var(--warning-hover) 0%, var(--warning) 100%);
   transform: translateY(-1px);
-  box-shadow: 0 8px 15px -3px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes overlayShow {
@@ -536,21 +535,21 @@ body {
   align-items: center;
   gap: 0.25rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
   color: white;
   border: none;
   border-radius: 12px;
   margin: 1rem 0;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   width: 100%;
 }
 
 .payment-price-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: linear-gradient(135deg, #333333 0%, #000000 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
 }
 
 .payment-price-button:disabled {
@@ -794,7 +793,7 @@ body {
 }
 
 .upgrade-button {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -802,13 +801,13 @@ body {
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .upgrade-button:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: linear-gradient(135deg, #333333 0%, #000000 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* Delete account button styles */
@@ -957,7 +956,7 @@ body {
 .form-group input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 4px rgba(58, 79, 65, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
   background: var(--bg-primary);
 }
 
@@ -977,7 +976,7 @@ body {
 .form-group select:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 4px rgba(58, 79, 65, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
   background: var(--bg-primary);
 }
 
@@ -1027,7 +1026,7 @@ body {
 
 .checkbox-label input[type="checkbox"]:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(58, 79, 65, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
 }
 
 .checkbox-text {

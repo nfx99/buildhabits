@@ -28,7 +28,7 @@ const MainPage = ({ session }) => {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
-  const [newHabitColor, setNewHabitColor] = useState('#3A4F41');
+  const [newHabitColor, setNewHabitColor] = useState('#000000');
   const [isQuantifiable, setIsQuantifiable] = useState(false);
   const [targetValue, setTargetValue] = useState('');
   const [metricUnit, setMetricUnit] = useState('times');
@@ -50,7 +50,8 @@ const MainPage = ({ session }) => {
 
   // Predefined color options
   const colorOptions = [
-    '#3A4F41', // Feldgrau (default)
+    '#000000', // Black (new default)
+    '#3A4F41', // Feldgrau
     '#984447', // Cordovan
     '#2563EB', // Blue
     '#DC2626', // Red
@@ -346,7 +347,7 @@ const MainPage = ({ session }) => {
 
       setHabits([data, ...habits]);
       setNewHabitName('');
-      setNewHabitColor('#3A4F41');
+      setNewHabitColor('#000000');
       setIsQuantifiable(false);
       setTargetValue('');
       setMetricUnit('times');

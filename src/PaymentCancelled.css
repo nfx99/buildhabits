@@ -207,13 +207,13 @@
   justify-content: center;
   gap: 0.5rem;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .payment-cancelled-button:hover {
   background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-hover) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
   text-decoration: none;
   color: white;
 }

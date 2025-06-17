@@ -30,7 +30,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [isDateCompleted, setIsDateCompleted] = React.useState(false);
   const [editName, setEditName] = React.useState(habit.name);
-  const [editColor, setEditColor] = React.useState(habit.color || '#3A4F41');
+  const [editColor, setEditColor] = React.useState(habit.color || '#000000');
   const [editIsQuantifiable, setEditIsQuantifiable] = React.useState(habit.is_quantifiable || false);
   const [editTargetValue, setEditTargetValue] = React.useState(habit.target_value || '');
   const [editMetricUnit, setEditMetricUnit] = React.useState(habit.metric_unit || 'times');
@@ -43,7 +43,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
   // Update state when habit changes
   React.useEffect(() => {
     setEditName(habit.name);
-    setEditColor(habit.color || '#3A4F41');
+    setEditColor(habit.color || '#000000');
     setEditIsQuantifiable(habit.is_quantifiable || false);
     setEditTargetValue(habit.target_value || '');
     setEditMetricUnit(habit.metric_unit || 'times');
@@ -86,7 +86,8 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
 
   // Predefined color options
   const colorOptions = [
-    '#3A4F41', // Feldgrau (default)
+    '#000000', // Black (new default)
+    '#3A4F41', // Feldgrau
     '#984447', // Cordovan
     '#2563EB', // Blue
     '#DC2626', // Red
@@ -462,7 +463,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
       ref={setNodeRef} 
       style={{
         ...style,
-        '--habit-color': habit.color || '#3A4F41'
+        '--habit-color': habit.color || '#000000'
       }} 
       className="habit-card"
     >
@@ -519,7 +520,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
               <button 
                 className="log-button" 
                 onClick={handleLogToday}
-                style={{ backgroundColor: habit.color || '#3A4F41' }}
+                style={{ backgroundColor: habit.color || '#000000' }}
               >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2v20M2 12h20" />
@@ -607,13 +608,13 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                     if (cell.progress > 0) {
                       // For quantifiable habits, show partial progress
                       const intensity = Math.min(cell.progress, 1);
-                      const baseColor = habit.color || '#3A4F41';
+                      const baseColor = habit.color || '#000000';
                       cellStyle.backgroundColor = `${baseColor}${Math.round(intensity * 255).toString(16).padStart(2, '0')}`;
                       cellStyle.borderColor = baseColor;
                     }
                   } else if (cell.completed) {
-                    cellStyle.backgroundColor = habit.color || '#3A4F41';
-                    cellStyle.borderColor = habit.color || '#3A4F41';
+                    cellStyle.backgroundColor = habit.color || '#000000';
+                    cellStyle.borderColor = habit.color || '#000000';
                   }
                   
                   const tooltipText = shouldShowCell ? 

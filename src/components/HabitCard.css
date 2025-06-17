@@ -301,7 +301,7 @@
 .edit-input:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
   background: var(--bg-primary);
 }
 
@@ -668,13 +668,13 @@
 .habit-card .dialog-buttons button:first-child:not(.save-button) {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .habit-card .dialog-buttons button:first-child:not(.save-button):hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-1px);
-  box-shadow: 0 8px 15px -3px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
 }
 
 .habit-card .dialog-buttons button:last-child {
@@ -692,32 +692,32 @@
 .habit-card .dialog-buttons .delete-confirm {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
-  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .habit-card .dialog-buttons .delete-confirm:hover {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
 }
 
 .habit-card .dialog-buttons .undo-button {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
-  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .habit-card .dialog-buttons .undo-button:hover {
   background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
   transform: translateY(-1px);
-  box-shadow: 0 8px 15px -3px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
 }
 
 .habit-card .dialog-buttons .save-button {
   color: white !important;
   box-shadow: none !important;
   transform: none !important;
-  background: var(--habit-color, #3A4F41) !important;
-  border: 1px solid var(--habit-color, #3A4F41) !important;
+  background: var(--habit-color, #000000) !important;
+  border: 1px solid var(--habit-color, #000000) !important;
 }
 
 .habit-card .dialog-buttons .save-button:hover {
