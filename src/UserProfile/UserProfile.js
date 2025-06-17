@@ -106,6 +106,7 @@ const UserProfile = ({ session }) => {
                 onDelete={() => {}} // Read-only for other users
                 onEdit={() => {}} // Read-only for other users
                 isReadOnly={true}
+                viewMode="year"
               />
             ))}
           </div>

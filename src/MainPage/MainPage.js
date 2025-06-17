@@ -46,6 +46,7 @@ const MainPage = ({ session }) => {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [calendarViewMode, setCalendarViewMode] = useState('year'); // 'year' or '365days'
 
   // Predefined color options
   const colorOptions = [
@@ -81,11 +82,9 @@ const MainPage = ({ session }) => {
         .eq('user_id', session.user.id);
 
       if (error) {
-        console.log('Profile fetch error:', error);
         
         // Handle specific RLS/permission errors
         if (error.code === 'PGRST301' || error.code === '42501' || error.message.includes('row-level security') || error.message.includes('permission denied')) {
-          console.log('RLS policy blocking access, creating new profile...');
           
           // Try to create a new profile
           try {
@@ -232,7 +231,6 @@ const MainPage = ({ session }) => {
 
   const fetchHabits = useCallback(async () => {
     try {
-      console.log('Fetching habits...');
       const { data, error } = await supabase
         .from('habits')
         .select(`
@@ -242,8 +240,6 @@ const MainPage = ({ session }) => {
         .eq('user_id', session.user.id)
         .order('order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
-
-      console.log('Supabase response:', { data, error });
 
       if (error) {
         console.error('Supabase error:', error);
@@ -255,8 +251,6 @@ const MainPage = ({ session }) => {
         ...habit,
         order: habit.order !== null ? habit.order : index
       }));
-      
-      console.log('Processed habits:', habitsWithOrder);
       setHabits(habitsWithOrder);
     } catch (error) {
       console.error('fetchHabits error:', error);
@@ -302,13 +296,7 @@ const MainPage = ({ session }) => {
 
     initialize();
     
-    // Add utility function to window for debugging (can be removed in production)
-    if (process.env.NODE_ENV === 'development') {
-      window.clearPremiumCongrats = () => {
-        localStorage.removeItem(`premium-congrats-${session.user.id}`);
-        console.log('Premium congratulations flag cleared');
-      };
-    }
+
   }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits, session.user.id]);
 
   const handleCreateHabit = async (e) => {
@@ -699,11 +687,7 @@ const MainPage = ({ session }) => {
         throw new Error('No active session');
       }
 
-      console.log('Session info:', {
-        userId: currentSession.user?.id,
-        hasAccessToken: !!currentSession.access_token,
-        tokenLength: currentSession.access_token?.length
-      });
+
 
       // Try refreshing the session first
       const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
@@ -903,17 +887,35 @@ const MainPage = ({ session }) => {
           >
             Create New Habit
           </button>
-          <div className="habit-search-container">
-            <input
-              type="text"
-              placeholder="Search habits..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="habit-search-input"
-            />
-            <svg className="search-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-            </svg>
+          <div className="habits-header-controls">
+            <div className="calendar-view-toggle">
+              <button
+                className={`view-toggle-btn ${calendarViewMode === 'year' ? 'active' : ''}`}
+                onClick={() => setCalendarViewMode('year')}
+                title="Calendar Year View"
+              >
+                📅 Year
+              </button>
+              <button
+                className={`view-toggle-btn ${calendarViewMode === '365days' ? 'active' : ''}`}
+                onClick={() => setCalendarViewMode('365days')}
+                title="Past 365 Days View"
+              >
+                📊 365 Days
+              </button>
+            </div>
+            <div className="habit-search-container">
+              <input
+                type="text"
+                placeholder="Search habits..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="habit-search-input"
+              />
+              <svg className="search-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -935,6 +937,7 @@ const MainPage = ({ session }) => {
                     onComplete={handleCompleteHabit}
                     onDelete={handleDeleteHabit}
                     onEdit={handleEditHabit}
+                    viewMode={calendarViewMode}
                   />
                 ))
               ) : searchQuery ? (

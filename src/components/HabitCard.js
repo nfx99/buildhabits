@@ -1,12 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { format, getDay, startOfYear, endOfYear, eachDayOfInterval, getYear, addDays } from 'date-fns';
+import { format, getDay, startOfYear, endOfYear, eachDayOfInterval, getYear, addDays, subDays } from 'date-fns';
 import * as Dialog from '@radix-ui/react-dialog';
 import './HabitCard.css';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) => {
+const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, viewMode = 'year' }) => {
   const {
     attributes,
     listeners,
@@ -36,6 +36,9 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
   const [editMetricUnit, setEditMetricUnit] = React.useState(habit.metric_unit || 'times');
   const [editIsPrivate, setEditIsPrivate] = React.useState(habit.is_private || false);
   const [quantifiableValue, setQuantifiableValue] = React.useState('');
+  
+  // Year navigation state
+  const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
 
   // Update state when habit changes
   React.useEffect(() => {
@@ -51,6 +54,35 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
 
   // Cache current year for performance
   const currentYear = React.useMemo(() => new Date().getFullYear(), []);
+
+  // Calculate available years based on habit completions
+  const availableYears = React.useMemo(() => {
+    if (!habit.habit_completions || habit.habit_completions.length === 0) {
+      return [currentYear];
+    }
+    
+    const years = new Set([currentYear]); // Always include current year
+    habit.habit_completions.forEach(completion => {
+      const year = new Date(completion.date).getFullYear();
+      years.add(year);
+    });
+    
+    return Array.from(years).sort((a, b) => b - a); // Sort descending (newest first)
+  }, [habit.habit_completions, currentYear]);
+  
+  // Navigation functions
+  const goToPreviousYear = () => {
+    setSelectedYear(prev => prev - 1);
+  };
+  
+  const goToNextYear = () => {
+    setSelectedYear(prev => prev + 1);
+  };
+  
+  // Allow going back to any reasonable year (e.g., 2020 onwards) and forward to current year
+  const minAllowedYear = 2020;
+  const canGoToPreviousYear = selectedYear > minAllowedYear;
+  const canGoToNextYear = selectedYear < currentYear;
 
   // Predefined color options
   const colorOptions = [
@@ -71,8 +103,20 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
 
 
   const heatmapData = React.useMemo(() => {
-    const startDate = startOfYear(new Date());
-    const endDate = endOfYear(new Date());
+    const now = new Date();
+    let startDate, endDate;
+    
+    if (viewMode === '365days') {
+      // Past 365 days view - normalize dates to avoid timezone/time issues
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 364);
+    } else {
+      // Calendar year view - use selected year
+      startDate = new Date(selectedYear, 0, 1); // January 1st of selected year
+      endDate = new Date(selectedYear, 11, 31); // December 31st of selected year
+    }
+    
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     
     return days.map(date => {
@@ -99,19 +143,29 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
         };
       } else {
         return {
-      date,
+          date,
           completed: !!completion,
           value: completion ? 1 : 0
         };
       }
     });
-  }, [habit.habit_completions, habit.is_quantifiable, habit.target_value]);
+  }, [habit.habit_completions, habit.is_quantifiable, habit.target_value, viewMode, selectedYear]);
 
   const dateGrid = React.useMemo(() => {
     const now = new Date();
-    const currentYear = getYear(now);
-    const startDate = startOfYear(now);
-    const endDate = endOfYear(now);
+    let startDate, endDate;
+    
+    if (viewMode === '365days') {
+      // Normalize dates to avoid timezone/time issues
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 364);
+    } else {
+      // Calendar year view - use selected year
+      startDate = new Date(selectedYear, 0, 1); // January 1st of selected year
+      endDate = new Date(selectedYear, 11, 31); // December 31st of selected year
+    }
+    
     const grid = [];
     
     // Create a map for faster lookups
@@ -120,45 +174,103 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
       completionMap.set(format(d.date, 'yyyy-MM-dd'), d);
     });
     
-    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
-      const row = [];
-      let date = addDays(startDate, dayOfWeek - getDay(startDate));
+    if (viewMode === '365days') {
+      // For 365 days view, create a more compact grid
+      // Start from the first day of the week containing startDate
+      const gridStartDate = addDays(startDate, -getDay(startDate));
+      const totalWeeks = Math.ceil((endDate - gridStartDate) / (7 * 24 * 60 * 60 * 1000)) + 1;
       
-      for (let week = 0; week < 53; week++) {
-        const cellDate = addDays(date, week * 7);
-        const isInCurrentYear = getYear(cellDate) === currentYear;
-        const isBeforeStart = isInCurrentYear && cellDate < startDate;
-        const isAfterEnd = isInCurrentYear && cellDate > endDate;
+
+      
+      for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+        const row = [];
         
-        if (isBeforeStart || isAfterEnd) {
-          row.push({ date: null, completed: false });
-        } else {
-          const cellDateStr = format(cellDate, 'yyyy-MM-dd');
-          const dayData = completionMap.get(cellDateStr);
-          row.push(dayData || { date: cellDate, completed: false });
+        for (let week = 0; week < totalWeeks; week++) {
+          const cellDate = addDays(gridStartDate, week * 7 + dayOfWeek);
+          
+          // Normalize cellDate for comparison
+          const normalizedCellDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+          
+          const isOutsideRange = normalizedCellDate < startDate || normalizedCellDate > endDate;
+          
+          if (isOutsideRange) {
+            row.push({ date: null, completed: false });
+          } else {
+            const cellDateStr = format(cellDate, 'yyyy-MM-dd');
+            const dayData = completionMap.get(cellDateStr);
+            row.push(dayData || { date: cellDate, completed: false });
+          }
         }
+        grid.push(row);
       }
-      grid.push(row);
+    } else {
+      // Calendar year view (original logic)
+      const targetYear = selectedYear; // Use selected year instead of current year
+      
+      for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+        const row = [];
+        let date = addDays(startDate, dayOfWeek - getDay(startDate));
+        
+        for (let week = 0; week < 53; week++) {
+          const cellDate = addDays(date, week * 7);
+          const isInTargetYear = getYear(cellDate) === targetYear;
+          const isBeforeStart = isInTargetYear && cellDate < startDate;
+          const isAfterEnd = isInTargetYear && cellDate > endDate;
+          
+          if (isBeforeStart || isAfterEnd) {
+            row.push({ date: null, completed: false });
+          } else {
+            const cellDateStr = format(cellDate, 'yyyy-MM-dd');
+            const dayData = completionMap.get(cellDateStr);
+            row.push(dayData || { date: cellDate, completed: false });
+          }
+        }
+        grid.push(row);
+      }
     }
     
     return grid;
-  }, [heatmapData]);
+  }, [heatmapData, viewMode, selectedYear]);
 
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const monthLabels = React.useMemo(() => {
     const months = [];
     const now = new Date();
-    const currentYear = getYear(now);
-    const startDate = startOfYear(now);
+    let startDate, totalWeeks;
+    
+    if (viewMode === '365days') {
+      // Normalize dates to avoid timezone/time issues
+      const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 364);
+      const gridStartDate = addDays(startDate, -getDay(startDate));
+      totalWeeks = Math.ceil((endDate - gridStartDate) / (7 * 24 * 60 * 60 * 1000)) + 1;
+    } else {
+      // Calendar year view - use selected year
+      startDate = new Date(selectedYear, 0, 1);
+      totalWeeks = 53;
+    }
+    
     let currentMonth = '';
     
-    for (let week = 0; week < 53; week++) {
-      const weekDate = addDays(startDate, (week * 7) - getDay(startDate));
+    for (let week = 0; week < totalWeeks; week++) {
+      let weekDate;
+      
+      if (viewMode === '365days') {
+        const gridStartDate = addDays(startDate, -getDay(startDate));
+        weekDate = addDays(gridStartDate, week * 7);
+      } else {
+        weekDate = addDays(startDate, (week * 7) - getDay(startDate));
+      }
+      
       const monthName = format(weekDate, 'MMM');
       
-      // Only show the month label if it's a new month and not December from previous year
-      const shouldShowLabel = monthName !== currentMonth && getYear(weekDate) === currentYear;
+      // For 365 days view, show all month changes
+      // For year view, only show months in selected year
+      const shouldShowLabel = viewMode === '365days' 
+        ? monthName !== currentMonth
+        : monthName !== currentMonth && getYear(weekDate) === selectedYear;
       
       months.push({
         week,
@@ -172,7 +284,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
     }
     
     return months;
-  }, []);
+  }, [viewMode, selectedYear]);
 
   const handleDateClick = (date) => {
     if (!date) return;
@@ -378,6 +490,32 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
         <div className="habit-actions">
           {!isReadOnly && (
             <>
+              {/* Year navigation - only show in year view mode */}
+              {viewMode === 'year' && (
+                <div className="year-navigation-inline">
+                  <button 
+                    className="year-nav-button-inline" 
+                    onClick={goToPreviousYear}
+                    disabled={!canGoToPreviousYear}
+                    aria-label="Previous year"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M15 18L9 12L15 6" />
+                    </svg>
+                  </button>
+                  <span className="year-display-inline">{selectedYear}</span>
+                  <button 
+                    className="year-nav-button-inline" 
+                    onClick={goToNextYear}
+                    disabled={!canGoToNextYear}
+                    aria-label="Next year"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18L15 12L9 6" />
+                    </svg>
+                  </button>
+                </div>
+              )}
               <button 
                 className="log-button" 
                 onClick={handleLogToday}
@@ -435,6 +573,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
           )}
         </div>
       </div>
+      
       <div className="heatmap-container">
         <div className="heatmap">
           {/* Month labels row */}
@@ -457,9 +596,12 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
                   if (!cell.date) {
                     return <div key={`${weekday}-${weekIndex}`} className="heatmap-cell empty" />;
                   }
-                  const isInCurrentYear = getYear(cell.date) === currentYear;
-                  const dayName = isInCurrentYear ? format(cell.date, 'EEEE') : '';
-                  const dateStr = isInCurrentYear ? format(cell.date, 'MMMM dd, yyyy') : '';
+                  
+                  // In 365-day view, show all dates in range; in year view, only show selected year
+                  const shouldShowCell = viewMode === '365days' || getYear(cell.date) === selectedYear;
+                  const dayName = shouldShowCell ? format(cell.date, 'EEEE') : '';
+                  const dateStr = shouldShowCell ? format(cell.date, 'MMMM dd, yyyy') : '';
+                  
                   const cellStyle = {};
                   if (habit.is_quantifiable) {
                     if (cell.progress > 0) {
@@ -474,7 +616,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
                     cellStyle.borderColor = habit.color || '#3A4F41';
                   }
                   
-                  const tooltipText = isInCurrentYear ? 
+                  const tooltipText = shouldShowCell ? 
                     (habit.is_quantifiable ? 
                       `${dayName}, ${dateStr}\n${cell.value || 0}/${cell.target || 1} ${habit.metric_unit || 'times'}` :
                       `${dayName}, ${dateStr}${cell.completed ? ' ✓' : ''}`) : '';
@@ -482,11 +624,11 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
                   return (
                     <div
                       key={`${weekday}-${weekIndex}`}
-                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!isInCurrentYear ? 'empty' : ''} ${habit.is_quantifiable && cell.progress > 0 && cell.progress < 1 ? 'partial' : ''}`}
+                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!shouldShowCell ? 'empty' : ''} ${habit.is_quantifiable && cell.progress > 0 && cell.progress < 1 ? 'partial' : ''}`}
                       style={cellStyle}
-                      onClick={() => !isReadOnly && isInCurrentYear && handleDateClick(cell.date)}
+                      onClick={() => !isReadOnly && shouldShowCell && handleDateClick(cell.date)}
                       data-tooltip={tooltipText}
-                      onMouseEnter={(e) => isInCurrentYear && showTooltip(e)}
+                      onMouseEnter={(e) => shouldShowCell && showTooltip(e)}
                       onMouseLeave={hideTooltip}
                     >
                     </div>

@@ -198,6 +198,53 @@ body {
   color: var(--text-secondary);
 }
 
+/* Habits header controls container */
+.habits-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Calendar view toggle styles */
+.calendar-view-toggle {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  overflow: hidden;
+  transform: translateY(-10px);
+}
+
+.view-toggle-btn {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.view-toggle-btn:hover:not(.active) {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.view-toggle-btn.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.view-toggle-btn:first-child {
+  border-right: 1px solid var(--border-primary);
+}
+
 /* No results/habits messages */
 .no-results,
 .no-habits {
@@ -1195,8 +1242,20 @@ body {
     gap: 0.75rem;
   }
 
+  .habits-header-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .calendar-view-toggle {
+    transform: none;
+    justify-content: center;
+  }
+
   .habit-search-container {
     width: 100%;
+    transform: none;
   }
 
   .create-habit-button {

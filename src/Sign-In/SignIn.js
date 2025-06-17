@@ -195,7 +195,7 @@ const SignIn = () => {
             setToastMessage('Check your email for the confirmation link!');
             setShowToast(true);
           } catch (profileError) {
-            console.log('Profile creation error:', profileError);
+    
             
             // Only show "email taken" message for specific duplicate key violations
             // that indicate the user_id already exists (not just any constraint error)
