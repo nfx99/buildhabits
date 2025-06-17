@@ -78,14 +78,59 @@ const MainPage = ({ session }) => {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('username, is_premium')
-        .eq('user_id', session.user.id)
-        .single();
+        .eq('user_id', session.user.id);
 
       if (error) {
-        throw error;
+        console.log('Profile fetch error:', error);
+        
+        // Handle specific RLS/permission errors
+        if (error.code === 'PGRST301' || error.code === '42501' || error.message.includes('row-level security') || error.message.includes('permission denied')) {
+          console.log('RLS policy blocking access, creating new profile...');
+          
+          // Try to create a new profile
+          try {
+            const newUsername = `User${Math.floor(Math.random() * 10000)}`;
+            
+            const { data: newProfile, error: createError } = await supabase
+              .from('user_profiles')
+              .insert([
+                {
+                  user_id: session.user.id,
+                  username: newUsername,
+                  is_premium: false
+                }
+              ])
+              .select()
+              .single();
+
+            if (createError) {
+              console.error('Profile creation error:', createError);
+              // Set default values if profile creation fails
+              setUsername(`User${Math.floor(Math.random() * 10000)}`);
+              setHasPaid(false);
+              return false;
+            } else {
+              setUsername(newProfile.username);
+              setHasPaid(false);
+              return false;
+            }
+          } catch (createError) {
+            console.error('Profile creation failed:', createError);
+            // Set default values
+            setUsername(`User${Math.floor(Math.random() * 10000)}`);
+            setHasPaid(false);
+            return false;
+          }
+        }
+        
+        // For other errors, also set defaults and continue
+        console.error('Other profile error:', error);
+        setUsername(`User${Math.floor(Math.random() * 10000)}`);
+        setHasPaid(false);
+        return false;
       }
       
-      if (!data) {
+      if (!data || data.length === 0) {
         try {
           const newUsername = `User${Math.floor(Math.random() * 10000)}`;
           
@@ -102,6 +147,9 @@ const MainPage = ({ session }) => {
             .single();
 
           if (createError) {
+            console.error('Profile creation error:', createError);
+            setUsername(newUsername);
+            setHasPaid(false);
             return false;
           } else {
             setUsername(newProfile.username);
@@ -109,13 +157,17 @@ const MainPage = ({ session }) => {
             return false;
           }
         } catch (createError) {
+          console.error('Profile creation failed:', createError);
+          setUsername(`User${Math.floor(Math.random() * 10000)}`);
+          setHasPaid(false);
           return false;
         }
       } else {
-        const isPremium = data.is_premium || false;
+        const profile = data[0]; // Get first (and should be only) result
+        const isPremium = profile.is_premium || false;
         const wasAlreadyPremium = hasPaid; // Store previous state
         setHasPaid(isPremium);
-        setUsername(data.username || '');
+        setUsername(profile.username || '');
         
         // Only show congratulations if:
         // 1. User is now premium
@@ -135,6 +187,10 @@ const MainPage = ({ session }) => {
       
       return false;
     } catch (error) {
+      console.error('Unexpected error in checkPaymentStatus:', error);
+      // Set default values and continue
+      setUsername(`User${Math.floor(Math.random() * 10000)}`);
+      setHasPaid(false);
       return false;
     }
   }, [session.user.id, hasPaid]);

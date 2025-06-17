@@ -12,6 +12,7 @@ import { supabase } from './config/supabase';
 
 function App() {
   const [session, setSession] = React.useState(null);
+  const [isEmailConfirmation, setIsEmailConfirmation] = React.useState(false);
 
   // Check for email confirmation on page load
   React.useEffect(() => {
@@ -22,8 +23,11 @@ function App() {
       const tokenType = urlParams.get('type');
       
       // If we have an access token and type=signup, this is email confirmation
-      if (hasAccessToken && tokenType === 'signup' && (window.location.pathname === '/' || window.location.pathname === '/signin')) {
-        window.location.href = `/email-confirmed${window.location.hash}`;
+      if (hasAccessToken && tokenType === 'signup') {
+        setIsEmailConfirmation(true);
+        if (window.location.pathname !== '/email-confirmed') {
+          window.location.href = `/email-confirmed${window.location.hash}`;
+        }
       }
     };
 
@@ -40,20 +44,12 @@ function App() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       
-      // Handle email confirmation redirect
-      if (event === 'SIGNED_IN' && session) {
-        const urlHash = window.location.hash;
-        const urlParams = new URLSearchParams(urlHash.substring(1));
-        const hasAccessToken = urlParams.get('access_token');
-        const tokenType = urlParams.get('type');
+      // Handle regular sign in redirect (not email confirmation)
+      if (event === 'SIGNED_IN' && session && !isEmailConfirmation) {
         const currentPath = window.location.pathname;
         
-        // If user just confirmed email, show confirmation page
-        if (hasAccessToken && tokenType === 'signup' && currentPath === '/signin') {
-          window.location.href = '/email-confirmed';
-        }
-        // Otherwise, if user just signed in normally on signin page, redirect to main
-        else if (currentPath === '/signin') {
+        // If user just signed in normally on signin page, redirect to main
+        if (currentPath === '/signin') {
           window.location.href = '/';
         }
       }
@@ -73,7 +69,9 @@ function App() {
           <Route
             path="/"
             element={
-              session ? (
+              isEmailConfirmation ? (
+                <Navigate to="/email-confirmed" />
+              ) : session ? (
                 <MainPage session={session} />
               ) : (
                 <LandingPage onGetStarted={handleGetStarted} />
@@ -82,7 +80,15 @@ function App() {
           />
           <Route
             path="/signin"
-            element={session ? <Navigate to="/" /> : <SignIn />}
+            element={
+              isEmailConfirmation ? (
+                <Navigate to="/email-confirmed" />
+              ) : session ? (
+                <Navigate to="/" />
+              ) : (
+                <SignIn />
+              )
+            }
           />
           <Route 
             path="/user/:userId" 
