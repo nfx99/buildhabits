@@ -99,7 +99,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
         };
       } else {
         return {
-          date,
+      date,
           completed: !!completion,
           value: completion ? 1 : 0
         };
@@ -222,19 +222,19 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
       setIsOpen(true);
     } else {
       // For simple habits, toggle completion directly
-      const isCompleted = habit.habit_completions?.some(
-        completion => {
-          const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
-          const todayDate = format(today, 'yyyy-MM-dd');
-          return completionDate === todayDate;
-        }
-      ) || false;
-      
-      try {
-        await onComplete(habit.id, today, isCompleted);
-      } catch (error) {
-        // Error is handled by parent component
+    const isCompleted = habit.habit_completions?.some(
+      completion => {
+        const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
+        const todayDate = format(today, 'yyyy-MM-dd');
+        return completionDate === todayDate;
       }
+    ) || false;
+    
+    try {
+      await onComplete(habit.id, today, isCompleted);
+    } catch (error) {
+      // Error is handled by parent component
+    }
     }
   }, [habit.id, habit.habit_completions, habit.is_quantifiable, onComplete]);
 
@@ -244,7 +244,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
         const value = parseFloat(quantifiableValue) || 0;
         await onComplete(habit.id, selectedDate, false, value);
       } else {
-        await onComplete(habit.id, selectedDate);
+      await onComplete(habit.id, selectedDate);
       }
       setIsOpen(false);
       setQuantifiableValue('');
@@ -383,54 +383,54 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
                 onClick={handleLogToday}
                 style={{ backgroundColor: habit.color || '#3A4F41' }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2v20M2 12h20" />
-                </svg>
-                Log Today
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v20M2 12h20" />
+            </svg>
+            Log Today
+          </button>
+          <Dialog.Root open={isMoreOpen} onOpenChange={setIsMoreOpen}>
+            <Dialog.Trigger asChild>
+              <button 
+                className="more-button" 
+                onClick={handleMoreClick}
+                ref={moreButtonRef}
+                aria-label="More options"
+              >
+                ⋮
               </button>
-              <Dialog.Root open={isMoreOpen} onOpenChange={setIsMoreOpen}>
-                <Dialog.Trigger asChild>
-                  <button 
-                    className="more-button" 
-                    onClick={handleMoreClick}
-                    ref={moreButtonRef}
-                    aria-label="More options"
-                  >
-                    ⋮
-                  </button>
-                </Dialog.Trigger>
-                <Dialog.Portal>
-                  <Dialog.Overlay className="dialog-overlay" />
-                  <Dialog.Content 
-                    className="more-menu"
-                    style={{
-                      position: 'fixed',
-                      top: menuPosition.top,
-                      right: menuPosition.right,
-                      transform: 'none'
-                    }}
-                  >
-                    <button 
-                      className="menu-item" 
-                      onClick={() => {
-                        setIsMoreOpen(false);
-                        setIsEditOpen(true);
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      className="menu-item delete" 
-                      onClick={() => {
-                        setIsMoreOpen(false);
-                        setIsDeleteOpen(true);
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </Dialog.Content>
-                </Dialog.Portal>
-              </Dialog.Root>
+            </Dialog.Trigger>
+            <Dialog.Portal>
+              <Dialog.Overlay className="dialog-overlay" />
+              <Dialog.Content 
+                className="more-menu"
+                style={{
+                  position: 'fixed',
+                  top: menuPosition.top,
+                  right: menuPosition.right,
+                  transform: 'none'
+                }}
+              >
+                <button 
+                  className="menu-item" 
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    setIsEditOpen(true);
+                  }}
+                >
+                  Edit
+                </button>
+                <button 
+                  className="menu-item delete" 
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    setIsDeleteOpen(true);
+                  }}
+                >
+                  Delete
+                </button>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
             </>
           )}
         </div>
@@ -532,7 +532,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false }) 
               {habit.is_quantifiable 
                 ? `Log your progress for ${habit.name} on ${format(selectedDate, 'MMMM dd, yyyy')}`
                 : (isDateCompleted 
-                  ? `Remove completion for ${habit.name} on ${format(selectedDate, 'MMMM dd, yyyy')}?`
+                ? `Remove completion for ${habit.name} on ${format(selectedDate, 'MMMM dd, yyyy')}?`
                   : `Mark ${habit.name} as completed for ${format(selectedDate, 'MMMM dd, yyyy')}?`)
               }
             </Dialog.Description>

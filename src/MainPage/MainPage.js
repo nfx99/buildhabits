@@ -631,36 +631,37 @@ const MainPage = ({ session }) => {
 
   const handleDeleteAccount = async () => {
     try {
-      // First, delete all user's habits and their completions
-      const { error: habitsError } = await supabase
-        .from('habits')
-        .delete()
-        .eq('user_id', session.user.id);
-
-      if (habitsError) {
-        throw habitsError;
-      }
-
-      // Delete user profile
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .delete()
-        .eq('user_id', session.user.id);
-
-      if (profileError) {
-        throw profileError;
-      }
-
-      // Delete the user account from Supabase Auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(session.user.id);
+      // Get the current session for authorization
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       
-      // Note: The above line won't work from client-side due to RLS
-      // Instead, we'll sign out the user and show a message
-      setToastMessage('Account deletion initiated. Please contact support if you need assistance.');
+      if (!currentSession) {
+        throw new Error('No active session');
+      }
+
+      // Call the Edge Function to completely delete the account
+      const { data, error } = await supabase.functions.invoke('delete-account', {
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data && !data.success) {
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      // Show success message
+      setToastMessage('Account completely deleted. You will be signed out.');
       setShowToast(true);
       
-      // Sign out the user
-      await supabase.auth.signOut();
+      // Wait a moment for the toast to show, then reload page
+      // The user will be automatically signed out since their auth record no longer exists
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
       
     } catch (error) {
       console.error('Error deleting account:', error);
