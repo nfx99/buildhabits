@@ -1193,6 +1193,10 @@ const MainPage = ({ session }) => {
             <a href="/cookie-policy.html" target="_blank" rel="noopener noreferrer">
               Cookie Policy
             </a>
+            <span className="footer-separator">•</span>
+            <a href="#" className="termly-display-preferences">
+              Consent Preferences
+            </a>
           </div>
           <div className="footer-copyright">
             © 2025 BuildHabits. All rights reserved.
