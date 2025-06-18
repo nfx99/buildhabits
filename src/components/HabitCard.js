@@ -7,7 +7,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { getHabitStats } from '../utils/tierSystem';
 
-const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, viewMode = 'year', isPremium = false }) => {
+const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, viewMode = 'year', isPremium = false, onEditDialogChange }) => {
   const {
     attributes,
     listeners,
@@ -109,12 +109,19 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
       showProgressBar: true
     });
   }, [habit.name, habit.is_quantifiable, habit.target_value, habit.metric_unit, habit.is_private, habit.has_insights, habit.insight_settings]);
+
+  // Update edit dialog state change
+  React.useEffect(() => {
+    if (onEditDialogChange) {
+      onEditDialogChange(isEditOpen);
+    }
+  }, [isEditOpen]); // Only depend on isEditOpen, not the callback function
+
   const moreButtonRef = React.useRef(null);
   const tooltipRef = React.useRef(null);
 
   // Cache current year for performance
   const currentYear = React.useMemo(() => new Date().getFullYear(), []);
-
 
   
   // Navigation functions
@@ -595,7 +602,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
               </button>
             </Dialog.Trigger>
             <Dialog.Portal>
-              <Dialog.Overlay className="dialog-overlay" />
               <Dialog.Content 
                 className="more-menu"
                 style={{

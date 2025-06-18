@@ -349,11 +349,11 @@ body {
 /* Dialog styles */
 .dialog-overlay {
   background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(4px);
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 9998;
   animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  filter: none !important;
 }
 
 .dialog-content {
@@ -370,8 +370,9 @@ body {
   max-height: 80vh;
   padding: 1.25rem;
   animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 51;
+  z-index: 9999;
   overflow-y: auto;
+  filter: none !important;
 }
 
 /* Dialog title styling for better visibility */
@@ -941,7 +942,7 @@ body {
   border-color: var(--accent-hover);
 }
 
-/* Dim and blur background content when dialog is active */
+/* Blur and dim background content when dialog is active */
 .main-page.dialog-active .header,
 .main-page.dialog-active .habits-container {
   filter: blur(3px);
@@ -968,6 +969,36 @@ body {
 .main-page:has(.dialog-overlay) .profile-button {
   opacity: 0.6;
   background: var(--bg-secondary);
+}
+
+/* Ensure all dialog elements are never affected by blur or other filters */
+[data-radix-portal] {
+  filter: none !important;
+  backdrop-filter: none !important;
+  z-index: 9990;
+}
+
+[data-radix-portal] * {
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Specifically ensure dialog overlays and content are never blurred */
+.dialog-overlay,
+.dialog-overlay *,
+.dialog-content,
+.dialog-content *,
+.dialog-content input,
+.dialog-content button,
+.dialog-content form,
+.dialog-content div,
+.dialog-content p,
+.dialog-content h1,
+.dialog-content h2,
+.dialog-content h3,
+.dialog-content label {
+  filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Form styles */

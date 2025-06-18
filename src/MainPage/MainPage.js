@@ -29,6 +29,7 @@ const MainPage = ({ session }) => {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
+  const [habitEditDialogStates, setHabitEditDialogStates] = useState({});
 
   const [isQuantifiable, setIsQuantifiable] = useState(false);
   const [targetValue, setTargetValue] = useState('');
@@ -442,13 +443,7 @@ const MainPage = ({ session }) => {
 
         if (error) throw error;
         
-        // Show appropriate message
-        if (isToday) {
-          setToastMessage('Today\'s completion removed');
-        } else {
-          setToastMessage('Past completion removed');
-        }
-        setShowToast(true);
+        // Removed toast notifications for habit undo
       } else {
         // Check if completion already exists for this date
         const { data: existing, error: selectError } = await supabase
@@ -489,13 +484,7 @@ const MainPage = ({ session }) => {
           if (error) throw error;
         }
         
-        // Show appropriate success message with points info
-        if (isToday) {
-          setToastMessage('🎉 +50 points! Keep your streak going!');
-        } else {
-          setToastMessage('🎉 +50 points! Past day logged successfully!');
-        }
-        setShowToast(true);
+        // Removed toast notifications for habit completions
       }
 
       // Refetch habits and user points to ensure data consistency
@@ -906,12 +895,23 @@ const MainPage = ({ session }) => {
     return () => clearTimeout(timeoutId);
   }, [userSearchQuery, searchUsers]);
 
+  // Handle edit dialog state changes from habit cards
+  const handleEditDialogChange = useCallback((habitId, isOpen) => {
+    setHabitEditDialogStates(prev => ({
+      ...prev,
+      [habitId]: isOpen
+    }));
+  }, []);
+
+  // Check if any edit dialog is open
+  const isAnyEditDialogOpen = Object.values(habitEditDialogStates).some(isOpen => isOpen);
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
 
   return (
-    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen || isDeleteAccountDialogOpen) ? 'dialog-active' : ''}`}>
+    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen || isDeleteAccountDialogOpen || isAnyEditDialogOpen) ? 'dialog-active' : ''}`}>
       <header className="header">
         <div className="header-left">
           <div className="user-search-container">
@@ -1035,6 +1035,7 @@ const MainPage = ({ session }) => {
                     onEdit={handleEditHabit}
                     viewMode={calendarViewMode}
                     isPremium={hasPaid}
+                    onEditDialogChange={(isOpen) => handleEditDialogChange(habit.id, isOpen)}
                   />
                 ))
               ) : searchQuery ? (
