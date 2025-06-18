@@ -157,7 +157,6 @@ const SignIn = () => {
 
     try {
       if (isSignUp) {
-        // Try to sign up
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -167,15 +166,7 @@ const SignIn = () => {
         });
 
         if (error) {
-          const errorMsg = error.message.toLowerCase();
           if (
-            errorMsg.includes('already registered') ||
-            errorMsg.includes('already exists') ||
-            errorMsg.includes('already in use') ||
-            errorMsg.includes('email taken') ||
-            errorMsg.includes('user already registered') ||
-            errorMsg.includes('duplicate') ||
-            errorMsg.includes('email address is already') ||
             error.status === 422
           ) {
             setToastMessage('This email is already registered. Please sign in instead.');
@@ -189,61 +180,26 @@ const SignIn = () => {
           }
         }
         
-        // Check if user was actually created or if it's an existing user
+        // Analyze the signup response to determine if this is truly new or existing
         if (data?.user) {
-          // If user has email_confirmed_at but we just "signed up", it means they already existed
-          if (data.user.email_confirmed_at) {
-            setToastMessage('This email is already registered. Please sign in instead.');
+          // If email is already confirmed, this is an existing verified user
+          if (data.user.role !== 'authenticated') {
+            setToastMessage('This email is already registered. Please sign in instead');
             setShowToast(true);
             setTimeout(() => {
               setIsSignUp(false);
-            }, 1500);
+            }, 1500); 
             return;
           }
-          
-          // Check if signup returned an existing user (common Supabase behavior for security)
-          // If the user object exists but no session was created, it's likely an existing user
-          if (!data.session && data.user) {
-            setToastMessage('This email is already registered. Please sign in instead.');
-            setShowToast(true);
-            setTimeout(() => {
-              setIsSignUp(false);
-            }, 1500);
-            return;
-          }
-          
+          // This appears to be a genuine new signup
           try {
             await createUserProfile(data.user.id);
-            setToastMessage('Check your email for the confirmation link!');
-            setShowToast(true);
           } catch (profileError) {
-            // Only show "email taken" message for specific duplicate key violations
-            // that indicate the user_id already exists (not just any constraint error)
-            if (profileError.code === '23505' && profileError.message.includes('user_id')) {
-              // This means there's already a profile with this user_id, which shouldn't happen
-              // for a fresh signup, so this is a real duplicate
-              setToastMessage('This email is already registered. Please sign in instead.');
-              setShowToast(true);
-              setTimeout(() => {
-                setIsSignUp(false);
-              }, 1500);
-              return;
-            }
-            
-            // For other errors, try to handle gracefully or show a different message
-            if (profileError.code === '42501' && profileError.message.includes('row-level security policy')) {
-              // RLS policy error - this might be due to deleted user data
-              // Try to proceed anyway since auth signup was successful
-              setToastMessage('Account created successfully! Check your email for the confirmation link.');
-              setShowToast(true);
-              return;
-            }
-            
-            // For any other profile creation error, still show success since auth signup worked
-            console.warn('Profile creation failed but auth signup succeeded:', profileError);
-            setToastMessage('Account created! Check your email for the confirmation link.');
-            setShowToast(true);
+            // Profile creation can fail for existing users, that's OK
+            console.warn('Profile creation failed:', profileError);
           }
+          setToastMessage('Check your email for the confirmation link');
+          setShowToast(true);
         } else {
           setToastMessage('An unexpected error occurred. Please try again.');
           setShowToast(true);
