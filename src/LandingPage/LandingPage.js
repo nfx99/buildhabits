@@ -1,31 +1,41 @@
 import React, { useState } from 'react';
 import './LandingPage.css';
 import HabitCard from '../components/HabitCard';
-import { startOfYear, format, addDays, startOfDay } from 'date-fns';
+import { startOfYear, format, addDays, startOfDay, isAfter } from 'date-fns';
 
 const createDemoHabit = (completions) => ({
   id: 'demo',
   name: 'Morning Workout 🏃‍♂️',
-  created_at: startOfYear(new Date(2025, 0, 1)).toISOString(),
+  created_at: startOfYear(new Date()).toISOString(), // Use current year instead of hardcoded 2025
   color: '#000000',
+  has_insights: true,
+  insight_settings: {
+    showCurrentStreak: true,
+    showTotalDays: true,
+    showWeeklyAverage: true
+  },
   habit_completions: completions
 });
 
 const LandingPage = ({ onGetStarted }) => {
-  // Initialize demo habit with completions for the entire year 2025
+  // Initialize demo habit with strategic completions to showcase tier system
   const [demoCompletions, setDemoCompletions] = useState(() => {
     const completions = [];
-    const startDate = new Date(2025, 0, 1); // January 1, 2025
+    const today = new Date();
+    const habitCreationDate = startOfYear(new Date()); // January 1st of current year
     
-    // Generate completions for all 365 days of 2025
-    for (let i = 0; i < 365; i++) {
-      const currentDate = addDays(startDate, i);
+    // Calculate the maximum days we can go back (from today to habit creation)
+    const maxDaysBack = Math.floor((today - habitCreationDate) / (1000 * 60 * 60 * 24));
+    
+    // For each day since habit creation, randomly decide if there's a completion
+    for (let i = 0; i <= maxDaysBack; i++) {
+      const shouldHaveCompletion = Math.random() < 0.5; // 50% chance for each day
       
-      // Randomly decide if this day should have a completion (about 60% chance)
-      if (Math.random() > 0.4) {
+      if (shouldHaveCompletion) {
+        const date = addDays(today, -i);
         completions.push({
           id: `demo-${i}`,
-          date: currentDate.toISOString(),
+          date: date.toISOString(),
           created_at: new Date().toISOString()
         });
       }
@@ -35,6 +45,15 @@ const LandingPage = ({ onGetStarted }) => {
   });
 
   const handleComplete = (habitId, date, isUndo = false) => {
+    // Prevent logging for future dates
+    const today = startOfDay(new Date());
+    const selectedDay = startOfDay(date);
+    
+    if (isAfter(selectedDay, today)) {
+      // Don't process future dates
+      return;
+    }
+    
     // Use the exact date format that matches the HabitCard logic
     const targetDateStr = format(date, 'yyyy-MM-dd');
     
@@ -103,6 +122,7 @@ const LandingPage = ({ onGetStarted }) => {
           onDelete={handleDelete}
           onEdit={handleEdit}
           isReadOnly={true}
+          isPremium={true}
         />
       </section>
     </div>

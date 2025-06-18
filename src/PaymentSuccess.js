@@ -51,11 +51,15 @@ const PaymentSuccess = () => {
             </div>
             <div className="feature-item">
               <span className="feature-icon">📊</span>
-              <span>Advanced analytics</span>
+              <span>Smart insights & analytics</span>
             </div>
             <div className="feature-item">
-              <span className="feature-icon">🎯</span>
-              <span>Premium features</span>
+              <span className="feature-icon">🏆</span>
+              <span>Achievement badges</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">📈</span>
+              <span>Trend analysis</span>
             </div>
           </div>
           

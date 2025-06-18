@@ -284,7 +284,7 @@
 
 /* Form styles */
 .form-group {
-  margin: 1rem 0;
+  margin: 0.75rem 0;
 }
 
 .edit-input {
@@ -439,53 +439,16 @@
 }
 
 .tracking-option:hover:not(.active) {
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
 }
 
 .tracking-option.active {
+  background: var(--accent-primary);
   color: white;
   font-weight: 600;
 }
 
-/* Color picker styles */
-.color-picker {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
 
-.color-option {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.color-option:hover {
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8), 0 0 12px rgba(0, 0, 0, 0.3);
-  filter: brightness(1.1);
-}
-
-.color-option.selected {
-  border-color: var(--text-primary);
-  transform: scale(1.15);
-  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--text-primary);
-}
-
-.color-option.selected::after {
-  content: '✓';
-  color: white;
-  font-size: 0.875rem;
-  font-weight: bold;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
 
 .heatmap-container {
   max-height: 600px;
@@ -591,6 +554,11 @@
   border-color: #16a34a;
 }
 
+.heatmap-cell.future {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+}
+
 /* Scrollbar styling */
 .heatmap-container::-webkit-scrollbar {
   height: 8px;
@@ -628,24 +596,30 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 90vw;
-  max-width: 450px;
-  max-height: 85vh;
-  padding: 2rem;
+  width: 85vw;
+  max-width: 400px;
+  max-height: 80vh;
+  padding: 1.25rem;
   animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
 }
 
 .dialog-content h2 {
-  margin: 0 0 1rem 0;
-  font-size: 1.25rem;
+  margin: 0 0 0.75rem 0;
+  font-size: 1.125rem;
   font-weight: 600;
   color: #1f2937;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .dialog-content p {
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1rem 0;
   color: #4b5563;
-  line-height: 1.5;
+  line-height: 1.4;
+  font-size: 0.9rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .dialog-buttons {
@@ -666,15 +640,63 @@
 }
 
 .habit-card .dialog-buttons button:first-child:not(.save-button) {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
 }
 
 .habit-card .dialog-buttons button:first-child:not(.save-button):hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Override any :first-child rules for save button */
+.habit-card .dialog-buttons button:first-child.save-button {
+  background: linear-gradient(135deg, #000000 0%, #2D2D2D 100%) !important;
+  background-color: #000000 !important;
+  color: white !important;
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+  transform: none !important;
+}
+
+.habit-card .dialog-buttons button:first-child.save-button:hover {
+  background: linear-gradient(135deg, #2D2D2D 0%, #000000 100%) !important;
+  background-color: #2D2D2D !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Ultra-specific save button styling - should override everything */
+div.habit-card div.dialog-buttons button.save-button,
+.habit-card .dialog-buttons button[class~="save-button"],
+button.save-button {
+  background: linear-gradient(135deg, #000000 0%, #2D2D2D 100%) !important;
+  background-color: #000000 !important;
+  background-image: linear-gradient(135deg, #000000 0%, #2D2D2D 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+  transform: none !important;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  transition: all 0.2s ease !important;
+}
+
+div.habit-card div.dialog-buttons button.save-button:hover,
+.habit-card .dialog-buttons button[class~="save-button"]:hover,
+button.save-button:hover {
+  background: linear-gradient(135deg, #2D2D2D 0%, #000000 100%) !important;
+  background-color: #2D2D2D !important;
+  background-image: linear-gradient(135deg, #2D2D2D 0%, #000000 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4) !important;
 }
 
 .habit-card .dialog-buttons button:last-child {
@@ -712,18 +734,27 @@
   box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
 }
 
-.habit-card .dialog-buttons .save-button {
+.habit-card .dialog-buttons button.save-button {
+  background: linear-gradient(135deg, #000000 0%, #2D2D2D 100%) !important;
+  background-color: #000000 !important;
   color: white !important;
-  box-shadow: none !important;
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
   transform: none !important;
-  background: var(--habit-color, #000000) !important;
-  border: 1px solid var(--habit-color, #000000) !important;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  transition: all 0.2s ease !important;
 }
 
-.habit-card .dialog-buttons .save-button:hover {
-  filter: brightness(0.9) !important;
-  box-shadow: none !important;
-  transform: none !important;
+.habit-card .dialog-buttons button.save-button:hover {
+  background: linear-gradient(135deg, #2D2D2D 0%, #000000 100%) !important;
+  background-color: #2D2D2D !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4) !important;
 }
 
 @keyframes overlayShow {
@@ -916,10 +947,11 @@
   }
 
   .dialog-content {
-    width: 95vw;
-    max-width: 95vw;
+    width: 92vw;
+    max-width: 92vw;
+    max-height: 85vh;
     margin: 0.5rem;
-    padding: 1rem;
+    padding: 0.875rem;
   }
 
   .dialog-buttons {
@@ -933,25 +965,17 @@
     font-size: 0.9rem;
   }
 
-  /* Mobile color picker */
-  .color-picker {
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
 
-  .color-option {
-    width: 28px;
-    height: 28px;
-  }
 
   /* Mobile tracking options */
-  .tracking-type-toggle {
+  .tracking-type-toggle,
+  .insights-toggle {
     flex-direction: column;
     gap: 0.5rem;
   }
 
-  .tracking-option {
+  .tracking-option,
+  .insights-option {
     width: 100%;
     padding: 0.75rem;
     text-align: center;
@@ -972,6 +996,35 @@
   .year-display-inline {
     font-size: 0.9rem;
     min-width: 50px;
+  }
+
+  /* Mobile insights */
+  .insights-bottom {
+    gap: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .insight-value {
+    font-size: 0.8rem;
+  }
+
+  .insight-checkboxes {
+    grid-template-columns: 1fr;
+    gap: 0.375rem;
+  }
+
+  .insight-checkbox-label {
+    font-size: 0.75rem;
+  }
+
+  /* Bottom stats responsive */
+  .bottom-stats-section {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .tier-progress-bottom {
+    width: 100%;
   }
 }
 
@@ -1037,6 +1090,7 @@
   .dialog-content {
     margin: 0.25rem;
     padding: 0.75rem;
+    max-height: 88vh;
   }
 
   .more-menu {
@@ -1077,6 +1131,23 @@
   .year-display-inline {
     font-size: 0.8rem;
     min-width: 40px;
+  }
+
+  /* Mobile insights for very small screens */
+  .insights-bottom {
+    gap: 0.375rem;
+    font-size: 0.7rem;
+    margin-top: 0.375rem;
+    padding-top: 0.375rem;
+  }
+
+  .insight-value {
+    font-size: 0.75rem;
+  }
+
+  .insight-checkbox-label {
+    font-size: 0.7rem;
+    padding: 0.125rem;
   }
 }
 
@@ -1121,4 +1192,224 @@
   .heatmap-cell {
     border-width: 0.5px;
   }
-} 
+}
+
+/* Insights toggle styles */
+.insights-toggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.insights-option {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.insights-option:last-child {
+  border-left: 1px solid var(--border-primary);
+}
+
+.insights-option:hover:not(.active) {
+  background: var(--bg-secondary);
+}
+
+.insights-option.active {
+  background: var(--accent-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.insights-description {
+  margin: 0.5rem 0 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* Bottom stats section container */
+.bottom-stats-section {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-primary);
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+/* Insights at bottom */
+.insights-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+/* Compact tier progress adjacent to insights */
+.tier-progress-bottom {
+  flex-shrink: 0;
+  width: 400px;
+}
+
+.tier-info-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.tier-current-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tier-icon {
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.tier-name-compact {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.7rem;
+}
+
+.tier-days-compact {
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+}
+
+.tier-progress-bar-compact {
+  width: 100%;
+  height: 3px;
+  background: var(--bg-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.tier-progress-fill-compact {
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.insight-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.insight-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+/* Insight settings in forms */
+.insight-settings {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-primary);
+}
+
+.insight-settings-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.insight-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.insight-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.insight-checkbox-label:hover {
+  background: var(--bg-secondary);
+}
+
+.insight-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-primary);
+}
+
+/* Premium badge */
+.premium-badge {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #000;
+  font-size: 0.7rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 12px;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+}
+
+
+
+/* Premium upsell */
+.insights-premium-upsell {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.1) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Disabled state for insights buttons */
+.insights-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Insights note */
+.insights-note {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.1) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+}
+
+.insights-note p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+ 

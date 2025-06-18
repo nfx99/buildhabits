@@ -5,7 +5,8 @@ import * as Dialog from '@radix-ui/react-dialog';
 import * as Toast from '@radix-ui/react-toast';
 import './MainPage.css';
 import { loadStripe } from '@stripe/stripe-js';
-import { format, startOfDay, addDays } from 'date-fns';
+import { format } from 'date-fns';
+import { getHabitStats, calculateTotalPoints, calculateTierBonusPoints, calculatePointsWithStreak } from '../utils/tierSystem';
 import {
   DndContext,
   closestCenter,
@@ -28,11 +29,19 @@ const MainPage = ({ session }) => {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
-  const [newHabitColor, setNewHabitColor] = useState('#000000');
+
   const [isQuantifiable, setIsQuantifiable] = useState(false);
   const [targetValue, setTargetValue] = useState('');
   const [metricUnit, setMetricUnit] = useState('times');
   const [isPrivate, setIsPrivate] = useState(false);
+  const [hasInsights, setHasInsights] = useState(false);
+  const [insightSettings, setInsightSettings] = useState({
+    showCurrentStreak: true,
+    showTotalDays: true,
+    showWeeklyAverage: false,
+    showPointsMultiplier: true,
+    showProgressBar: true
+  });
   const [loading, setLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
@@ -42,25 +51,38 @@ const MainPage = ({ session }) => {
   const [username, setUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [editingUsername, setEditingUsername] = useState('');
+  const [showUserPoints, setShowUserPoints] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [calendarViewMode, setCalendarViewMode] = useState('year'); // 'year' or '365days'
 
+  // State for stored user points
+  const [userPoints, setUserPoints] = useState(0);
+
+  // Calculate overall stats from all habits
+  const overallStats = React.useMemo(() => {
+    if (!habits.length) return { totalPoints: userPoints, totalDays: 0, currentStreak: 0 };
+    
+    let totalDays = 0;
+    let maxStreak = 0;
+    
+    habits.forEach(habit => {
+      const stats = getHabitStats(habit);
+      totalDays += stats.totalDays;
+      maxStreak = Math.max(maxStreak, stats.currentStreak);
+    });
+    
+    return {
+      totalPoints: userPoints, // Use stored points from database
+      totalDays,
+      currentStreak: maxStreak
+    };
+  }, [habits, userPoints]);
+
   // Predefined color options
-  const colorOptions = [
-    '#000000', // Black
-    '#059669', // Green
-    '#DC2626', // Red
-    '#2563EB', // Blue
-    '#EC4899', // Pink
-    '#7C2D92', // Purple
-    '#EAB308', // Yellow
-    '#8B0000', // Burgundy
-    '#EA580C', // Orange
-    '#92400E', // Brown
-  ];
+
 
 
 
@@ -76,7 +98,7 @@ const MainPage = ({ session }) => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('username, is_premium')
+        .select('username, is_premium, points')
         .eq('user_id', session.user.id);
 
       if (error) {
@@ -165,6 +187,7 @@ const MainPage = ({ session }) => {
         const wasAlreadyPremium = hasPaid; // Store previous state
         setHasPaid(isPremium);
         setUsername(profile.username || '');
+        setUserPoints(profile.points || 0);
         
         // Only show congratulations if:
         // 1. User is now premium
@@ -224,6 +247,25 @@ const MainPage = ({ session }) => {
       return false;
     } catch (error) {
       return false;
+    }
+  }, [session.user.id]);
+
+  const fetchUserPoints = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('points')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user points:', error);
+        return;
+      }
+      
+      setUserPoints(data?.points || 0);
+    } catch (error) {
+      console.error('fetchUserPoints error:', error);
     }
   }, [session.user.id]);
 
@@ -289,13 +331,14 @@ const MainPage = ({ session }) => {
       }
       
       await fetchHabits();
+      await fetchUserPoints();
       setLoading(false);
     };
 
     initialize();
     
 
-  }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits, session.user.id]);
+  }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits, fetchUserPoints, session.user.id]);
 
   const handleCreateHabit = async (e) => {
     e.preventDefault();
@@ -314,13 +357,28 @@ const MainPage = ({ session }) => {
     }
 
     try {
+      // Check if insights are enabled but no specific insights are selected
+      let finalHasInsights = hasInsights;
+      let finalInsightSettings = insightSettings;
+      
+      if (hasInsights) {
+        const hasAnyInsightSelected = Object.values(insightSettings).some(value => value === true);
+        if (!hasAnyInsightSelected) {
+          // Disable insights if enabled but no specific insights are chosen
+          finalHasInsights = false;
+          finalInsightSettings = null;
+        }
+      }
+      
       const habitData = {
         name: sanitizedName,
         user_id: session.user.id,
         order: habits.length,
-        color: newHabitColor,
+        color: '#000000',
         is_quantifiable: isQuantifiable,
         is_private: isPrivate,
+        has_insights: finalHasInsights,
+        insight_settings: finalHasInsights ? finalInsightSettings : null,
       };
 
       if (isQuantifiable) {
@@ -344,11 +402,17 @@ const MainPage = ({ session }) => {
 
       setHabits([data, ...habits]);
       setNewHabitName('');
-      setNewHabitColor('#000000');
+
       setIsQuantifiable(false);
       setTargetValue('');
       setMetricUnit('times');
       setIsPrivate(false);
+          setHasInsights(false);
+    setInsightSettings({
+      showCurrentStreak: true,
+      showTotalDays: true,
+      showWeeklyAverage: false
+    });
       setIsCreateDialogOpen(false);
     } catch (error) {
       setToastMessage(error.message || 'Error creating habit. Please try again.');
@@ -362,6 +426,11 @@ const MainPage = ({ session }) => {
       const targetDate = format(date, 'yyyy-MM-dd');
       const normalizedDate = new Date(targetDate + 'T12:00:00.000Z').toISOString();
       
+      // Check if this is today's date for points awarding
+      const today = new Date();
+      const todayStr = format(today, 'yyyy-MM-dd');
+      const isToday = targetDate === todayStr;
+      
       if (isUndo) {
         // For undo, delete using exact date match
         const { error } = await supabase
@@ -372,6 +441,14 @@ const MainPage = ({ session }) => {
           .eq('user_id', session.user.id);
 
         if (error) throw error;
+        
+        // Show appropriate message
+        if (isToday) {
+          setToastMessage('Today\'s completion removed');
+        } else {
+          setToastMessage('Past completion removed');
+        }
+        setShowToast(true);
       } else {
         // Check if completion already exists for this date
         const { data: existing, error: selectError } = await supabase
@@ -411,10 +488,18 @@ const MainPage = ({ session }) => {
 
           if (error) throw error;
         }
+        
+        // Show appropriate success message with points info
+        if (isToday) {
+          setToastMessage('🎉 +50 points! Keep your streak going!');
+        } else {
+          setToastMessage('🎉 +50 points! Past day logged successfully!');
+        }
+        setShowToast(true);
       }
 
-      // Refetch habits to ensure data consistency
-      await fetchHabits();
+      // Refetch habits and user points to ensure data consistency
+      await Promise.all([fetchHabits(), fetchUserPoints()]);
     } catch (error) {
       setToastMessage(isUndo ? 'Error removing habit completion' : 'Error completing habit');
       setShowToast(true);
@@ -569,7 +654,9 @@ const MainPage = ({ session }) => {
         is_quantifiable: editData.is_quantifiable,
         target_value: editData.target_value,
         metric_unit: editData.metric_unit,
-        is_private: editData.is_private
+        is_private: editData.is_private,
+        has_insights: editData.has_insights,
+        insight_settings: editData.insight_settings
       };
 
       const { error } = await supabase
@@ -873,19 +960,30 @@ const MainPage = ({ session }) => {
 
       <div className="habits-container">
         <div className="habits-header">
-          <button
-            className="create-habit-button"
-            onClick={() => {
-              if (!hasPaid && habits.length >= 2) {
-                setIsPaymentDialogOpen(true);
-              } else {
-                setIsCreateDialogOpen(true);
-              }
-            }}
-          >
-            Create New Habit
-          </button>
+          <div className="habits-header-left">
+            <button
+              className="create-habit-button"
+              onClick={() => {
+                if (!hasPaid && habits.length >= 2) {
+                  setIsPaymentDialogOpen(true);
+                } else {
+                  setIsCreateDialogOpen(true);
+                }
+              }}
+            >
+              Create New Habit
+            </button>
+          </div>
           <div className="habits-header-controls">
+            {showUserPoints && (
+              <div className="global-stats">
+                <div className="global-points">
+                  <span className="points-icon">⭐</span>
+                  <span className="points-value">{overallStats.totalPoints.toLocaleString()}</span>
+                  <span className="points-label">points</span>
+                </div>
+              </div>
+            )}
             <div className="calendar-view-toggle">
               <button
                 className={`view-toggle-btn ${calendarViewMode === 'year' ? 'active' : ''}`}
@@ -936,6 +1034,7 @@ const MainPage = ({ session }) => {
                     onDelete={handleDeleteHabit}
                     onEdit={handleEditHabit}
                     viewMode={calendarViewMode}
+                    isPremium={hasPaid}
                   />
                 ))
               ) : searchQuery ? (
@@ -968,21 +1067,6 @@ const MainPage = ({ session }) => {
                   required
                 />
               </div>
-                              <div className="form-group">
-                  <label htmlFor="habit-color">Habit Color</label>
-                  <div className="color-picker">
-                    {colorOptions.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`color-option ${newHabitColor === color ? 'selected' : ''}`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => setNewHabitColor(color)}
-                        aria-label={`Select color ${color}`}
-                      />
-                    ))}
-                  </div>
-                </div>
                 <div className="form-group">
                   <label>Tracking Type</label>
                   <div className="tracking-type-toggle">
@@ -990,7 +1074,7 @@ const MainPage = ({ session }) => {
                       type="button"
                       className={`tracking-option ${!isQuantifiable ? 'active' : ''}`}
                       onClick={() => setIsQuantifiable(false)}
-                      style={!isQuantifiable ? { backgroundColor: newHabitColor, borderColor: newHabitColor } : {}}
+
                     >
                       Simple
                     </button>
@@ -998,7 +1082,7 @@ const MainPage = ({ session }) => {
                       type="button"
                       className={`tracking-option ${isQuantifiable ? 'active' : ''}`}
                       onClick={() => setIsQuantifiable(true)}
-                      style={isQuantifiable ? { backgroundColor: newHabitColor, borderColor: newHabitColor } : {}}
+
                     >
                       Numbers
                     </button>
@@ -1039,7 +1123,7 @@ const MainPage = ({ session }) => {
                       type="button"
                       className={`privacy-option ${!isPrivate ? 'active' : ''}`}
                       onClick={() => setIsPrivate(false)}
-                      style={!isPrivate ? { backgroundColor: newHabitColor, borderColor: newHabitColor } : {}}
+
                     >
                       Public
                     </button>
@@ -1047,7 +1131,7 @@ const MainPage = ({ session }) => {
                       type="button"
                       className={`privacy-option ${isPrivate ? 'active' : ''}`}
                       onClick={() => setIsPrivate(true)}
-                      style={isPrivate ? { backgroundColor: newHabitColor, borderColor: newHabitColor } : {}}
+
                     >
                       Private
                     </button>
@@ -1056,6 +1140,97 @@ const MainPage = ({ session }) => {
                     Private habits are only visible to you. Public habits can be viewed by other users.
                   </p>
                 </div>
+                            <div className="form-group">
+              <label>Insights {!hasPaid && <span className="premium-badge">Premium</span>}</label>
+              <div className="insights-toggle">
+                <button
+                  type="button"
+                  className={`insights-option ${!hasInsights ? 'active' : ''}`}
+                  onClick={() => hasPaid ? setHasInsights(false) : setIsPaymentDialogOpen(true)}
+
+                  disabled={!hasPaid && hasInsights}
+                >
+                  Disabled
+                </button>
+                <button
+                  type="button"
+                  className={`insights-option ${hasInsights ? 'active' : ''}`}
+                  onClick={() => hasPaid ? setHasInsights(true) : setIsPaymentDialogOpen(true)}
+
+                  disabled={!hasPaid}
+                >
+                  Enabled
+                </button>
+              </div>
+              <p className="insights-description">
+                {hasPaid 
+                  ? "Get powerful analytics including streaks, patterns, trends, predictions, and personalized recommendations."
+                  : "🔒 Premium feature: Advanced habit analytics with smart insights, trend analysis, and achievement tracking."
+                }
+              </p>
+              {hasInsights && hasPaid && (
+                <div className="insight-settings">
+                  <p className="insight-settings-label">Choose which insights to display:</p>
+                  <div className="insight-checkboxes">
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={insightSettings.showCurrentStreak}
+                        onChange={(e) => setInsightSettings(prev => ({
+                          ...prev,
+                          showCurrentStreak: e.target.checked
+                        }))}
+                      />
+                      <span>Current Streak</span>
+                    </label>
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={insightSettings.showTotalDays}
+                        onChange={(e) => setInsightSettings(prev => ({
+                          ...prev,
+                          showTotalDays: e.target.checked
+                        }))}
+                      />
+                      <span>Total Completions</span>
+                    </label>
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={insightSettings.showWeeklyAverage}
+                        onChange={(e) => setInsightSettings(prev => ({
+                          ...prev,
+                          showWeeklyAverage: e.target.checked
+                        }))}
+                      />
+                      <span>Weekly Average</span>
+                    </label>
+                  </div>
+                  <div className="insights-note">
+                    <p>✨ Achievement badges are automatically displayed when insights are enabled</p>
+                  </div>
+                </div>
+              )}
+              {!hasPaid && (
+                <div className="premium-insights-preview">
+                  <h4>🚀 Premium Insights Include:</h4>
+                  <ul>
+                    <li>📊 Current streak tracking</li>
+                    <li>📈 Weekly average analysis</li>
+                    <li>📋 Total completion counts</li>
+                    <li>🏆 Achievement badges & milestones</li>
+                    <li>💡 Motivational progress tracking</li>
+                    <li>✨ Smart habit analytics</li>
+                  </ul>
+                  <button 
+                    className="upgrade-insights-button"
+                    onClick={() => setIsPaymentDialogOpen(true)}
+                  >
+                    Upgrade to Premium - $4.99
+                  </button>
+                </div>
+              )}
+            </div>
               <div className="dialog-buttons">
                 <button type="submit">Create</button>
                 <button
@@ -1078,7 +1253,7 @@ const MainPage = ({ session }) => {
             <Dialog.Description>
               <div className="payment-content">
                 <h3>🚀 Go Premium!</h3>
-                <p>Unlock unlimited habits and advanced features to supercharge your habit building journey.</p>
+                <p>Unlock unlimited habits, smart insights with trend analysis, achievement badges, and advanced analytics to supercharge your habit building journey.</p>
                 
                 <button 
                   className="payment-price-button"
@@ -1162,6 +1337,18 @@ const MainPage = ({ session }) => {
                   </div>
                 </div>
                 
+                <div className="profile-preferences">
+                  <h4>Display Preferences</h4>
+                  <label className="preference-toggle">
+                    <input
+                      type="checkbox"
+                      checked={showUserPoints}
+                      onChange={(e) => setShowUserPoints(e.target.checked)}
+                    />
+                    <span>Show points in header</span>
+                  </label>
+                </div>
+                
                 <div className="profile-stats">
                   <div className="stat">
                     <div className="stat-number">{habits.length}</div>
@@ -1182,7 +1369,7 @@ const MainPage = ({ session }) => {
                 {!hasPaid && (
                   <div className="profile-upgrade">
                     <h4>🚀 Upgrade to Pro</h4>
-                    <p>Unlock unlimited habits and advanced features</p>
+                    <p>Unlock unlimited habits, smart insights, trend analysis, and achievement badges</p>
                     <button 
                       className="upgrade-button"
                       onClick={handleUpgrade}
@@ -1270,19 +1457,6 @@ const MainPage = ({ session }) => {
 
       <footer className="footer">
         <div className="footer-content">
-          <div className="footer-links">
-            <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer">
-              Privacy Policy
-            </a>
-            <span className="footer-separator">•</span>
-            <a href="/cookie-policy.html" target="_blank" rel="noopener noreferrer">
-              Cookie Policy
-            </a>
-            <span className="footer-separator">•</span>
-            <a href="#" className="termly-display-preferences">
-              Cookie Preferences
-            </a>
-          </div>
           <div className="footer-copyright">
             © 2025 BuildHabits. All rights reserved.
           </div>

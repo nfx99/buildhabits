@@ -1,12 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { format, getDay, startOfYear, endOfYear, eachDayOfInterval, getYear, addDays, subDays } from 'date-fns';
+import { format, getDay, eachDayOfInterval, getYear, addDays, isAfter, startOfDay } from 'date-fns';
 import * as Dialog from '@radix-ui/react-dialog';
 import './HabitCard.css';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { getHabitStats } from '../utils/tierSystem';
 
-const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, viewMode = 'year' }) => {
+const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, viewMode = 'year', isPremium = false }) => {
   const {
     attributes,
     listeners,
@@ -30,45 +31,91 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [isDateCompleted, setIsDateCompleted] = React.useState(false);
   const [editName, setEditName] = React.useState(habit.name);
-  const [editColor, setEditColor] = React.useState(habit.color || '#000000');
+
   const [editIsQuantifiable, setEditIsQuantifiable] = React.useState(habit.is_quantifiable || false);
   const [editTargetValue, setEditTargetValue] = React.useState(habit.target_value || '');
   const [editMetricUnit, setEditMetricUnit] = React.useState(habit.metric_unit || 'times');
   const [editIsPrivate, setEditIsPrivate] = React.useState(habit.is_private || false);
+  const [editHasInsights, setEditHasInsights] = React.useState(habit.has_insights || false);
+  const [editInsightSettings, setEditInsightSettings] = React.useState(habit.insight_settings || {
+    showCurrentStreak: true,
+    showTotalDays: true,
+    showWeeklyAverage: false,
+    showPointsMultiplier: true,
+    showProgressBar: true
+  });
   const [quantifiableValue, setQuantifiableValue] = React.useState('');
   
   // Year navigation state
   const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
+  
+  // Enhanced insights calculation with premium features
+  const insights = React.useMemo(() => {
+    if (!habit.has_insights || !isPremium || !habit.habit_completions) return null;
+    
+    const completions = habit.habit_completions;
+    const totalDays = completions.length;
+    
+    if (totalDays === 0) return null;
+    
+    const today = new Date();
+    const sortedCompletions = [...completions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Calculate current streak (including current day)
+    let currentStreak = 0;
+    for (let i = 0; i < sortedCompletions.length; i++) {
+      const completionDate = new Date(sortedCompletions[i].date);
+      const daysDiff = Math.floor((today - completionDate) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff === i) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+    
+    // PREMIUM: Calculate weekly average
+    const fourWeeksAgo = new Date();
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    const weeklyCompletions = completions.filter(c => new Date(c.date) >= fourWeeksAgo);
+    const weeklyAverage = (weeklyCompletions.length / 4).toFixed(1);
+    
+    return {
+      currentStreak,
+      totalCompletions: totalDays,
+      weeklyAverage
+    };
+  }, [habit.has_insights, habit.habit_completions, isPremium]);
+
+  // Tier system stats
+  const tierStats = React.useMemo(() => {
+    return getHabitStats(habit);
+  }, [habit]);
 
   // Update state when habit changes
   React.useEffect(() => {
     setEditName(habit.name);
-    setEditColor(habit.color || '#000000');
+
     setEditIsQuantifiable(habit.is_quantifiable || false);
     setEditTargetValue(habit.target_value || '');
     setEditMetricUnit(habit.metric_unit || 'times');
     setEditIsPrivate(habit.is_private || false);
-  }, [habit.name, habit.color, habit.is_quantifiable, habit.target_value, habit.metric_unit, habit.is_private]);
+    setEditHasInsights(habit.has_insights || false);
+    setEditInsightSettings(habit.insight_settings || {
+      showCurrentStreak: true,
+      showTotalDays: true,
+      showWeeklyAverage: false,
+      showPointsMultiplier: true,
+      showProgressBar: true
+    });
+  }, [habit.name, habit.is_quantifiable, habit.target_value, habit.metric_unit, habit.is_private, habit.has_insights, habit.insight_settings]);
   const moreButtonRef = React.useRef(null);
   const tooltipRef = React.useRef(null);
 
   // Cache current year for performance
   const currentYear = React.useMemo(() => new Date().getFullYear(), []);
 
-  // Calculate available years based on habit completions
-  const availableYears = React.useMemo(() => {
-    if (!habit.habit_completions || habit.habit_completions.length === 0) {
-      return [currentYear];
-    }
-    
-    const years = new Set([currentYear]); // Always include current year
-    habit.habit_completions.forEach(completion => {
-      const year = new Date(completion.date).getFullYear();
-      years.add(year);
-    });
-    
-    return Array.from(years).sort((a, b) => b - a); // Sort descending (newest first)
-  }, [habit.habit_completions, currentYear]);
+
   
   // Navigation functions
   const goToPreviousYear = () => {
@@ -84,19 +131,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
   const canGoToPreviousYear = selectedYear > minAllowedYear;
   const canGoToNextYear = selectedYear < currentYear;
 
-  // Predefined color options
-  const colorOptions = [
-    '#000000', // Black
-    '#059669', // Green
-    '#DC2626', // Red
-    '#2563EB', // Blue
-    '#EC4899', // Pink
-    '#7C2D92', // Purple
-    '#EAB308', // Yellow
-    '#8B0000', // Burgundy
-    '#EA580C', // Orange
-    '#92400E', // Brown
-  ];
+
 
 
 
@@ -287,6 +322,15 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
   const handleDateClick = (date) => {
     if (!date) return;
     
+    // Prevent logging for future dates
+    const today = startOfDay(new Date());
+    const selectedDay = startOfDay(date);
+    
+    if (isAfter(selectedDay, today)) {
+      // Don't open dialog for future dates
+      return;
+    }
+    
     // Find existing completion for this date
     const existingCompletion = habit.habit_completions?.find(
       completion => {
@@ -383,20 +427,35 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
 
   const handleEdit = React.useCallback(async () => {
     try {
+      // Check if insights are enabled but no specific insights are selected
+      let finalHasInsights = editHasInsights;
+      let finalInsightSettings = editInsightSettings;
+      
+      if (editHasInsights) {
+        const hasAnyInsightSelected = Object.values(editInsightSettings).some(value => value === true);
+        if (!hasAnyInsightSelected) {
+          // Disable insights if enabled but no specific insights are chosen
+          finalHasInsights = false;
+          finalInsightSettings = null;
+        }
+      }
+      
       const editData = {
         name: editName,
-        color: editColor,
+        color: habit.color || '#000000',
         is_quantifiable: editIsQuantifiable,
         target_value: editIsQuantifiable ? parseFloat(editTargetValue) || 1 : null,
         metric_unit: editIsQuantifiable ? editMetricUnit : null,
-        is_private: editIsPrivate
+        is_private: editIsPrivate,
+        has_insights: finalHasInsights,
+        insight_settings: finalHasInsights ? finalInsightSettings : null
       };
       await onEdit(habit.id, editData);
       setIsEditOpen(false);
     } catch (error) {
       // Error is handled by parent component
     }
-  }, [habit.id, editName, editColor, editIsQuantifiable, editTargetValue, editMetricUnit, editIsPrivate, onEdit]);
+  }, [habit.id, editName, editIsQuantifiable, editTargetValue, editMetricUnit, editIsPrivate, editHasInsights, editInsightSettings, onEdit, habit.color]);
 
   const showTooltip = (event) => {
     if (!tooltipRef.current) return;
@@ -600,6 +659,11 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                   const dayName = shouldShowCell ? format(cell.date, 'EEEE') : '';
                   const dateStr = shouldShowCell ? format(cell.date, 'MMMM dd, yyyy') : '';
                   
+                  // Check if this date is in the future
+                  const today = startOfDay(new Date());
+                  const cellDay = startOfDay(cell.date);
+                  const isFutureDate = isAfter(cellDay, today);
+                  
                   const cellStyle = {};
                   if (habit.is_quantifiable) {
                     if (cell.progress > 0) {
@@ -614,17 +678,25 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                     cellStyle.borderColor = habit.color || '#000000';
                   }
                   
+                  // Style future dates differently
+                  if (isFutureDate && shouldShowCell) {
+                    cellStyle.opacity = '0.3';
+                    cellStyle.cursor = 'not-allowed';
+                  }
+                  
                   const tooltipText = shouldShowCell ? 
-                    (habit.is_quantifiable ? 
-                      `${dayName}, ${dateStr}\n${cell.value || 0}/${cell.target || 1} ${habit.metric_unit || 'times'}` :
-                      `${dayName}, ${dateStr}${cell.completed ? ' ✓' : ''}`) : '';
+                    (isFutureDate ? 
+                      `${dayName}, ${dateStr}\nFuture date - cannot log` :
+                      (habit.is_quantifiable ? 
+                        `${dayName}, ${dateStr}\n${cell.value || 0}/${cell.target || 1} ${habit.metric_unit || 'times'}` :
+                        `${dayName}, ${dateStr}${cell.completed ? ' ✓' : ''}`)) : '';
                   
                   return (
                     <div
                       key={`${weekday}-${weekIndex}`}
-                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!shouldShowCell ? 'empty' : ''} ${habit.is_quantifiable && cell.progress > 0 && cell.progress < 1 ? 'partial' : ''}`}
+                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!shouldShowCell ? 'empty' : ''} ${habit.is_quantifiable && cell.progress > 0 && cell.progress < 1 ? 'partial' : ''} ${isFutureDate ? 'future' : ''}`}
                       style={cellStyle}
-                      onClick={() => !isReadOnly && shouldShowCell && handleDateClick(cell.date)}
+                      onClick={() => !isReadOnly && shouldShowCell && !isFutureDate && handleDateClick(cell.date)}
                       data-tooltip={tooltipText}
                       onMouseEnter={(e) => shouldShowCell && showTooltip(e)}
                       onMouseLeave={hideTooltip}
@@ -740,21 +812,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                 placeholder="Habit name"
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="habit-color">Habit Color</label>
-              <div className="color-picker">
-                {colorOptions.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    className={`color-option ${editColor === color ? 'selected' : ''}`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => setEditColor(color)}
-                    aria-label={`Select color ${color}`}
-                  />
-                ))}
-              </div>
-            </div>
                          <div className="form-group">
                <label>Tracking Type</label>
                <div className="tracking-type-toggle">
@@ -762,7 +819,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                    type="button"
                    className={`tracking-option ${!editIsQuantifiable ? 'active' : ''}`}
                    onClick={() => setEditIsQuantifiable(false)}
-                   style={!editIsQuantifiable ? { backgroundColor: editColor, borderColor: editColor } : {}}
+
                  >
                    Simple
                  </button>
@@ -770,7 +827,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                    type="button"
                    className={`tracking-option ${editIsQuantifiable ? 'active' : ''}`}
                    onClick={() => setEditIsQuantifiable(true)}
-                   style={editIsQuantifiable ? { backgroundColor: editColor, borderColor: editColor } : {}}
+
                  >
                    Numbers
                  </button>
@@ -813,7 +870,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                   type="button"
                   className={`privacy-option ${!editIsPrivate ? 'active' : ''}`}
                   onClick={() => setEditIsPrivate(false)}
-                  style={!editIsPrivate ? { backgroundColor: editColor, borderColor: editColor } : {}}
+
                 >
                   Public
                 </button>
@@ -821,7 +878,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                   type="button"
                   className={`privacy-option ${editIsPrivate ? 'active' : ''}`}
                   onClick={() => setEditIsPrivate(true)}
-                  style={editIsPrivate ? { backgroundColor: editColor, borderColor: editColor } : {}}
+
                 >
                   Private
                 </button>
@@ -830,15 +887,103 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                 Private habits are only visible to you. Public habits can be viewed by other users.
               </p>
             </div>
+            <div className="form-group">
+              <label>Insights {!isPremium && <span className="premium-badge">Premium</span>}</label>
+              <div className="insights-toggle">
+                <button
+                  type="button"
+                  className={`insights-option ${!editHasInsights ? 'active' : ''}`}
+                  onClick={() => isPremium ? setEditHasInsights(false) : null}
+
+                  disabled={!isPremium && editHasInsights}
+                >
+                  Disabled
+                </button>
+                <button
+                  type="button"
+                  className={`insights-option ${editHasInsights ? 'active' : ''}`}
+                  onClick={() => isPremium ? setEditHasInsights(true) : null}
+
+                  disabled={!isPremium}
+                >
+                  Enabled
+                </button>
+              </div>
+              <p className="insights-description">
+                {isPremium 
+                  ? "Get powerful analytics including streaks, patterns, trends, predictions, and personalized recommendations."
+                  : "🔒 Premium feature: Advanced habit analytics with smart insights, trend analysis, and achievement tracking."
+                }
+              </p>
+              {editHasInsights && isPremium && (
+                <div className="insight-settings">
+                  <p className="insight-settings-label">Choose which insights to display:</p>
+                  <div className="insight-checkboxes">
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={editInsightSettings.showCurrentStreak}
+                        onChange={(e) => setEditInsightSettings(prev => ({
+                          ...prev,
+                          showCurrentStreak: e.target.checked
+                        }))}
+                      />
+                      <span>Current Streak</span>
+                    </label>
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={editInsightSettings.showTotalDays}
+                        onChange={(e) => setEditInsightSettings(prev => ({
+                          ...prev,
+                          showTotalDays: e.target.checked
+                        }))}
+                      />
+                      <span>Total Completions</span>
+                    </label>
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={editInsightSettings.showWeeklyAverage}
+                        onChange={(e) => setEditInsightSettings(prev => ({
+                          ...prev,
+                          showWeeklyAverage: e.target.checked
+                        }))}
+                      />
+                      <span>Weekly Average</span>
+                    </label>
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={editInsightSettings.showPointsMultiplier}
+                        onChange={(e) => setEditInsightSettings(prev => ({
+                          ...prev,
+                          showPointsMultiplier: e.target.checked
+                        }))}
+                      />
+                      <span>Points Multiplier</span>
+                    </label>
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={editInsightSettings.showProgressBar}
+                        onChange={(e) => setEditInsightSettings(prev => ({
+                          ...prev,
+                          showProgressBar: e.target.checked
+                        }))}
+                      />
+                      <span>Progress Bar</span>
+                    </label>
+                  </div>
+                  <div className="insights-note">
+                    <p>📊 Customize which analytics to display for this habit</p>
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="dialog-buttons">
               <button 
                 onClick={handleEdit}
-                style={{ 
-                  backgroundColor: editColor, 
-                  borderColor: editColor,
-                  boxShadow: 'none',
-                  transform: 'none'
-                }}
                 className="save-button"
               >
                 Save
@@ -848,6 +993,66 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+      
+      {/* Bottom stats section with insights and tier progress */}
+      {insights && habit.insight_settings && isPremium && (
+        <div className="bottom-stats-section">
+          {/* Premium insights section */}
+          <div className="insights-bottom">
+            {habit.insight_settings.showCurrentStreak && (
+              <span className="insight-item">
+                <span className="insight-value">{insights.currentStreak}</span> day streak
+              </span>
+            )}
+            {habit.insight_settings.showPointsMultiplier && (
+              <span className="insight-item">
+                <span className="insight-value">{tierStats.streakMultiplier.multiplier}x</span> points multiplier
+              </span>
+            )}
+            {habit.insight_settings.showTotalDays && (
+              <span className="insight-item">
+                <span className="insight-value">{insights.totalCompletions}</span> total
+              </span>
+            )}
+            {habit.insight_settings.showWeeklyAverage && (
+              <span className="insight-item">
+                <span className="insight-value">{insights.weeklyAverage}</span>/week avg
+              </span>
+            )}
+          </div>
+
+          {/* Tier Progress Section */}
+          {habit.insight_settings.showProgressBar && (
+            <div className="tier-progress-bottom">
+              <div className="tier-info-compact">
+                <div className="tier-current-compact">
+                  <span className="tier-icon" style={{ color: tierStats.currentTier.color }}>
+                    {tierStats.currentTier.icon}
+                  </span>
+                  <span className="tier-name-compact">{tierStats.currentTier.name}</span>
+                  <span className="tier-days-compact">{tierStats.totalDays} days</span>
+                </div>
+              </div>
+              <div className="tier-progress-bar-compact">
+                <div 
+                  className="tier-progress-fill-compact" 
+                  style={{ 
+                    width: `${tierStats.tierProgress * 100}%`,
+                    backgroundColor: tierStats.currentTier.color 
+                  }}
+                ></div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Show premium upsell for non-premium users with insights enabled */}
+      {habit.has_insights && !isPremium && (
+        <div className="insights-premium-upsell">
+          <span>🔒 Upgrade to Premium to unlock powerful habit insights</span>
+        </div>
+      )}
     </div>
   );
 };
