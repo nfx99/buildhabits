@@ -1,14 +1,67 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import * as Toast from '@radix-ui/react-toast';
-import SignIn from './Sign-In/SignIn';
-import MainPage from './MainPage/MainPage';
-import LandingPage from './LandingPage/LandingPage';
-import UserProfile from './UserProfile/UserProfile';
-import PaymentSuccess from './PaymentSuccess';
-import PaymentCancelled from './PaymentCancelled';
-import EmailConfirmation from './EmailConfirmation';
 import { supabase } from './config/supabase';
+
+// Lazy load heavy dependencies
+const SignIn = lazy(() => import('./Sign-In/SignIn'));
+const MainPage = lazy(() => import('./MainPage/MainPage'));
+const LandingPage = lazy(() => import('./LandingPage/LandingPage'));
+const UserProfile = lazy(() => import('./UserProfile/UserProfile'));
+const PaymentSuccess = lazy(() => import('./PaymentSuccess'));
+const PaymentCancelled = lazy(() => import('./PaymentCancelled'));
+const EmailConfirmation = lazy(() => import('./EmailConfirmation'));
+
+// Preload critical components for better UX
+const preloadCriticalComponents = () => {
+  // Preload the most commonly used components
+  import('./MainPage/MainPage');
+  import('./LandingPage/LandingPage');
+};
+
+// Start preloading after initial render
+if (typeof window !== 'undefined') {
+  setTimeout(preloadCriticalComponents, 1000);
+}
+
+// Loading component
+const LoadingSpinner = () => (
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+    background: '#FFFFFF',
+    color: '#14000A',
+    fontFamily: 'system-ui, -apple-system, sans-serif'
+  }}>
+    <div style={{
+      textAlign: 'center',
+      padding: '2rem'
+    }}>
+      <div style={{
+        width: '40px',
+        height: '40px',
+        border: '3px solid #E5E7EB',
+        borderTop: '3px solid #000000',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+        margin: '0 auto 1rem'
+      }}></div>
+      <div style={{
+        fontSize: '1rem',
+        color: '#6B7280',
+        fontWeight: '500'
+      }}>Loading...</div>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  </div>
+);
 
 function App() {
   const [session, setSession] = React.useState(null);
@@ -65,39 +118,41 @@ function App() {
   return (
     <Router>
       <Toast.Provider>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              isEmailConfirmation ? (
-                <Navigate to="/email-confirmed" />
-              ) : session ? (
-                <MainPage session={session} />
-              ) : (
-                <LandingPage onGetStarted={handleGetStarted} />
-              )
-            }
-          />
-          <Route
-            path="/signin"
-            element={
-              isEmailConfirmation ? (
-                <Navigate to="/email-confirmed" />
-              ) : session ? (
-                <Navigate to="/" />
-              ) : (
-                <SignIn />
-              )
-            }
-          />
-          <Route 
-            path="/user/:userId" 
-            element={<UserProfile session={session} />} 
-          />
-          <Route path="/email-confirmed" element={<EmailConfirmation />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/payment-cancelled" element={<PaymentCancelled />} />
-        </Routes>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                isEmailConfirmation ? (
+                  <Navigate to="/email-confirmed" />
+                ) : session ? (
+                  <MainPage session={session} />
+                ) : (
+                  <LandingPage onGetStarted={handleGetStarted} />
+                )
+              }
+            />
+            <Route
+              path="/signin"
+              element={
+                isEmailConfirmation ? (
+                  <Navigate to="/email-confirmed" />
+                ) : session ? (
+                  <Navigate to="/" />
+                ) : (
+                  <SignIn />
+                )
+              }
+            />
+            <Route 
+              path="/user/:userId" 
+              element={<UserProfile session={session} />} 
+            />
+            <Route path="/email-confirmed" element={<EmailConfirmation />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+          </Routes>
+        </Suspense>
         <Toast.Viewport className="toast-viewport" />
       </Toast.Provider>
     </Router>
