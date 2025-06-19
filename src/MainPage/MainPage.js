@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy } from 'react';
 import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -22,14 +22,19 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
+// Lazy load Friends component
+const Friends = lazy(() => import('../Friends/Friends'));
+
 const MainPage = ({ session }) => {
   const [habits, setHabits] = useState([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] = useState(false);
+  const [isFriendsDialogOpen, setIsFriendsDialogOpen] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
   const [habitEditDialogStates, setHabitEditDialogStates] = useState({});
+  const [showShareSuccess, setShowShareSuccess] = useState(false);
 
   const [isQuantifiable, setIsQuantifiable] = useState(false);
   const [targetValue, setTargetValue] = useState('');
@@ -815,6 +820,25 @@ const MainPage = ({ session }) => {
     }
   };
 
+  const handleShareProfile = async () => {
+    try {
+      const profileUrl = `${window.location.origin}/user/${session.user.id}`;
+      await navigator.clipboard.writeText(profileUrl);
+      setShowShareSuccess(true);
+      setToastMessage('Profile link copied to clipboard!');
+      setShowToast(true);
+      
+      // Reset share success state after 2 seconds
+      setTimeout(() => {
+        setShowShareSuccess(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      setToastMessage('Error copying link to clipboard');
+      setShowToast(true);
+    }
+  };
+
   const handleDragEnd = useCallback(async (event) => {
     const { active, over } = event;
 
@@ -952,6 +976,20 @@ const MainPage = ({ session }) => {
         </div>
         <h1> {'Build Habits'}</h1>
         <div className="header-right">
+          <button 
+            className="quick-share-button"
+            onClick={handleShareProfile}
+            title="Share your profile"
+          >
+            Share
+          </button>
+          <button 
+            className="friends-button"
+            onClick={() => setIsFriendsDialogOpen(true)}
+            title="Manage friends"
+          >
+            👥 Friends
+          </button>
           <button className="profile-button" onClick={() => setIsProfileDialogOpen(true)}>
             Profile
           </button>
@@ -1367,6 +1405,17 @@ const MainPage = ({ session }) => {
                   </div>
                 </div>
 
+                <div className="profile-sharing">
+                  <h4>Share Your Profile</h4>
+                  <p>Share your public habits with friends and family</p>
+                  <button 
+                    className={`share-profile-button ${showShareSuccess ? 'shared' : ''}`}
+                    onClick={handleShareProfile}
+                  >
+                    {showShareSuccess ? '✓ Copied!' : 'Share Profile'}
+                  </button>
+                </div>
+
                 {!hasPaid && (
                   <div className="profile-upgrade">
                     <h4>🚀 Upgrade to Pro</h4>
@@ -1440,6 +1489,14 @@ const MainPage = ({ session }) => {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      <React.Suspense fallback={<div className="loading">Loading...</div>}>
+        <Friends 
+          session={session}
+          isOpen={isFriendsDialogOpen}
+          onClose={() => setIsFriendsDialogOpen(false)}
+        />
+      </React.Suspense>
 
       <Toast.Root
         className="toast-root"

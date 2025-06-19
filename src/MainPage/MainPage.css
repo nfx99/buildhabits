@@ -281,14 +281,58 @@ body {
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  justify-content: center;
-  white-space: nowrap;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.quick-share-button {
+  background: var(--accent-primary);
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-share-button:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.friends-button {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.friends-button:hover {
+  background: var(--accent-hover);
+  color: white;
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
 }
 
 .profile-button:hover {
   background: var(--accent-hover);
   color: white;
   border-color: var(--accent-hover);
+  transform: translateY(-1px);
 }
 
 .habits-container {
@@ -806,11 +850,10 @@ body {
 }
 
 .stat-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.75px;
-  font-weight: 600;
+  text-align: center;
+  margin-top: 0.25rem;
 }
 
 .profile-upgrade {
@@ -1419,130 +1462,115 @@ body {
 /* Responsive styles */
 @media (max-width: 1200px) {
   .header {
-    flex-direction: column;
+    padding: 1rem 1.5rem;
+    flex-wrap: wrap;
     gap: 1rem;
-    padding: 1rem;
   }
 
   .header h1 {
+    font-size: 1.75rem;
     position: static;
     transform: none;
-    order: -1;
   }
 
   .header-left,
   .header-right {
-    width: 100%;
-    justify-content: center;
+    min-width: auto;
+    flex: 1;
   }
 
-
-
   .user-search-input {
-    width: 100%;
-    max-width: 300px;
-    font-size: 16px; /* Prevent zoom on iOS */
-    min-height: 44px; /* Touch-friendly */
+    width: 200px;
   }
 
   .habits-container {
-    padding: 0 0.5rem;
+    padding: 0 1.5rem;
   }
 
   .habits-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.5rem;
+    gap: 1rem;
   }
 
   .habits-header-left {
-    width: auto;
+    order: 1;
   }
 
   .habits-header-controls {
+    order: 2;
     flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
+    gap: 1rem;
   }
 
   .calendar-view-toggle {
-    transform: none;
     justify-content: center;
   }
 
   .view-toggle-btn {
-    min-height: 44px; /* Touch-friendly */
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
+    flex: 1;
+    max-width: 120px;
   }
 
   .habit-search-container {
     width: 100%;
-    transform: none;
   }
 
   .habit-search-input {
-    font-size: 16px; /* Prevent zoom on iOS */
-    min-height: 44px; /* Touch-friendly */
+    width: 100%;
   }
 
   .create-habit-button {
     width: 100%;
-    justify-content: center;
-    min-height: 48px; /* Touch-friendly */
+    padding: 0.75rem 1rem;
     font-size: 1rem;
   }
 
   .habits-grid {
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: 1.5rem;
   }
 
-  /* Mobile-friendly profile button */
   .profile-button {
-    min-height: 44px; /* Touch-friendly */
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
   }
 
-  /* Mobile dialog improvements */
+  .quick-share-button {
+    display: none;
+  }
+
+  .friends-button {
+    display: none;
+  }
+
   .dialog-content {
-    width: 92vw;
-    max-width: 92vw;
-    max-height: 85vh;
-    margin: 0.75rem auto;
-    padding: 1rem;
-    overflow-y: auto;
-    border-radius: 12px;
+    margin: 1rem;
+    padding: 1.5rem;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
   }
 
   .dialog-buttons {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
 
   .dialog-buttons button {
     width: 100%;
-    min-height: 44px; /* Touch-friendly */
-    padding: 0.875rem;
-    font-size: 1rem;
+    padding: 0.75rem;
   }
 
-  /* Mobile form improvements */
   .form-group input,
   .form-group select {
-    font-size: 16px; /* Prevent zoom on iOS */
-    min-height: 44px; /* Touch-friendly */
     padding: 0.75rem;
-    box-sizing: border-box;
+    font-size: 1rem;
   }
 
   .checkbox-label,
   .quantifiable-checkbox-label {
-    min-height: 44px; /* Touch-friendly */
     padding: 0.75rem;
-    display: flex;
-    align-items: center;
+    font-size: 1rem;
   }
 
   .tracking-type-toggle,
@@ -1556,26 +1584,19 @@ body {
   .privacy-option,
   .insights-option {
     width: 100%;
-    min-height: 44px; /* Touch-friendly */
     padding: 0.75rem;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 1rem;
   }
 
   .insight-checkboxes {
-    grid-template-columns: 1fr;
-    gap: 0.375rem;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   .insight-checkbox-label {
-    font-size: 0.75rem;
-    min-height: 44px; /* Touch-friendly */
     padding: 0.5rem;
+    font-size: 0.9rem;
   }
-
-
 }
 
 @media (max-width: 480px) {
@@ -1773,4 +1794,60 @@ body {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.9rem;
+}
+
+.profile-sharing {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+}
+
+.profile-sharing h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.profile-sharing p {
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.share-profile-button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.share-profile-button:hover:not(.shared) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.share-profile-button.shared {
+  background: var(--success);
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.share-profile-button.shared:hover {
+  background: var(--success);
 } 

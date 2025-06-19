@@ -44,6 +44,130 @@
   transform: translateX(-2px);
 }
 
+.share-button {
+  background: var(--accent-primary);
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: static;
+  align-self: flex-end;
+  order: -1;
+}
+
+.share-button:hover:not(.shared) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.share-button.shared {
+  background: var(--success);
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.share-button.shared:hover {
+  background: var(--success);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: static;
+  align-self: flex-end;
+  order: -1;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.friend-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-friend-btn,
+.cancel-request-btn,
+.accept-friend-btn,
+.reject-friend-btn,
+.remove-friend-btn {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.add-friend-btn {
+  background: var(--success);
+  color: white;
+}
+
+.add-friend-btn:hover {
+  background: var(--success-hover);
+  transform: translateY(-1px);
+}
+
+.cancel-request-btn {
+  background: var(--warning);
+  color: white;
+}
+
+.cancel-request-btn:hover {
+  background: var(--warning-hover);
+  transform: translateY(-1px);
+}
+
+.accept-friend-btn {
+  background: var(--success);
+  color: white;
+}
+
+.accept-friend-btn:hover {
+  background: var(--success-hover);
+  transform: translateY(-1px);
+}
+
+.reject-friend-btn {
+  background: var(--error);
+  color: white;
+}
+
+.reject-friend-btn:hover {
+  background: var(--error-hover);
+  transform: translateY(-1px);
+}
+
+.remove-friend-btn {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.remove-friend-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.friend-request-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .user-info {
   text-align: center;
 }
@@ -158,6 +282,25 @@
     order: -1;
   }
 
+  .share-button {
+    position: static;
+    align-self: flex-end;
+    order: -1;
+  }
+
+  .header-actions {
+    position: static;
+    align-self: flex-end;
+    order: -1;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .friend-request-actions {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
   .user-info h1 {
     font-size: 2rem;
   }
@@ -178,6 +321,10 @@
 
   .user-profile-header .back-button {
     left: 1rem;
+  }
+
+  .share-button {
+    right: 1rem;
   }
 
   .user-info h1 {
