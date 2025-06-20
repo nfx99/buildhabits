@@ -1252,14 +1252,12 @@ const MainPage = ({ session }) => {
               )}
               {!hasPaid && (
                 <div className="premium-insights-preview">
-                  <h4>🚀 Premium Insights Include:</h4>
+                  <h4>🚀 Upgrade to Premium</h4>
                   <ul>
-                    <li>📊 Current streak tracking</li>
-                    <li>📈 Weekly average analysis</li>
-                    <li>📋 Total completion counts</li>
+                    <li>♾️ Unlimited habits (no more 2-habit limit!)</li>
+                    <li>📊 Advanced analytics & insights</li>
+                    <li>📈 Trend analysis & predictions</li>
                     <li>🏆 Achievement badges & milestones</li>
-                    <li>💡 Motivational progress tracking</li>
-                    <li>✨ Smart habit analytics</li>
                   </ul>
                   <button 
                     className="upgrade-insights-button"
@@ -1291,8 +1289,8 @@ const MainPage = ({ session }) => {
             <Dialog.Title>Upgrade to Premium</Dialog.Title>
             <Dialog.Description>
               <div className="payment-content">
-                <h3>🚀 Go Premium!</h3>
-                <p>Unlock unlimited habits, smart insights with trend analysis, achievement badges, and advanced analytics to supercharge your habit building journey.</p>
+                <h3>🚀 Unlock Unlimited Habits!</h3>
+                <p>Break free from the 2-habit limit! Upgrade to Premium and create unlimited habits with advanced analytics, smart insights, trend analysis, and achievement badges to supercharge your habit building journey.</p>
                 
                 <button 
                   className="payment-price-button"
@@ -1376,18 +1374,6 @@ const MainPage = ({ session }) => {
                   </div>
                 </div>
                 
-                <div className="profile-preferences">
-                  <h4>Display Preferences</h4>
-                  <label className="preference-toggle">
-                    <input
-                      type="checkbox"
-                      checked={showUserPoints}
-                      onChange={(e) => setShowUserPoints(e.target.checked)}
-                    />
-                    <span>Show points in header</span>
-                  </label>
-                </div>
-                
                 <div className="profile-stats">
                   <div className="stat">
                     <div className="stat-number">{habits.length}</div>
@@ -1405,21 +1391,10 @@ const MainPage = ({ session }) => {
                   </div>
                 </div>
 
-                <div className="profile-sharing">
-                  <h4>Share Your Profile</h4>
-                  <p>Share your public habits with friends and family</p>
-                  <button 
-                    className={`share-profile-button ${showShareSuccess ? 'shared' : ''}`}
-                    onClick={handleShareProfile}
-                  >
-                    {showShareSuccess ? '✓ Copied!' : 'Share Profile'}
-                  </button>
-                </div>
-
                 {!hasPaid && (
                   <div className="profile-upgrade">
-                    <h4>🚀 Upgrade to Pro</h4>
-                    <p>Unlock unlimited habits, smart insights, trend analysis, and achievement badges</p>
+                    <h4>🚀 Unlock Unlimited Habits!</h4>
+                    <p>Break free from the 2-habit limit! Get unlimited habits plus smart insights, trend analysis, and achievement badges</p>
                     <button 
                       className="upgrade-button"
                       onClick={handleUpgrade}

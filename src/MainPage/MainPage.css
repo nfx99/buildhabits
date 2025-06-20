@@ -638,7 +638,7 @@ body {
 
 /* Profile Dialog Styles */
 .profile-dialog {
-  max-width: 450px;
+  max-width: 550px;
   text-align: center;
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
@@ -648,7 +648,7 @@ body {
 .profile-content {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   margin: 1.5rem 0;
   padding: 0 1rem;
 }
@@ -891,21 +891,20 @@ body {
 }
 
 .upgrade-button {
-  background: linear-gradient(135deg, #000000 0%, #333333 100%);
-  color: white;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #000;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
 }
 
 .upgrade-button:hover {
-  background: linear-gradient(135deg, #333333 0%, #000000 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(255, 215, 0, 0.4);
 }
 
 /* Delete account button styles */
@@ -1409,13 +1408,14 @@ body {
   color: var(--text-primary);
   font-size: 1rem;
   font-weight: 600;
+  text-align: center;
 }
 
 .premium-insights-preview ul {
   list-style: none;
   padding: 0;
   margin: 0 0 1rem 0;
-  text-align: left;
+  text-align: center;
 }
 
 .premium-insights-preview li {
@@ -1439,7 +1439,6 @@ body {
 }
 
 .upgrade-insights-button:hover {
-  background: linear-gradient(135deg, #FFA500 0%, #FFD700 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(255, 215, 0, 0.4);
 }

@@ -211,6 +211,7 @@
 
 .add-friend-btn,
 .cancel-request-btn,
+.incoming-request-btn,
 .accept-friend-btn,
 .reject-friend-btn,
 .remove-friend-btn {
@@ -242,6 +243,13 @@
 .cancel-request-btn:hover {
   background: var(--warning-hover);
   transform: translateY(-1px);
+}
+
+.incoming-request-btn {
+  background-color: #e0e0e0;
+  color: #555;
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
 .accept-friend-btn {

@@ -13,71 +13,130 @@ const Friends = ({ session, isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('friends'); // 'friends', 'requests', 'add'
   const [loading, setLoading] = useState(true);
 
-  // Fetch friends list
-  const fetchFriends = useCallback(async () => {
+  // Fetch user details for a given user ID
+  const fetchUserDetails = useCallback(async (userId) => {
     try {
       const { data, error } = await supabase
-        .from('friendships')
-        .select(`
-          *,
-          friend:user_profiles!friendships_friend_id_fkey(
-            user_id,
-            username
-          )
-        `)
-        .eq('user_id', session.user.id)
-        .eq('status', 'accepted');
+        .from('user_profiles')
+        .select('user_id, username')
+        .eq('user_id', userId)
+        .single();
 
-      if (error) throw error;
-      setFriends(data || []);
+      if (error) {
+        console.error('Error fetching user details:', error);
+        return null;
+      }
+      return data;
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      return null;
+    }
+  }, []);
+
+  // Fetch friends list with user details
+  const fetchFriends = useCallback(async () => {
+    try {
+      console.log('Fetching friends for user:', session.user.id);
+      const { data, error } = await supabase
+        .from('friendships')
+        .select('*')
+        .eq('status', 'accepted')
+        .or(`user_id.eq.${session.user.id},friend_id.eq.${session.user.id}`);
+
+      if (error) {
+        console.error('Supabase error fetching friends:', error);
+        throw error;
+      }
+      console.log('Friends data:', data);
+      
+      // Fetch user details for each friend and normalize the data
+      const friendsWithDetails = await Promise.all(
+        (data || []).map(async (friendship) => {
+          // Determine which user is the friend (not the current user)
+          const friendId = friendship.user_id === session.user.id 
+            ? friendship.friend_id 
+            : friendship.user_id;
+          
+          const userDetails = await fetchUserDetails(friendId);
+          return {
+            ...friendship,
+            friend_id: friendId, // Normalize to always have friend_id as the other user
+            friend: userDetails
+          };
+        })
+      );
+      
+      setFriends(friendsWithDetails);
     } catch (error) {
       console.error('Error fetching friends:', error);
     }
-  }, [session.user.id]);
+  }, [session.user.id, fetchUserDetails]);
 
   // Fetch incoming friend requests
   const fetchFriendRequests = useCallback(async () => {
     try {
+      console.log('Fetching friend requests for user:', session.user.id);
       const { data, error } = await supabase
         .from('friendships')
-        .select(`
-          *,
-          requester:user_profiles!friendships_user_id_fkey(
-            user_id,
-            username
-          )
-        `)
+        .select('*')
         .eq('friend_id', session.user.id)
         .eq('status', 'pending');
 
-      if (error) throw error;
-      setFriendRequests(data || []);
+      if (error) {
+        console.error('Supabase error fetching friend requests:', error);
+        throw error;
+      }
+      console.log('Friend requests data:', data);
+      
+      // Fetch user details for each requester
+      const requestsWithDetails = await Promise.all(
+        (data || []).map(async (friendship) => {
+          const userDetails = await fetchUserDetails(friendship.user_id);
+          return {
+            ...friendship,
+            requester: userDetails
+          };
+        })
+      );
+      
+      setFriendRequests(requestsWithDetails);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
     }
-  }, [session.user.id]);
+  }, [session.user.id, fetchUserDetails]);
 
   // Fetch outgoing friend requests
   const fetchPendingRequests = useCallback(async () => {
     try {
+      console.log('Fetching pending requests for user:', session.user.id);
       const { data, error } = await supabase
         .from('friendships')
-        .select(`
-          *,
-          friend:user_profiles!friendships_friend_id_fkey(
-            user_id,
-            username
-          )
-        `)
+        .select('*')
         .eq('user_id', session.user.id)
         .eq('status', 'pending');
 
-      if (error) throw error;
-      setPendingRequests(data || []);
+      if (error) {
+        console.error('Supabase error fetching pending requests:', error);
+        throw error;
+      }
+      console.log('Pending requests data:', data);
+      
+      // Fetch user details for each friend
+      const pendingWithDetails = await Promise.all(
+        (data || []).map(async (friendship) => {
+          const userDetails = await fetchUserDetails(friendship.friend_id);
+          return {
+            ...friendship,
+            friend: userDetails
+          };
+        })
+      );
+      
+      setPendingRequests(pendingWithDetails);
     } catch (error) {
       console.error('Error fetching pending requests:', error);
     }
-  }, [session.user.id]);
+  }, [session.user.id, fetchUserDetails]);
 
   // Search for users to add as friends
   const searchUsers = useCallback(async (query) => {
@@ -109,7 +168,8 @@ const Friends = ({ session, isOpen, onClose }) => {
   // Send friend request
   const sendFriendRequest = async (friendId) => {
     try {
-      const { error } = await supabase
+      console.log('Sending friend request from', session.user.id, 'to', friendId);
+      const { data, error } = await supabase
         .from('friendships')
         .insert([
           {
@@ -117,9 +177,15 @@ const Friends = ({ session, isOpen, onClose }) => {
             friend_id: friendId,
             status: 'pending'
           }
-        ]);
+        ])
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error sending friend request:', error);
+        throw error;
+      }
+      
+      console.log('Friend request sent successfully:', data);
       
       // Refresh pending requests
       await fetchPendingRequests();
@@ -135,12 +201,19 @@ const Friends = ({ session, isOpen, onClose }) => {
   // Accept friend request
   const acceptFriendRequest = async (friendshipId) => {
     try {
-      const { error } = await supabase
+      console.log('Accepting friend request with ID:', friendshipId);
+      const { data, error } = await supabase
         .from('friendships')
         .update({ status: 'accepted' })
-        .eq('id', friendshipId);
+        .eq('id', friendshipId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error accepting friend request:', error);
+        throw error;
+      }
+      
+      console.log('Friend request accepted successfully:', data);
       
       // Refresh friends and requests
       await Promise.all([fetchFriends(), fetchFriendRequests()]);
@@ -257,9 +330,6 @@ const Friends = ({ session, isOpen, onClose }) => {
               onClick={() => setActiveTab('requests')}
             >
               Requests ({friendRequests.length + pendingRequests.length})
-              {friendRequests.length > 0 && (
-                <span className="notification-badge">{friendRequests.length}</span>
-              )}
             </button>
             <button
               className={`tab-button ${activeTab === 'add' ? 'active' : ''}`}

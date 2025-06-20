@@ -23,12 +23,12 @@
 
 .sign-in-box {
   background: var(--bg-card);
-  padding: 2.5rem 2rem;
+  padding: 3.5rem 3rem;
   border-radius: 12px;
   box-shadow: var(--shadow-primary);
   border: 1px solid var(--border-primary);
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
   position: relative;
   z-index: 1;
   backdrop-filter: blur(8px);
@@ -37,10 +37,10 @@
 
 .sign-in-box h2 {
   font-family: 'Leckerli One', cursive;
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 400;
   color: var(--text-primary);
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   text-align: center;
   letter-spacing: 0;
 }
@@ -48,8 +48,8 @@
 .sign-in-box .form-group input {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  font-size: 0.95rem;
-  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  padding: 1rem 1.25rem;
   color: var(--text-primary);
   border-radius: 8px;
   box-sizing: border-box;
@@ -60,16 +60,16 @@
 
 .sign-in-container button[type="submit"] {
   width: 100%;
-  padding: 0.875rem 1rem;
+  padding: 1rem 1.25rem;
   background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
 }
@@ -200,7 +200,7 @@
   }
 
   .sign-in-box {
-    padding: 2rem 1.5rem;
+    padding: 3rem 2rem;
     max-width: none;
   }
 
@@ -212,36 +212,21 @@
 
   .sign-in-box .form-group input {
     font-size: 16px !important; /* Prevent zoom on iOS */
-    min-height: 44px; /* Touch-friendly */
-    padding: 0.75rem 1rem !important;
-  }
-
-  .sign-in-container button[type="submit"] {
-    min-height: 48px; /* Touch-friendly */
-    font-size: 1rem;
-  }
-
-  .forgot-password-link,
-  .toggle-auth {
-    min-height: 44px; /* Touch-friendly */
-    padding: 0.5rem;
-    display: inline-block;
   }
 }
 
 @media (max-width: 480px) {
   .sign-in-box {
-    padding: 1.5rem 1rem;
-    margin: 0.5rem;
+    padding: 2.5rem 1.5rem;
   }
 
   .sign-in-box h2 {
-    font-size: 1.75rem;
+    font-size: 2rem;
   }
 
   .back-button {
-    top: 0.5rem;
-    left: 0.5rem;
+    top: 0.75rem;
+    left: 0.75rem;
   }
 }
 

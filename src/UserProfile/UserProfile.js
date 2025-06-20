@@ -53,9 +53,6 @@ const UserProfile = ({ session }) => {
   }, [userId]);
 
   const checkFriendStatus = useCallback(async () => {
-    if (!session || !userId) return;
-    
-    // Check if this is the user's own profile
     if (session.user.id === userId) {
       setIsOwnProfile(true);
       setFriendStatus('own');
@@ -63,6 +60,7 @@ const UserProfile = ({ session }) => {
     }
 
     try {
+      console.log('Checking friend status between', session.user.id, 'and', userId);
       // Check if they are friends
       const { data: friendship, error } = await supabase
         .from('friendships')
@@ -70,17 +68,26 @@ const UserProfile = ({ session }) => {
         .or(`and(user_id.eq.${session.user.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${session.user.id})`)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error checking friend status:', error);
+        throw error;
+      }
+
+      console.log('Friendship data:', friendship);
 
       if (friendship) {
         if (friendship.status === 'accepted') {
+          console.log('Setting friend status to: friend');
           setFriendStatus('friend');
         } else if (friendship.user_id === session.user.id) {
+          console.log('Setting friend status to: pending (outgoing request)');
           setFriendStatus('pending');
         } else {
+          console.log('Setting friend status to: incoming (incoming request)');
           setFriendStatus('incoming');
         }
       } else {
+        console.log('Setting friend status to: none (no friendship)');
         setFriendStatus('none');
       }
     } catch (error) {
@@ -122,7 +129,8 @@ const UserProfile = ({ session }) => {
 
   const sendFriendRequest = async () => {
     try {
-      const { error } = await supabase
+      console.log('Sending friend request from', session.user.id, 'to', userId);
+      const { data, error } = await supabase
         .from('friendships')
         .insert([
           {
@@ -130,9 +138,15 @@ const UserProfile = ({ session }) => {
             friend_id: userId,
             status: 'pending'
           }
-        ]);
+        ])
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error sending friend request:', error);
+        throw error;
+      }
+      
+      console.log('Friend request sent successfully:', data);
       setFriendStatus('pending');
     } catch (error) {
       console.error('Error sending friend request:', error);
@@ -141,13 +155,20 @@ const UserProfile = ({ session }) => {
 
   const acceptFriendRequest = async () => {
     try {
-      const { error } = await supabase
+      console.log('Accepting friend request from', userId);
+      const { data, error } = await supabase
         .from('friendships')
         .update({ status: 'accepted' })
         .eq('user_id', userId)
-        .eq('friend_id', session.user.id);
+        .eq('friend_id', session.user.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error accepting friend request:', error);
+        throw error;
+      }
+      
+      console.log('Friend request accepted successfully:', data);
       setFriendStatus('friend');
     } catch (error) {
       console.error('Error accepting friend request:', error);
@@ -156,13 +177,19 @@ const UserProfile = ({ session }) => {
 
   const rejectFriendRequest = async () => {
     try {
+      console.log('Rejecting friend request from', userId);
       const { error } = await supabase
         .from('friendships')
         .delete()
         .eq('user_id', userId)
         .eq('friend_id', session.user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error rejecting friend request:', error);
+        throw error;
+      }
+      
+      console.log('Friend request rejected successfully');
       setFriendStatus('none');
     } catch (error) {
       console.error('Error rejecting friend request:', error);
@@ -171,12 +198,18 @@ const UserProfile = ({ session }) => {
 
   const removeFriend = async () => {
     try {
+      console.log('Removing friend relationship with', userId);
       const { error } = await supabase
         .from('friendships')
         .delete()
         .or(`and(user_id.eq.${session.user.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${session.user.id})`);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error removing friend:', error);
+        throw error;
+      }
+      
+      console.log('Friend removed successfully');
       setFriendStatus('none');
     } catch (error) {
       console.error('Error removing friend:', error);
@@ -185,13 +218,19 @@ const UserProfile = ({ session }) => {
 
   const cancelPendingRequest = async () => {
     try {
+      console.log('Canceling pending friend request to', userId);
       const { error } = await supabase
         .from('friendships')
         .delete()
         .eq('user_id', session.user.id)
         .eq('friend_id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error canceling pending request:', error);
+        throw error;
+      }
+      
+      console.log('Pending friend request canceled successfully');
       setFriendStatus('none');
     } catch (error) {
       console.error('Error canceling pending request:', error);
@@ -244,26 +283,17 @@ const UserProfile = ({ session }) => {
                   onClick={cancelPendingRequest}
                   title="Cancel friend request"
                 >
-                  ⏳ Cancel Request
+                  ⏳ Request Sent
                 </button>
               )}
               {friendStatus === 'incoming' && (
-                <div className="friend-request-actions">
-                  <button 
-                    className="accept-friend-btn"
-                    onClick={acceptFriendRequest}
-                    title="Accept friend request"
-                  >
-                    ✓ Accept
-                  </button>
-                  <button 
-                    className="reject-friend-btn"
-                    onClick={rejectFriendRequest}
-                    title="Reject friend request"
-                  >
-                    ✕ Reject
-                  </button>
-                </div>
+                <button
+                  className="incoming-request-btn"
+                  disabled
+                  title="You have an incoming friend request from this user. Please check your Friends tab."
+                >
+                  ✉️ Incoming Request
+                </button>
               )}
               {friendStatus === 'friend' && (
                 <button 
@@ -271,7 +301,7 @@ const UserProfile = ({ session }) => {
                   onClick={removeFriend}
                   title="Remove friend"
                 >
-                  👥 Friends
+                  👥 Remove Friend
                 </button>
               )}
             </div>
