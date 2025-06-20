@@ -7,41 +7,19 @@
   align-items: center;
   min-height: 100vh;
   background: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(0, 0, 0, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.02) 0%, transparent 50%),
+    linear-gradient(45deg, transparent 40%, rgba(0, 0, 0, 0.01) 50%, transparent 60%),
+    linear-gradient(-45deg, transparent 40%, rgba(0, 0, 0, 0.01) 50%, transparent 60%);
+  background-size: 100px 100px, 150px 150px, 50px 50px, 50px 50px;
+  background-position: 0 0, 50px 50px, 0 0, 25px 25px;
   position: relative;
   overflow: hidden;
   padding: 1rem;
   box-sizing: border-box;
 }
 
-/* Subtle animated background */
-.sign-in-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 80%, var(--accent-primary) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, var(--accent-secondary) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, var(--success) 0%, transparent 50%);
-  filter: blur(100px);
-  opacity: 0.03;
-  animation: bgAnimation 20s ease infinite alternate;
-  z-index: 0;
-}
-
-@keyframes bgAnimation {
-  0% {
-    transform: scale(1) rotate(0deg);
-  }
-  50% {
-    transform: scale(1.1) rotate(3deg);
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
-  }
-}
 
 .sign-in-box {
   background: var(--bg-card);
@@ -67,37 +45,18 @@
   letter-spacing: 0;
 }
 
-.form-group {
-  margin-bottom: 1.25rem;
-  width: 100%;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  font-size: 0.875rem;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 0.75rem 1rem;
+.sign-in-box .form-group input {
+  background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
   font-size: 0.95rem;
-  background: var(--bg-primary);
+  padding: 0.75rem 1rem;
   color: var(--text-primary);
-  transition: all 0.2s ease;
+  border-radius: 8px;
   box-sizing: border-box;
+  width: 100%;
+  transition: all 0.2s ease;
 }
 
-.form-group input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
-  background: var(--bg-primary);
-}
 
 .sign-in-container button[type="submit"] {
   width: 100%;
@@ -251,9 +210,10 @@
     min-height: 44px; /* Touch-friendly */
   }
 
-  .form-group input {
-    font-size: 16px; /* Prevent zoom on iOS */
+  .sign-in-box .form-group input {
+    font-size: 16px !important; /* Prevent zoom on iOS */
     min-height: 44px; /* Touch-friendly */
+    padding: 0.75rem 1rem !important;
   }
 
   .sign-in-container button[type="submit"] {

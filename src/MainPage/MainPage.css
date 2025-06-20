@@ -22,6 +22,13 @@
 /* Optimized theme transitions */
 html {
   background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(0, 0, 0, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.02) 0%, transparent 50%),
+    linear-gradient(45deg, transparent 40%, rgba(0, 0, 0, 0.01) 50%, transparent 60%),
+    linear-gradient(-45deg, transparent 40%, rgba(0, 0, 0, 0.01) 50%, transparent 60%);
+  background-size: 100px 100px, 150px 150px, 50px 50px, 50px 50px;
+  background-position: 0 0, 50px 50px, 0 0, 25px 25px;
   color: var(--text-primary);
 }
 
@@ -29,14 +36,19 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(0, 0, 0, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.02) 0%, transparent 50%),
+    linear-gradient(45deg, transparent 40%, rgba(0, 0, 0, 0.01) 50%, transparent 60%),
+    linear-gradient(-45deg, transparent 40%, rgba(0, 0, 0, 0.01) 50%, transparent 60%);
+  background-size: 100px 100px, 150px 150px, 50px 50px, 50px 50px;
+  background-position: 0 0, 50px 50px, 0 0, 25px 25px;
   color: var(--text-primary);
 }
 
-
-
 .main-page {
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: transparent;
   color: var(--text-primary);
   padding: 0;
   display: flex;
@@ -48,7 +60,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  background: var(--bg-primary);
+  background: transparent;
   margin-bottom: 1rem;
 }
 
@@ -267,8 +279,6 @@ body {
   line-height: 1.5;
 }
 
-
-
 .profile-button {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
@@ -340,6 +350,7 @@ body {
   margin: 0 auto;
   padding: 0 2rem;
   flex: 1;
+  background: transparent;
 }
 
 .create-habit-button {
@@ -387,7 +398,7 @@ body {
   min-height: 100vh;
   font-size: 1.2rem;
   color: var(--text-secondary);
-  background: var(--bg-primary);
+  background: transparent;
 }
 
 /* Dialog styles */
@@ -1153,8 +1164,6 @@ body {
   user-select: none;
 }
 
-
-
 /* Quantifiable checkbox styling */
 .quantifiable-checkbox-label {
   display: flex;
@@ -1629,8 +1638,6 @@ body {
     max-height: 88vh;
   }
 
-
-
   .profile-button {
     padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
@@ -1645,8 +1652,6 @@ body {
     transform: none;
     box-shadow: var(--shadow-primary);
   }
-
-
 
   .tracking-option:hover:not(.active),
   .privacy-option:hover:not(.active),
@@ -1679,8 +1684,7 @@ body {
 .footer {
   margin-top: 4rem;
   padding: 2rem 0 1rem;
-  border-top: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
+  background: transparent;
 }
 
 .footer-content {
@@ -1752,8 +1756,6 @@ body {
   border-radius: 12px;
   padding: 0.5rem 1rem;
 }
-
-
 
 .global-points {
   display: flex;
