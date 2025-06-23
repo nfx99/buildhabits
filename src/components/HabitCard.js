@@ -41,7 +41,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
     showCurrentStreak: true,
     showTotalDays: true,
     showWeeklyAverage: false,
-    showPointsMultiplier: true,
     showProgressBar: true
   });
   const [quantifiableValue, setQuantifiableValue] = React.useState('');
@@ -105,7 +104,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
       showCurrentStreak: true,
       showTotalDays: true,
       showWeeklyAverage: false,
-      showPointsMultiplier: true,
       showProgressBar: true
     });
   }, [habit.name, habit.is_quantifiable, habit.target_value, habit.metric_unit, habit.is_private, habit.has_insights, habit.insight_settings]);
@@ -890,11 +888,11 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                 </button>
               </div>
               <p className="privacy-description">
-                Private habits are only visible to you. Public habits can be viewed by other users.
+                Private habits are only visible to you. Public habits can be viewed by other users
               </p>
             </div>
             <div className="form-group">
-              <label>Insights {!isPremium && <span className="premium-badge">Premium</span>}</label>
+              <label>Analytics {!isPremium && <span className="premium-badge">Premium</span>}</label>
               <div className="insights-toggle">
                 <button
                   type="button"
@@ -917,8 +915,8 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
               </div>
               <p className="insights-description">
                 {isPremium 
-                  ? "Get powerful analytics including streaks, patterns, trends, predictions, and personalized recommendations."
-                  : "🔒 Premium feature: Advanced habit analytics with smart insights, trend analysis, and achievement tracking."
+                  ? "Get powerful analytics including streaks, tracking, and trends"
+                  : "🔒 Premium feature: Advanced habit analytics with ranked progress tracking"
                 }
               </p>
               {editHasInsights && isPremium && (
@@ -961,28 +959,14 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                     <label className="insight-checkbox-label">
                       <input
                         type="checkbox"
-                        checked={editInsightSettings.showPointsMultiplier}
-                        onChange={(e) => setEditInsightSettings(prev => ({
-                          ...prev,
-                          showPointsMultiplier: e.target.checked
-                        }))}
-                      />
-                      <span>Points Multiplier</span>
-                    </label>
-                    <label className="insight-checkbox-label">
-                      <input
-                        type="checkbox"
                         checked={editInsightSettings.showProgressBar}
                         onChange={(e) => setEditInsightSettings(prev => ({
                           ...prev,
                           showProgressBar: e.target.checked
                         }))}
                       />
-                      <span>Progress Bar</span>
+                      <span>Rank Progress Bar</span>
                     </label>
-                  </div>
-                  <div className="insights-note">
-                    <p>📊 Customize which analytics to display for this habit</p>
                   </div>
                 </div>
               )}
@@ -1008,11 +992,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
             {habit.insight_settings.showCurrentStreak && (
               <span className="insight-item">
                 <span className="insight-value">{insights.currentStreak}</span> day streak
-              </span>
-            )}
-            {habit.insight_settings.showPointsMultiplier && (
-              <span className="insight-item">
-                <span className="insight-value">{tierStats.streakMultiplier.multiplier}x</span> points multiplier
               </span>
             )}
             {habit.insight_settings.showTotalDays && (

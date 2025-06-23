@@ -33,6 +33,7 @@ const UserProfile = ({ session }) => {
 
   const fetchUserHabits = useCallback(async () => {
     try {
+      console.log('Fetching habits for user:', userId);
       const { data, error } = await supabase
         .from('habits')
         .select(`
@@ -44,7 +45,12 @@ const UserProfile = ({ session }) => {
         .order('order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching habits:', error);
+        throw error;
+      }
+      
+      console.log('Fetched habits:', data);
       setHabits(data || []);
     } catch (error) {
       console.error('Error fetching user habits:', error);

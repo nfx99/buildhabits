@@ -45,7 +45,6 @@ const MainPage = ({ session }) => {
     showCurrentStreak: true,
     showTotalDays: true,
     showWeeklyAverage: false,
-    showPointsMultiplier: true,
     showProgressBar: true
   });
   const [loading, setLoading] = useState(true);
@@ -1013,7 +1012,7 @@ const MainPage = ({ session }) => {
             </button>
           </div>
           <div className="habits-header-controls">
-            {showUserPoints && (
+            {showUserPoints && hasPaid && (
               <div className="global-stats">
                 <div className="global-points">
                   <span className="points-icon">⭐</span>
@@ -1176,7 +1175,7 @@ const MainPage = ({ session }) => {
                     </button>
                   </div>
                   <p className="privacy-description">
-                    Private habits are only visible to you. Public habits can be viewed by other users.
+                    Private habits are only visible to you. Public habits can be viewed by other users
                   </p>
                 </div>
                             <div className="form-group">
@@ -1203,8 +1202,8 @@ const MainPage = ({ session }) => {
               </div>
               <p className="insights-description">
                 {hasPaid 
-                  ? "Get powerful analytics including streaks, patterns, trends, predictions, and personalized recommendations."
-                  : "🔒 Premium feature: Advanced habit analytics with smart insights, trend analysis, and achievement tracking."
+                  ? "Get powerful analytics including streaks, tracking, and trends"
+                  : "🔒 Premium feature: Advanced habit analytics with ranked progress tracking"
                 }
               </p>
               {hasInsights && hasPaid && (
@@ -1244,9 +1243,17 @@ const MainPage = ({ session }) => {
                       />
                       <span>Weekly Average</span>
                     </label>
-                  </div>
-                  <div className="insights-note">
-                    <p>✨ Achievement badges are automatically displayed when insights are enabled</p>
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={insightSettings.showProgressBar}
+                        onChange={(e) => setInsightSettings(prev => ({
+                          ...prev,
+                          showProgressBar: e.target.checked
+                        }))}
+                      />
+                      <span>Rank Progress Bar</span>
+                    </label>
                   </div>
                 </div>
               )}
@@ -1303,9 +1310,23 @@ const MainPage = ({ session }) => {
               </div>
             </Dialog.Description>
             <div className="dialog-buttons">
-              <button onClick={() => setIsPaymentDialogOpen(false)}>
+              <a 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsPaymentDialogOpen(false);
+                }}
+                style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  opacity: 0.6,
+                  marginTop: '-0.5rem'
+                }}
+              >
                 Maybe Later
-              </button>
+              </a>
             </div>
           </Dialog.Content>
         </Dialog.Portal>
