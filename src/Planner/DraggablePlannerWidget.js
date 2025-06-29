@@ -77,7 +77,18 @@ const DraggablePlannerWidget = ({ session, onRefresh, onHabitClick }) => {
             alignItems: 'center',
             gap: 8,
             letterSpacing: '0.01em',
-            transition: 'background 0.2s, box-shadow 0.2s',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: 'translateY(0)',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-2px) scale(1.02)';
+            e.target.style.boxShadow = '0 4px 16px rgba(0,0,0,0.25)';
+            e.target.style.background = '#222';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0) scale(1)';
+            e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.18)';
+            e.target.style.background = '#111';
           }}
           onClick={() => setVisible(true)}
         >
