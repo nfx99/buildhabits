@@ -150,9 +150,9 @@
 }
 
 .back-button:hover {
-  background: #000000;
+  background: #333333;
   color: white;
-  border-color: #000000;
+  border-color: #333333;
   transform: translateX(-2px);
 }
 
