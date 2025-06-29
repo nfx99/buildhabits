@@ -7,7 +7,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { getHabitStats } from '../utils/tierSystem';
 
-const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, viewMode = 'year', isPremium = false, onEditDialogChange }) => {
+const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = false, viewMode = 'year', isPremium = false, onEditDialogChange, onDeleteDialogChange, onLogProgressDialogChange, onMoreMenuChange }) => {
   const {
     attributes,
     listeners,
@@ -31,6 +31,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [isDateCompleted, setIsDateCompleted] = React.useState(false);
   const [editName, setEditName] = React.useState(habit.name);
+  const [planDate, setPlanDate] = React.useState(null);
 
   const [editIsQuantifiable, setEditIsQuantifiable] = React.useState(habit.is_quantifiable || false);
   const [editTargetValue, setEditTargetValue] = React.useState(habit.target_value || '');
@@ -114,6 +115,27 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
       onEditDialogChange(isEditOpen);
     }
   }, [isEditOpen]); // Only depend on isEditOpen, not the callback function
+
+  // Update delete dialog state change
+  React.useEffect(() => {
+    if (onDeleteDialogChange) {
+      onDeleteDialogChange(isDeleteOpen);
+    }
+  }, [isDeleteOpen]); // Only depend on isDeleteOpen, not the callback function
+
+  // Update log progress dialog state change
+  React.useEffect(() => {
+    if (onLogProgressDialogChange) {
+      onLogProgressDialogChange(isOpen);
+    }
+  }, [isOpen]); // Only depend on isOpen, not the callback function
+
+  // Update more menu state change
+  React.useEffect(() => {
+    if (onMoreMenuChange) {
+      onMoreMenuChange(isMoreOpen);
+    }
+  }, [isMoreOpen]); // Only depend on isMoreOpen, not the callback function
 
   const moreButtonRef = React.useRef(null);
   const tooltipRef = React.useRef(null);
@@ -324,78 +346,30 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
     return months;
   }, [viewMode, selectedYear]);
 
-  const handleDateClick = (date) => {
-    if (!date) return;
-    
-    // Prevent logging for future dates
-    const today = startOfDay(new Date());
-    const selectedDay = startOfDay(date);
-    
-    if (isAfter(selectedDay, today)) {
-      // Don't open dialog for future dates
-      return;
-    }
-    
-    // Find existing completion for this date
-    const existingCompletion = habit.habit_completions?.find(
-      completion => {
-        const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
-        const originalDate = format(date, 'yyyy-MM-dd');
-        return completionDate === originalDate;
-      }
-    );
-    
-    const isCompleted = !!existingCompletion;
-    
-    // Use the original date - no adjustment needed
-    setSelectedDate(date);
-    setIsDateCompleted(isCompleted);
-    
-    // For quantifiable habits, pre-populate the value if it exists
-    if (habit.is_quantifiable && existingCompletion?.value) {
-      setQuantifiableValue(existingCompletion.value.toString());
+  const handleDateClick = (date, isFuture) => {
+    if (isReadOnly) return;
+
+    if (isFuture) {
+      setPlanDate(date); // Open planning confirmation dialog
     } else {
-      setQuantifiableValue('');
+      // Existing logic for past/present dates
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const completion = habit.habit_completions?.find(c => format(new Date(c.date), 'yyyy-MM-dd') === dateStr);
+      setSelectedDate(date);
+      setIsDateCompleted(!!completion);
+
+      if (habit.is_quantifiable) {
+        setQuantifiableValue(completion?.value || '');
+        setIsOpen(true);
+      } else {
+        onComplete(habit.id, date, !!completion);
+      }
     }
-    
-    setIsOpen(true);
   };
 
-  const handleLogToday = React.useCallback(async () => {
-    const today = new Date();
-    
-    if (habit.is_quantifiable) {
-      // For quantifiable habits, open the dialog to input value
-      setSelectedDate(today);
-      const existingCompletion = habit.habit_completions?.find(
-        completion => {
-          const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
-          const todayDate = format(today, 'yyyy-MM-dd');
-          return completionDate === todayDate;
-        }
-      );
-      setIsDateCompleted(!!existingCompletion);
-      if (existingCompletion?.value) {
-        setQuantifiableValue(existingCompletion.value.toString());
-      }
-      setIsOpen(true);
-    } else {
-      // For simple habits, toggle completion directly
-    const isCompleted = habit.habit_completions?.some(
-      completion => {
-        const completionDate = format(new Date(completion.date), 'yyyy-MM-dd');
-        const todayDate = format(today, 'yyyy-MM-dd');
-        return completionDate === todayDate;
-      }
-    ) || false;
-    
-    try {
-      await onComplete(habit.id, today, isCompleted);
-    } catch (error) {
-      // Error is handled by parent component
-    }
-    }
-  }, [habit.id, habit.habit_completions, habit.is_quantifiable, onComplete]);
+  const handleLogToday = () => {
+    handleDateClick(new Date(), false);
+  };
 
   const handleComplete = React.useCallback(async () => {
     try {
@@ -527,6 +501,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
         '--habit-color': habit.color || '#000000'
       }} 
       className="habit-card"
+      data-habit-id={habit.id}
     >
       <div className="habit-header">
         <div className="habit-title-section">
@@ -685,12 +660,12 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                   // Style future dates differently
                   if (isFutureDate && shouldShowCell) {
                     cellStyle.opacity = '0.3';
-                    cellStyle.cursor = 'not-allowed';
+                    cellStyle.cursor = 'pointer';
                   }
                   
                   const tooltipText = shouldShowCell ? 
                     (isFutureDate ? 
-                      `${dayName}, ${dateStr}\nFuture date - cannot log` :
+                      `${dayName}, ${dateStr}\nClick to plan this habit` :
                       (habit.is_quantifiable ? 
                         `${dayName}, ${dateStr}\n${cell.value || 0}/${cell.target || 1} ${habit.metric_unit || 'times'}` :
                         `${dayName}, ${dateStr}${cell.completed ? ' ✓' : ''}`)) : '';
@@ -700,7 +675,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                       key={`${weekday}-${weekIndex}`}
                       className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!shouldShowCell ? 'empty' : ''} ${habit.is_quantifiable && cell.progress > 0 && cell.progress < 1 ? 'partial' : ''} ${isFutureDate ? 'future' : ''}`}
                       style={cellStyle}
-                      onClick={() => !isReadOnly && shouldShowCell && !isFutureDate && handleDateClick(cell.date)}
+                      onClick={() => !isReadOnly && shouldShowCell && handleDateClick(cell.date, isFutureDate)}
                       data-tooltip={tooltipText}
                       onMouseEnter={(e) => shouldShowCell && showTooltip(e)}
                       onMouseLeave={hideTooltip}
@@ -792,7 +767,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
               Are you sure you want to delete "{habit.name}"? This action cannot be undone.
             </Dialog.Description>
             <div className="dialog-buttons">
-              <button className="delete-confirm" onClick={handleDelete}>Delete</button>
+              <button className="delete-habit-button" onClick={handleDelete}>Delete</button>
               <button onClick={() => setIsDeleteOpen(false)}>Cancel</button>
             </div>
           </Dialog.Content>
@@ -979,6 +954,32 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, isReadOnly = false, vi
                 Save
               </button>
               <button onClick={() => setIsEditOpen(false)}>Cancel</button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+      
+      <Dialog.Root open={!!planDate} onOpenChange={() => setPlanDate(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content">
+            <Dialog.Title>Plan Habit</Dialog.Title>
+            <Dialog.Description>
+              Add "{habit.name}" to your planner for {planDate?.toLocaleDateString()}?
+            </Dialog.Description>
+            <div className="dialog-buttons">
+              <button
+                className="save-button"
+                onClick={() => {
+                  if (planDate) {
+                    onPlan(habit.id, format(planDate, 'yyyy-MM-dd'));
+                  }
+                  setPlanDate(null);
+                }}
+              >
+                Confirm
+              </button>
+              <button onClick={() => setPlanDate(null)}>Cancel</button>
             </div>
           </Dialog.Content>
         </Dialog.Portal>

@@ -553,7 +553,7 @@
 
 .heatmap-cell.future {
   opacity: 0.3 !important;
-  cursor: not-allowed !important;
+  cursor: pointer !important;
 }
 
 /* Scrollbar styling */
@@ -637,64 +637,23 @@
   transition: all 0.2s ease;
 }
 
-.habit-card .dialog-buttons button:first-child:not(.save-button) {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-  color: white !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+.habit-card .dialog-buttons button.save-button {
+  background: var(--bg-secondary);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
+  border-color: var(--border-secondary);
+  box-shadow: none;
+  transform: none;
 }
 
-.habit-card .dialog-buttons button:first-child:not(.save-button):hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* Override any :first-child rules for save button */
-.habit-card .dialog-buttons button:first-child.save-button {
-  background: linear-gradient(135deg, #000000 0%, #2D2D2D 100%) !important;
-  background-color: #000000 !important;
-  color: white !important;
-  border: none !important;
-  border-color: transparent !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
-  transform: none !important;
-}
-
-.habit-card .dialog-buttons button:first-child.save-button:hover {
-  background: linear-gradient(135deg, #2D2D2D 0%, #000000 100%) !important;
-  background-color: #2D2D2D !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* Ultra-specific save button styling - should override everything */
-div.habit-card div.dialog-buttons button.save-button,
-.habit-card .dialog-buttons button[class~="save-button"],
-button.save-button {
-  background: linear-gradient(135deg, #000000 0%, #2D2D2D 100%) !important;
-  background-color: #000000 !important;
-  background-image: linear-gradient(135deg, #000000 0%, #2D2D2D 100%) !important;
-  color: white !important;
-  border: none !important;
-  border-color: transparent !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
-  transform: none !important;
-  padding: 0.625rem 1.25rem !important;
-  border-radius: 6px !important;
-  cursor: pointer !important;
-  font-weight: 500 !important;
-  font-size: 0.875rem !important;
-  transition: all 0.2s ease !important;
-}
-
-div.habit-card div.dialog-buttons button.save-button:hover,
-.habit-card .dialog-buttons button[class~="save-button"]:hover,
-button.save-button:hover {
-  background: linear-gradient(135deg, #2D2D2D 0%, #000000 100%) !important;
-  background-color: #2D2D2D !important;
-  background-image: linear-gradient(135deg, #2D2D2D 0%, #000000 100%) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4) !important;
+.habit-card .dialog-buttons button.save-button:hover {
+  background: var(--accent-hover);
+  background-color: var(--accent-hover);
+  color: white;
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: none;
 }
 
 .habit-card .dialog-buttons button:last-child {
@@ -730,29 +689,6 @@ button.save-button:hover {
   background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
   transform: translateY(-1px);
   box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
-}
-
-.habit-card .dialog-buttons button.save-button {
-  background: linear-gradient(135deg, #000000 0%, #2D2D2D 100%) !important;
-  background-color: #000000 !important;
-  color: white !important;
-  border: none !important;
-  border-color: transparent !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
-  transform: none !important;
-  padding: 0.625rem 1.25rem !important;
-  border-radius: 6px !important;
-  cursor: pointer !important;
-  font-weight: 500 !important;
-  font-size: 0.875rem !important;
-  transition: all 0.2s ease !important;
-}
-
-.habit-card .dialog-buttons button.save-button:hover {
-  background: linear-gradient(135deg, #2D2D2D 0%, #000000 100%) !important;
-  background-color: #2D2D2D !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4) !important;
 }
 
 @keyframes overlayShow {

@@ -238,17 +238,22 @@
 
 .search-container {
   margin-bottom: 1rem;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .search-input {
   width: 100%;
   padding: 0.75rem;
+  padding-right: 2.5rem;
   border: 1px solid var(--border-primary);
   border-radius: 6px;
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 0.875rem;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .search-input:focus {
@@ -260,6 +265,36 @@
 
 .search-input::placeholder {
   color: var(--text-secondary);
+}
+
+.search-icon-btn {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  width: 2rem;
+  height: 2rem;
+}
+
+.search-icon-btn:hover {
+  color: var(--accent-primary);
+  background: var(--bg-primary);
+}
+
+.search-icon {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .search-results {
@@ -407,4 +442,38 @@ h4 {
     padding: 0.5rem;
     font-size: 0.7rem;
   }
+}
+
+/* Remove shiny effects from close button */
+.friends-dialog .dialog-buttons button {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.friends-dialog .dialog-buttons button:hover {
+  background: var(--accent-hover) !important;
+  color: white !important;
+  border-color: var(--accent-hover) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: translateY(-1px) !important;
+  filter: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+}
+
+.friends-dialog .dialog-buttons button:active {
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
 } 

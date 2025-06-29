@@ -10,6 +10,7 @@ const Friends = ({ session, isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [activeTab, setActiveTab] = useState('friends'); // 'friends', 'requests', 'add'
   const [loading, setLoading] = useState(true);
 
@@ -142,10 +143,12 @@ const Friends = ({ session, isOpen, onClose }) => {
   const searchUsers = useCallback(async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
+      setHasSearched(false);
       return;
     }
 
     setIsSearching(true);
+    setHasSearched(true);
     try {
       const { data, error } = await supabase
         .from('user_profiles')
@@ -285,14 +288,17 @@ const Friends = ({ session, isOpen, onClose }) => {
     return 'none';
   };
 
-  // Debounced search
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      searchUsers(searchQuery);
-    }, 300);
+  // Handle search submission
+  const handleSearch = () => {
+    searchUsers(searchQuery);
+  };
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery, searchUsers]);
+  // Handle Enter key press
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   // Load data when component mounts
   useEffect(() => {
@@ -470,15 +476,31 @@ const Friends = ({ session, isOpen, onClose }) => {
                         type="text"
                         placeholder="Search for users..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          if (!e.target.value.trim()) {
+                            setHasSearched(false);
+                            setSearchResults([]);
+                          }
+                        }}
+                        onKeyDown={handleKeyPress}
                         className="search-input"
                       />
+                      <button 
+                        className="search-icon-btn"
+                        onClick={handleSearch}
+                        title="Search"
+                      >
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="search-icon">
+                          <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                        </svg>
+                      </button>
                     </div>
                     
                     <div className="search-results">
                       {isSearching ? (
                         <div className="search-loading">Searching...</div>
-                      ) : searchResults.length > 0 ? (
+                      ) : hasSearched && searchResults.length > 0 ? (
                         searchResults.map((user) => {
                           const status = getFriendStatus(user.user_id);
                           return (
@@ -554,7 +576,7 @@ const Friends = ({ session, isOpen, onClose }) => {
                             </div>
                           );
                         })
-                      ) : searchQuery ? (
+                      ) : hasSearched && searchQuery ? (
                         <div className="no-results">No users found</div>
                       ) : (
                         <div className="search-placeholder">

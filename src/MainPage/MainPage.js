@@ -21,9 +21,11 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import DraggablePlannerWidget from '../Planner/DraggablePlannerWidget';
 
 // Lazy load Friends component
 const Friends = lazy(() => import('../Friends/Friends'));
+const Planner = lazy(() => import('../Planner/Planner'));
 
 const MainPage = ({ session }) => {
   const [habits, setHabits] = useState([]);
@@ -34,6 +36,9 @@ const MainPage = ({ session }) => {
   const [isFriendsDialogOpen, setIsFriendsDialogOpen] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
   const [habitEditDialogStates, setHabitEditDialogStates] = useState({});
+  const [habitDeleteDialogStates, setHabitDeleteDialogStates] = useState({});
+  const [habitLogProgressDialogStates, setHabitLogProgressDialogStates] = useState({});
+  const [habitMoreMenuStates, setHabitMoreMenuStates] = useState({});
   const [showShareSuccess, setShowShareSuccess] = useState(false);
 
   const [isQuantifiable, setIsQuantifiable] = useState(false);
@@ -58,10 +63,9 @@ const MainPage = ({ session }) => {
   const [editingUsername, setEditingUsername] = useState('');
   const [showUserPoints, setShowUserPoints] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [calendarViewMode, setCalendarViewMode] = useState('year'); // 'year' or '365days'
+  const [currentView, setCurrentView] = useState('habits'); // 'habits' or 'planner'
+  const [plannerRefreshTrigger, setPlannerRefreshTrigger] = useState(0);
 
   // State for stored user points
   const [userPoints, setUserPoints] = useState(0);
@@ -881,43 +885,6 @@ const MainPage = ({ session }) => {
     habit.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Search for users function
-  const searchUsers = useCallback(async (query) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    setIsSearchingUsers(true);
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('user_id, username')
-        .not('username', 'is', null)
-        .ilike('username', `%${query}%`)
-        .limit(10);
-
-      if (error) throw error;
-      setSearchResults(data || []);
-    } catch (error) {
-      console.error('Error searching users:', error);
-      setToastMessage('Error searching users');
-      setShowToast(true);
-      setSearchResults([]);
-    } finally {
-      setIsSearchingUsers(false);
-    }
-  }, [session.user.id]);
-
-  // Debounced user search
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      searchUsers(userSearchQuery);
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [userSearchQuery, searchUsers]);
-
   // Handle edit dialog state changes from habit cards
   const handleEditDialogChange = useCallback((habitId, isOpen) => {
     setHabitEditDialogStates(prev => ({
@@ -926,52 +893,81 @@ const MainPage = ({ session }) => {
     }));
   }, []);
 
-  // Check if any edit dialog is open
+  // Handle delete dialog state changes from habit cards
+  const handleDeleteDialogChange = useCallback((habitId, isOpen) => {
+    setHabitDeleteDialogStates(prev => ({
+      ...prev,
+      [habitId]: isOpen
+    }));
+  }, []);
+
+  // Handle log progress dialog state changes from habit cards
+  const handleLogProgressDialogChange = useCallback((habitId, isOpen) => {
+    setHabitLogProgressDialogStates(prev => ({
+      ...prev,
+      [habitId]: isOpen
+    }));
+  }, []);
+
+  // Handle more menu state changes from habit cards
+  const handleMoreMenuChange = useCallback((habitId, isOpen) => {
+    setHabitMoreMenuStates(prev => ({
+      ...prev,
+      [habitId]: isOpen
+    }));
+  }, []);
+
+  // Check if any dialog is open
   const isAnyEditDialogOpen = Object.values(habitEditDialogStates).some(isOpen => isOpen);
+  const isAnyDeleteDialogOpen = Object.values(habitDeleteDialogStates).some(isOpen => isOpen);
+  const isAnyLogProgressDialogOpen = Object.values(habitLogProgressDialogStates).some(isOpen => isOpen);
+  const isAnyMoreMenuOpen = Object.values(habitMoreMenuStates).some(isOpen => isOpen);
+
+  const handlePlanHabit = async (habitId, plannedDate) => {
+    try {
+      const { error } = await supabase
+        .from('habit_plans')
+        .insert([{ 
+          habit_id: habitId, 
+          user_id: session.user.id,
+          planned_date: plannedDate 
+        }]);
+
+      if (error) {
+        if (error.code === '23505') { // unique constraint violation
+          setToastMessage('This habit is already planned for this date.');
+        } else {
+          throw error;
+        }
+      } else {
+        // Trigger planner refresh
+        setPlannerRefreshTrigger(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error planning habit:', error);
+      setToastMessage('Failed to plan habit. The table might not exist yet.');
+    }
+  };
+
+  const handleHabitClick = (habitId) => {
+    // Find the habit element and scroll to it
+    const habitElement = document.querySelector(`[data-habit-id="${habitId}"]`);
+    if (habitElement) {
+      habitElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+  };
 
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
 
   return (
-    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen || isDeleteAccountDialogOpen || isAnyEditDialogOpen) ? 'dialog-active' : ''}`}>
+    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen || isDeleteAccountDialogOpen || isAnyEditDialogOpen || isAnyDeleteDialogOpen || isAnyLogProgressDialogOpen || isFriendsDialogOpen) ? 'dialog-active' : ''}`}>
       <header className="header">
         <div className="header-left">
-          <div className="user-search-container">
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={userSearchQuery}
-              onChange={(e) => setUserSearchQuery(e.target.value)}
-              className="user-search-input"
-            />
-            <svg className="search-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-            </svg>
-            {(userSearchQuery || searchResults.length > 0) && (
-              <div className="user-search-results">
-                {isSearchingUsers ? (
-                  <div className="search-loading">Searching...</div>
-                ) : searchResults.length > 0 ? (
-                  searchResults.map((user) => (
-                    <div 
-                      key={user.user_id} 
-                      className="user-result"
-                      onClick={() => {
-                        window.location.href = `/user/${user.user_id}`;
-                        setUserSearchQuery('');
-                        setSearchResults([]);
-                      }}
-                    >
-                      <span className="user-result-name">{user.username}</span>
-                    </div>
-                  ))
-                ) : userSearchQuery ? (
-                  <div className="no-user-results">No users found</div>
-                ) : null}
-              </div>
-            )}
-          </div>
         </div>
         <h1> {'Build Habits'}</h1>
         <div className="header-right">
@@ -995,99 +991,108 @@ const MainPage = ({ session }) => {
         </div>
       </header>
 
-      <div className="habits-container">
-        <div className="habits-header">
-          <div className="habits-header-left">
-            <button
-              className="create-habit-button"
-              onClick={() => {
-                if (!hasPaid && habits.length >= 2) {
-                  setIsPaymentDialogOpen(true);
-                } else {
-                  setIsCreateDialogOpen(true);
-                }
-              }}
-            >
-              Create New Habit
-            </button>
-          </div>
-          <div className="habits-header-controls">
-            {showUserPoints && hasPaid && (
-              <div className="global-stats">
-                <div className="global-points">
-                  <span className="points-icon">⭐</span>
-                  <span className="points-value">{overallStats.totalPoints.toLocaleString()}</span>
-                  <span className="points-label">points</span>
-                </div>
-              </div>
-            )}
-            <div className="calendar-view-toggle">
+      {currentView === 'habits' && (
+        <div className="habits-container">
+          <div className="habits-header">
+            <div className="habits-header-left">
               <button
-                className={`view-toggle-btn ${calendarViewMode === 'year' ? 'active' : ''}`}
-                onClick={() => setCalendarViewMode('year')}
-                title="Calendar Year View"
+                className="create-habit-button"
+                onClick={() => {
+                  if (!hasPaid && habits.length >= 2) {
+                    setIsPaymentDialogOpen(true);
+                  } else {
+                    setIsCreateDialogOpen(true);
+                  }
+                }}
               >
-                📅 Year
-              </button>
-              <button
-                className={`view-toggle-btn ${calendarViewMode === '365days' ? 'active' : ''}`}
-                onClick={() => setCalendarViewMode('365days')}
-                title="Past 365 Days View"
-              >
-                📊 365 Days
+                Create New Habit
               </button>
             </div>
-            <div className="habit-search-container">
-              <input
-                type="text"
-                placeholder="Search habits..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="habit-search-input"
-              />
-              <svg className="search-icon" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={filteredHabits.map(habit => habit.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="habits-grid">
-              {filteredHabits.length > 0 ? (
-                filteredHabits.map((habit) => (
-                  <HabitCard
-                    key={habit.id}
-                    habit={habit}
-                    onComplete={handleCompleteHabit}
-                    onDelete={handleDeleteHabit}
-                    onEdit={handleEditHabit}
-                    viewMode={calendarViewMode}
-                    isPremium={hasPaid}
-                    onEditDialogChange={(isOpen) => handleEditDialogChange(habit.id, isOpen)}
-                  />
-                ))
-              ) : searchQuery ? (
-                <div className="no-results">
-                  <p>No habits found matching "{searchQuery}"</p>
-                </div>
-              ) : (
-                <div className="no-habits">
-                  <p>No habits yet. Create your first habit to get started!</p>
+            <div className="habits-header-controls">
+              {showUserPoints && hasPaid && (
+                <div className="global-stats">
+                  <div className="global-points">
+                    <span className="points-icon">⭐</span>
+                    <span className="points-value">{overallStats.totalPoints.toLocaleString()}</span>
+                    <span className="points-label">points</span>
+                  </div>
                 </div>
               )}
+              <div className="calendar-view-toggle">
+                <button
+                  className={`view-toggle-btn ${calendarViewMode === 'year' ? 'active' : ''}`}
+                  onClick={() => setCalendarViewMode('year')}
+                  title="Calendar Year View"
+                >
+                  📅 Year
+                </button>
+                <button
+                  className={`view-toggle-btn ${calendarViewMode === '365days' ? 'active' : ''}`}
+                  onClick={() => setCalendarViewMode('365days')}
+                  title="Past 365 Days View"
+                >
+                  📊 365 Days
+                </button>
+              </div>
+              <div className="habit-search-container">
+                <input
+                  type="text"
+                  placeholder="Search habits..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="habit-search-input"
+                />
+                <svg className="search-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                </svg>
+              </div>
             </div>
-          </SortableContext>
-        </DndContext>
-      </div>
+          </div>
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={filteredHabits.map(habit => habit.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="habits-grid">
+                {filteredHabits.length > 0 ? (
+                  filteredHabits.map((habit) => (
+                    <div key={habit.id} data-habit-id={habit.id}>
+                      <HabitCard
+                        habit={habit}
+                        onComplete={handleCompleteHabit}
+                        onDelete={handleDeleteHabit}
+                        onEdit={handleEditHabit}
+                        onPlan={handlePlanHabit}
+                        viewMode={calendarViewMode}
+                        isPremium={hasPaid}
+                        onEditDialogChange={(isOpen) => handleEditDialogChange(habit.id, isOpen)}
+                        onDeleteDialogChange={(isOpen) => handleDeleteDialogChange(habit.id, isOpen)}
+                        onLogProgressDialogChange={(isOpen) => handleLogProgressDialogChange(habit.id, isOpen)}
+                        onMoreMenuChange={(isOpen) => handleMoreMenuChange(habit.id, isOpen)}
+                      />
+                    </div>
+                  ))
+                ) : searchQuery ? (
+                  <div className="no-results">
+                    <p>No habits found matching "{searchQuery}"</p>
+                  </div>
+                ) : (
+                  <div className="no-habits">
+                    <p>No habits yet. Create your first habit to get started!</p>
+                  </div>
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      )}
+
+      <DraggablePlannerWidget session={session} onRefresh={plannerRefreshTrigger} onHabitClick={handleHabitClick} />
 
       <Dialog.Root open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <Dialog.Portal>
@@ -1360,20 +1365,6 @@ const MainPage = ({ session }) => {
                               }
                             }}
                           />
-                          <div className="username-edit-buttons">
-                            <button 
-                              className="save-username-btn"
-                              onClick={handleSaveUsername}
-                            >
-                              ✓
-                            </button>
-                            <button 
-                              className="cancel-username-btn"
-                              onClick={handleCancelEditingUsername}
-                            >
-                              ✕
-                            </button>
-                          </div>
                         </div>
                       ) : (
                         <div className="username-display">
