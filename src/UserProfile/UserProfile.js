@@ -302,15 +302,7 @@ const UserProfile = ({ session }) => {
                   ✉️ Incoming Request
                 </button>
               )}
-              {friendStatus === 'friend' && (
-                <button 
-                  className="remove-friend-btn"
-                  onClick={removeFriend}
-                  title="Remove friend"
-                >
-                  👥 Remove Friend
-                </button>
-              )}
+
             </div>
           )}
         </div>

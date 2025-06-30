@@ -1,5 +1,5 @@
-/* Import theme variables from main page */
-@import url('../MainPage/MainPage.css');
+/* Import global styles */
+@import '../styles/globals.css';
 
 .friends-dialog {
   max-width: 600px;
@@ -98,12 +98,7 @@
   transition: all 0.2s ease;
 }
 
-.friend-item:hover,
-.request-item:hover,
-.search-result:hover {
-  border-color: var(--accent-primary);
-  box-shadow: var(--shadow-hover);
-}
+/* Hover effects removed for friend and request items */
 
 .friend-info,
 .request-info,
@@ -444,17 +439,16 @@ h4 {
   }
 }
 
-/* Remove shiny effects from close button */
+/* Ensure Friends dialog buttons have proper styling */
 .friends-dialog .dialog-buttons button {
   background: var(--bg-secondary) !important;
   color: var(--text-primary) !important;
   border: 1px solid var(--border-primary) !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  transform: none !important;
-  filter: none !important;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
   transition: all 0.2s ease !important;
 }
 
@@ -462,18 +456,9 @@ h4 {
   background: var(--accent-hover) !important;
   color: white !important;
   border-color: var(--accent-hover) !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
   transform: translateY(-1px) !important;
-  filter: none !important;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
 }
 
 .friends-dialog .dialog-buttons button:active {
-  box-shadow: none !important;
   transform: none !important;
-  filter: none !important;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
 } 

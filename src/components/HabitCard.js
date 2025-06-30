@@ -529,71 +529,73 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
               Log Today
             </button>
           )}
-          <Dialog.Root open={isMoreOpen} onOpenChange={setIsMoreOpen}>
-            <Dialog.Trigger asChild>
-              <button 
-                className="more-button" 
-                onClick={handleMoreClick}
-                ref={moreButtonRef}
-                aria-label="More options"
-              >
-                ⋮
-              </button>
-            </Dialog.Trigger>
-            <Dialog.Portal>
-              <Dialog.Content 
-                className="more-menu"
-                style={{
-                  position: 'fixed',
-                  top: menuPosition.top,
-                  right: menuPosition.right,
-                  transform: 'none'
-                }}
-              >
-                {!isArchived && (
-                  <button 
-                    className="menu-item" 
-                    onClick={() => {
-                      setIsMoreOpen(false);
-                      setIsEditOpen(true);
-                    }}
-                  >
-                    Edit
-                  </button>
-                )}
-                {isArchived ? (
-                  <button 
-                    className="menu-item" 
-                    onClick={() => {
-                      setIsMoreOpen(false);
-                      onUnarchive && onUnarchive(habit.id);
-                    }}
-                  >
-                    Unarchive
-                  </button>
-                ) : (
-                  <button 
-                    className="menu-item" 
-                    onClick={() => {
-                      setIsMoreOpen(false);
-                      onArchive && onArchive(habit.id);
-                    }}
-                  >
-                    Archive
-                  </button>
-                )}
+          {!isReadOnly && (
+            <Dialog.Root open={isMoreOpen} onOpenChange={setIsMoreOpen}>
+              <Dialog.Trigger asChild>
                 <button 
-                  className="menu-item delete" 
-                  onClick={() => {
-                    setIsMoreOpen(false);
-                    setIsDeleteOpen(true);
+                  className="more-button" 
+                  onClick={handleMoreClick}
+                  ref={moreButtonRef}
+                  aria-label="More options"
+                >
+                  ⋮
+                </button>
+              </Dialog.Trigger>
+              <Dialog.Portal>
+                <Dialog.Content 
+                  className="more-menu"
+                  style={{
+                    position: 'fixed',
+                    top: menuPosition.top,
+                    right: menuPosition.right,
+                    transform: 'none'
                   }}
                 >
-                  Delete
-                </button>
-              </Dialog.Content>
-            </Dialog.Portal>
-          </Dialog.Root>
+                  {!isArchived && (
+                    <button 
+                      className="menu-item" 
+                      onClick={() => {
+                        setIsMoreOpen(false);
+                        setIsEditOpen(true);
+                      }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {isArchived ? (
+                    <button 
+                      className="menu-item" 
+                      onClick={() => {
+                        setIsMoreOpen(false);
+                        onUnarchive && onUnarchive(habit.id);
+                      }}
+                    >
+                      Unarchive
+                    </button>
+                  ) : (
+                    <button 
+                      className="menu-item" 
+                      onClick={() => {
+                        setIsMoreOpen(false);
+                        onArchive && onArchive(habit.id);
+                      }}
+                    >
+                      Archive
+                    </button>
+                  )}
+                  <button 
+                    className="menu-item delete" 
+                    onClick={() => {
+                      setIsMoreOpen(false);
+                      setIsDeleteOpen(true);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+          )}
         </div>
       </div>
       

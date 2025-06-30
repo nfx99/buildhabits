@@ -1,21 +1,5 @@
-:root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-card: #ffffff;
-  --text-primary: #374151;
-  --text-secondary: #6b7280;
-  --border-primary: #f3f4f6;
-  --border-secondary: #e5e7eb;
-  --shadow-primary: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --cell-empty: #f9fafb;
-  --cell-completed: #059669;
-  --cell-border: #f3f4f6;
-  --tooltip-x: 0px;
-  --tooltip-y: 0px;
-}
-
-
+/* Import global styles */
+@import '../styles/globals.css';
 
 .habit-card {
   background: var(--bg-card);
@@ -284,10 +268,7 @@
   color: #dc2626;
 }
 
-/* Form styles */
-.form-group {
-  margin: 0.75rem 0;
-}
+/* Form styles now in globals.css */
 
 .edit-input {
   width: 100%;
@@ -581,56 +562,7 @@
   background: #9ca3af;
 }
 
-/* Dialog styles */
-.dialog-overlay {
-  background-color: rgba(0, 0, 0, 0.35);
-  position: fixed;
-  inset: 0;
-  animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 1000;
-}
-
-.dialog-content {
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 95vw;
-  max-width: 95vw;
-  max-height: 90vh;
-  padding: 1rem;
-  animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 1001;
-  overflow-y: auto;
-}
-
-.dialog-content h2 {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-.dialog-content p {
-  margin: 0 0 1rem 0;
-  color: #4b5563;
-  line-height: 1.4;
-  font-size: 0.9rem;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-.dialog-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
+/* Dialog styles now in globals.css - only component-specific overrides here */
 
 .habit-card .dialog-buttons button {
   padding: 0.625rem 1.25rem;
@@ -642,23 +574,18 @@
   transition: all 0.2s ease;
 }
 
-.habit-card .dialog-buttons button.save-button {
-  background: var(--bg-secondary);
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-secondary);
-  border-color: var(--border-secondary);
-  box-shadow: none;
-  transform: none;
+.habit-card .dialog-buttons button.save-button,
+.dialog-buttons button.save-button {
+  background: var(--accent-primary) !important;
+  color: white !important;
+  border: 1px solid var(--accent-primary) !important;
 }
 
-.habit-card .dialog-buttons button.save-button:hover {
-  background: var(--accent-hover);
-  background-color: var(--accent-hover);
-  color: white;
-  border-color: var(--accent-hover);
+.habit-card .dialog-buttons button.save-button:hover,
+.dialog-buttons button.save-button:hover {
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
   transform: translateY(-1px);
-  box-shadow: none;
 }
 
 .habit-card .dialog-buttons button:last-child {
@@ -673,48 +600,39 @@
   transform: translateY(-1px);
 }
 
-.habit-card .dialog-buttons .delete-confirm {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
+.habit-card .dialog-buttons .delete-confirm,
+.dialog-buttons .delete-confirm,
+.delete-habit-button {
+  background: var(--gradient-error) !important;
+  color: white !important;
+  border: none !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
-.habit-card .dialog-buttons .delete-confirm:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+.habit-card .dialog-buttons .delete-confirm:hover,
+.dialog-buttons .delete-confirm:hover,
+.delete-habit-button:hover {
+  background: var(--gradient-error-hover) !important;
   box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
 }
 
-.habit-card .dialog-buttons .undo-button {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
+.habit-card .dialog-buttons .undo-button,
+.dialog-buttons .undo-button {
+  background: var(--gradient-warning) !important;
+  color: white !important;
+  border: none !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
-.habit-card .dialog-buttons .undo-button:hover {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+.habit-card .dialog-buttons .undo-button:hover,
+.dialog-buttons .undo-button:hover {
+  background: var(--gradient-warning-hover) !important;
   transform: translateY(-1px);
   box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
 }
 
-@keyframes overlayShow {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes contentShow {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -48%) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
+/* Animation keyframes now in globals.css */
 
 /* Year Navigation Styles - Inline Header Version */
 .year-navigation-inline {
@@ -1301,7 +1219,7 @@
 
 /* Premium badge */
 .premium-badge {
-  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  background: var(--gradient-premium);
   color: #000;
   font-size: 0.7rem;
   padding: 0.125rem 0.375rem;
@@ -1350,5 +1268,7 @@
   color: var(--text-secondary);
   text-align: center;
 }
+
+
 
  

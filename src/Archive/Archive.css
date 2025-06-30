@@ -1,3 +1,6 @@
+/* Import global styles */
+@import '../styles/globals.css';
+
 .archive-container {
   max-width: 1200px;
   margin: 0 auto;

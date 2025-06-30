@@ -1,5 +1,5 @@
-/* Import theme variables */
-@import url('./MainPage/MainPage.css');
+/* Import global styles */
+@import './styles/globals.css';
 
 .confirmation-container {
   height: 100vh;
