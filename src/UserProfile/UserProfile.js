@@ -42,6 +42,7 @@ const UserProfile = ({ session }) => {
         `)
         .eq('user_id', userId)
         .eq('is_private', false) // Only fetch public habits
+        .eq('is_archived', false) // Only fetch non-archived habits
         .order('order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
