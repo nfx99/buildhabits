@@ -6,7 +6,7 @@ import * as Toast from '@radix-ui/react-toast';
 import './MainPage.css';
 import { loadStripe } from '@stripe/stripe-js';
 import { format } from 'date-fns';
-import { getHabitStats, calculateTotalPoints, calculateTierBonusPoints, calculatePointsWithStreak } from '../utils/tierSystem';
+import { getHabitStats } from '../utils/tierSystem';
 import {
   DndContext,
   closestCenter,
@@ -22,6 +22,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import DraggablePlannerWidget from '../Planner/DraggablePlannerWidget';
+import { useNavigate } from 'react-router-dom';
 
 // Lazy load Friends component
 const Friends = lazy(() => import('../Friends/Friends'));
@@ -43,13 +44,12 @@ const MainPage = ({ session }) => {
 
   const [isQuantifiable, setIsQuantifiable] = useState(false);
   const [targetValue, setTargetValue] = useState('');
-  const [metricUnit, setMetricUnit] = useState('times');
+  const [metricUnit, setMetricUnit] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [hasInsights, setHasInsights] = useState(false);
   const [insightSettings, setInsightSettings] = useState({
     showCurrentStreak: true,
     showTotalDays: true,
-    showWeeklyAverage: false,
     showProgressBar: true
   });
   const [loading, setLoading] = useState(true);
@@ -63,12 +63,14 @@ const MainPage = ({ session }) => {
   const [editingUsername, setEditingUsername] = useState('');
   const [showUserPoints, setShowUserPoints] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [calendarViewMode, setCalendarViewMode] = useState('year'); // 'year' or '365days'
+  const [calendarViewMode, setCalendarViewMode] = useState('year');
   const [currentView, setCurrentView] = useState('habits'); // 'habits' or 'planner'
   const [plannerRefreshTrigger, setPlannerRefreshTrigger] = useState(0);
 
   // State for stored user points
   const [userPoints, setUserPoints] = useState(0);
+
+  const navigate = useNavigate();
 
   // Calculate overall stats from all habits
   const overallStats = React.useMemo(() => {
@@ -89,11 +91,6 @@ const MainPage = ({ session }) => {
       currentStreak: maxStreak
     };
   }, [habits, userPoints]);
-
-  // Predefined color options
-
-
-
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -287,8 +284,8 @@ const MainPage = ({ session }) => {
           habit_completions!fk_habit_completions_habit_id(*)
         `)
         .eq('user_id', session.user.id)
-        .order('order', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: false });
+        .eq('is_archived', false) // Only fetch non-archived habits
+        .order('order', { ascending: true, nullsFirst: false });
 
       if (error) {
         console.error('Supabase error:', error);
@@ -379,10 +376,30 @@ const MainPage = ({ session }) => {
         }
       }
       
+      // Shift existing habits down by 1 to make room for new habit at top
+      if (habits.length > 0) {
+        const updates = habits.map(habit => ({
+          id: habit.id,
+          order: habit.order + 1
+        }));
+
+        // Update each habit's order
+        for (const update of updates) {
+          const { error } = await supabase
+            .from('habits')
+            .update({ order: update.order })
+            .eq('id', update.id);
+
+          if (error) {
+            console.error('Error updating habit order:', error);
+          }
+        }
+      }
+      
       const habitData = {
         name: sanitizedName,
         user_id: session.user.id,
-        order: habits.length,
+        order: 0, // New habit goes to the top
         color: '#000000',
         is_quantifiable: isQuantifiable,
         is_private: isPrivate,
@@ -409,18 +426,23 @@ const MainPage = ({ session }) => {
         throw new Error('No data returned from habit creation');
       }
 
-      setHabits([data, ...habits]);
+      // Update local state with new habit at the top
+      const updatedHabits = habits.map(habit => ({
+        ...habit,
+        order: habit.order + 1
+      }));
+      setHabits([data, ...updatedHabits]);
       setNewHabitName('');
 
       setIsQuantifiable(false);
       setTargetValue('');
-      setMetricUnit('times');
+      setMetricUnit('');
       setIsPrivate(false);
           setHasInsights(false);
     setInsightSettings({
       showCurrentStreak: true,
       showTotalDays: true,
-      showWeeklyAverage: false
+      showProgressBar: true
     });
       setIsCreateDialogOpen(false);
     } catch (error) {
@@ -627,11 +649,45 @@ const MainPage = ({ session }) => {
         .delete()
         .eq('id', habitId);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      fetchHabits();
+      setHabits(prev => prev.filter(habit => habit.id !== habitId));
+      setHabitDeleteDialogStates(prev => {
+        const newState = { ...prev };
+        delete newState[habitId];
+        return newState;
+      });
+      setToastMessage('Habit deleted successfully');
+      setShowToast(true);
     } catch (error) {
-      setToastMessage('Failed to delete habit. Please try again.');
+      console.error('Error deleting habit:', error);
+      setToastMessage('Error deleting habit');
+      setShowToast(true);
+    }
+  };
+
+  const handleArchiveHabit = async (habitId) => {
+    try {
+      const { error } = await supabase
+        .from('habits')
+        .update({ 
+          is_archived: true,
+          archived_at: new Date().toISOString()
+        })
+        .eq('id', habitId);
+
+      if (error) {
+        throw error;
+      }
+
+      setHabits(prev => prev.filter(habit => habit.id !== habitId));
+      setToastMessage('Habit archived successfully');
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error archiving habit:', error);
+      setToastMessage('Error archiving habit');
       setShowToast(true);
     }
   };
@@ -972,6 +1028,13 @@ const MainPage = ({ session }) => {
         <h1> {'Build Habits'}</h1>
         <div className="header-right">
           <button 
+            className="archive-button"
+            onClick={() => navigate('/archive')}
+            title="View archived habits"
+          >
+            📦 Archive
+          </button>
+          <button 
             className="quick-share-button"
             onClick={handleShareProfile}
             title="Share your profile"
@@ -1068,6 +1131,7 @@ const MainPage = ({ session }) => {
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
                         onPlan={handlePlanHabit}
+                        onArchive={handleArchiveHabit}
                         viewMode={calendarViewMode}
                         isPremium={hasPaid}
                         onEditDialogChange={(isOpen) => handleEditDialogChange(habit.id, isOpen)}
@@ -1127,9 +1191,12 @@ const MainPage = ({ session }) => {
                       onClick={() => setIsQuantifiable(true)}
 
                     >
-                      Numbers
+                      Numerical
                     </button>
                   </div>
+                  <p className="tracking-type-description">
+                    Choose between simple or numerical logging
+                  </p>
                 </div>
                 {isQuantifiable && (
                   <>
@@ -1207,7 +1274,7 @@ const MainPage = ({ session }) => {
               </div>
               <p className="insights-description">
                 {hasPaid 
-                  ? "Get powerful analytics including streaks, tracking, and trends"
+                  ? "Get powerful analytics including streaks, trends, and ranked progression"
                   : "🔒 Premium feature: Advanced habit analytics with ranked progress tracking"
                 }
               </p>
@@ -1236,17 +1303,6 @@ const MainPage = ({ session }) => {
                         }))}
                       />
                       <span>Total Completions</span>
-                    </label>
-                    <label className="insight-checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={insightSettings.showWeeklyAverage}
-                        onChange={(e) => setInsightSettings(prev => ({
-                          ...prev,
-                          showWeeklyAverage: e.target.checked
-                        }))}
-                      />
-                      <span>Weekly Average</span>
                     </label>
                     <label className="insight-checkbox-label">
                       <input

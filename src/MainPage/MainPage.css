@@ -294,7 +294,8 @@ body {
 
 .profile-button,
 .friends-button,
-.quick-share-button {
+.quick-share-button,
+.archive-button {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   color: var(--text-primary);
@@ -311,7 +312,8 @@ body {
 
 .profile-button:hover,
 .friends-button:hover,
-.quick-share-button:hover {
+.quick-share-button:hover,
+.archive-button:hover {
   background: var(--accent-hover);
   color: white;
   border-color: var(--accent-hover);
@@ -795,9 +797,6 @@ body {
 }
 
 .stat:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
-  border-color: var(--border-secondary);
 }
 
 .stat-number {
@@ -1208,6 +1207,13 @@ body {
   font-weight: 600;
 }
 
+.tracking-type-description {
+  margin: 0.5rem 0 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 /* Privacy toggle styles */
 .privacy-toggle {
   display: flex;
@@ -1413,22 +1419,6 @@ body {
   cursor: not-allowed;
   background: var(--bg-secondary) !important;
   color: var(--text-secondary) !important;
-}
-
-/* Insights note */
-.insights-note {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.1) 100%);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 8px;
-}
-
-.insights-note p {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  text-align: center;
 }
 
 /* Responsive styles */

@@ -7,7 +7,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { getHabitStats } from '../utils/tierSystem';
 
-const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = false, viewMode = 'year', isPremium = false, onEditDialogChange, onDeleteDialogChange, onLogProgressDialogChange, onMoreMenuChange }) => {
+const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onUnarchive, isReadOnly = false, viewMode = 'year', isPremium = false, isArchived = false, onEditDialogChange, onDeleteDialogChange, onLogProgressDialogChange, onMoreMenuChange }) => {
   const {
     attributes,
     listeners,
@@ -35,13 +35,12 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
 
   const [editIsQuantifiable, setEditIsQuantifiable] = React.useState(habit.is_quantifiable || false);
   const [editTargetValue, setEditTargetValue] = React.useState(habit.target_value || '');
-  const [editMetricUnit, setEditMetricUnit] = React.useState(habit.metric_unit || 'times');
+  const [editMetricUnit, setEditMetricUnit] = React.useState(habit.metric_unit || '');
   const [editIsPrivate, setEditIsPrivate] = React.useState(habit.is_private || false);
   const [editHasInsights, setEditHasInsights] = React.useState(habit.has_insights || false);
   const [editInsightSettings, setEditInsightSettings] = React.useState(habit.insight_settings || {
     showCurrentStreak: true,
     showTotalDays: true,
-    showWeeklyAverage: false,
     showProgressBar: true
   });
   const [quantifiableValue, setQuantifiableValue] = React.useState('');
@@ -74,16 +73,9 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
       }
     }
     
-    // PREMIUM: Calculate weekly average
-    const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-    const weeklyCompletions = completions.filter(c => new Date(c.date) >= fourWeeksAgo);
-    const weeklyAverage = (weeklyCompletions.length / 4).toFixed(1);
-    
     return {
       currentStreak,
-      totalCompletions: totalDays,
-      weeklyAverage
+      totalCompletions: totalDays
     };
   }, [habit.has_insights, habit.habit_completions, isPremium]);
 
@@ -98,13 +90,12 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
 
     setEditIsQuantifiable(habit.is_quantifiable || false);
     setEditTargetValue(habit.target_value || '');
-    setEditMetricUnit(habit.metric_unit || 'times');
+    setEditMetricUnit(habit.metric_unit || '');
     setEditIsPrivate(habit.is_private || false);
     setEditHasInsights(habit.has_insights || false);
     setEditInsightSettings(habit.insight_settings || {
       showCurrentStreak: true,
       showTotalDays: true,
-      showWeeklyAverage: false,
       showProgressBar: true
     });
   }, [habit.name, habit.is_quantifiable, habit.target_value, habit.metric_unit, habit.is_private, habit.has_insights, habit.insight_settings]);
@@ -153,10 +144,11 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
     setSelectedYear(prev => prev + 1);
   };
   
-  // Allow going back to any reasonable year (e.g., 2020 onwards) and forward to current year
+  // Allow going back to any reasonable year (e.g., 2020 onwards) and forward to any future year
   const minAllowedYear = 2020;
+  const maxAllowedYear = currentYear + 5; // Cap at 5 years in the future
   const canGoToPreviousYear = selectedYear > minAllowedYear;
-  const canGoToNextYear = selectedYear < currentYear;
+  const canGoToNextYear = selectedYear < maxAllowedYear;
 
 
 
@@ -505,7 +497,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
     >
       <div className="habit-header">
         <div className="habit-title-section">
-          {!isReadOnly && (
+          {!isReadOnly && !isArchived && (
             <button 
               className="drag-handle"
               {...attributes}
@@ -525,44 +517,18 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
           </h3>
         </div>
         <div className="habit-actions">
-          {!isReadOnly && (
-            <>
-              {/* Year navigation - only show in year view mode */}
-              {viewMode === 'year' && (
-                <div className="year-navigation-inline">
-                  <button 
-                    className="year-nav-button-inline" 
-                    onClick={goToPreviousYear}
-                    disabled={!canGoToPreviousYear}
-                    aria-label="Previous year"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M15 18L9 12L15 6" />
-                    </svg>
-                  </button>
-                  <span className="year-display-inline">{selectedYear}</span>
-                  <button 
-                    className="year-nav-button-inline" 
-                    onClick={goToNextYear}
-                    disabled={!canGoToNextYear}
-                    aria-label="Next year"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 18L15 12L9 6" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-              <button 
-                className="log-button" 
-                onClick={handleLogToday}
-                style={{ backgroundColor: habit.color || '#000000' }}
-              >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M2 12h20" />
-            </svg>
-            Log Today
-          </button>
+          {!isReadOnly && !isArchived && (
+            <button 
+              className="log-button" 
+              onClick={handleLogToday}
+              style={{ backgroundColor: habit.color || '#000000' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2v20M2 12h20" />
+              </svg>
+              Log Today
+            </button>
+          )}
           <Dialog.Root open={isMoreOpen} onOpenChange={setIsMoreOpen}>
             <Dialog.Trigger asChild>
               <button 
@@ -584,15 +550,38 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
                   transform: 'none'
                 }}
               >
-                <button 
-                  className="menu-item" 
-                  onClick={() => {
-                    setIsMoreOpen(false);
-                    setIsEditOpen(true);
-                  }}
-                >
-                  Edit
-                </button>
+                {!isArchived && (
+                  <button 
+                    className="menu-item" 
+                    onClick={() => {
+                      setIsMoreOpen(false);
+                      setIsEditOpen(true);
+                    }}
+                  >
+                    Edit
+                  </button>
+                )}
+                {isArchived ? (
+                  <button 
+                    className="menu-item" 
+                    onClick={() => {
+                      setIsMoreOpen(false);
+                      onUnarchive && onUnarchive(habit.id);
+                    }}
+                  >
+                    Unarchive
+                  </button>
+                ) : (
+                  <button 
+                    className="menu-item" 
+                    onClick={() => {
+                      setIsMoreOpen(false);
+                      onArchive && onArchive(habit.id);
+                    }}
+                  >
+                    Archive
+                  </button>
+                )}
                 <button 
                   className="menu-item delete" 
                   onClick={() => {
@@ -605,8 +594,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
               </Dialog.Content>
             </Dialog.Portal>
           </Dialog.Root>
-            </>
-          )}
         </div>
       </div>
       
@@ -665,7 +652,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
                   
                   const tooltipText = shouldShowCell ? 
                     (isFutureDate ? 
-                      `${dayName}, ${dateStr}\nClick to plan this habit` :
+                      (!isArchived ? `${dayName}, ${dateStr}\nClick to plan this habit` : `${dayName}, ${dateStr}`) :
                       (habit.is_quantifiable ? 
                         `${dayName}, ${dateStr}\n${cell.value || 0}/${cell.target || 1} ${habit.metric_unit || 'times'}` :
                         `${dayName}, ${dateStr}${cell.completed ? ' ✓' : ''}`)) : '';
@@ -675,7 +662,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
                       key={`${weekday}-${weekIndex}`}
                       className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!shouldShowCell ? 'empty' : ''} ${habit.is_quantifiable && cell.progress > 0 && cell.progress < 1 ? 'partial' : ''} ${isFutureDate ? 'future' : ''}`}
                       style={cellStyle}
-                      onClick={() => !isReadOnly && shouldShowCell && handleDateClick(cell.date, isFutureDate)}
+                      onClick={() => !isReadOnly && !isArchived && shouldShowCell && handleDateClick(cell.date, isFutureDate)}
                       data-tooltip={tooltipText}
                       onMouseEnter={(e) => shouldShowCell && showTooltip(e)}
                       onMouseLeave={hideTooltip}
@@ -808,9 +795,12 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
                    onClick={() => setEditIsQuantifiable(true)}
 
                  >
-                   Numbers
+                   Numerical
                  </button>
                </div>
+               <p className="tracking-type-description">
+                 Choose between simple or numerical logging.
+               </p>
              </div>
             {editIsQuantifiable && (
               <>
@@ -890,7 +880,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
               </div>
               <p className="insights-description">
                 {isPremium 
-                  ? "Get powerful analytics including streaks, tracking, and trends"
+                  ? "Get powerful analytics including streaks, trends, and ranked progression"
                   : "🔒 Premium feature: Advanced habit analytics with ranked progress tracking"
                 }
               </p>
@@ -919,17 +909,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
                         }))}
                       />
                       <span>Total Completions</span>
-                    </label>
-                    <label className="insight-checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={editInsightSettings.showWeeklyAverage}
-                        onChange={(e) => setEditInsightSettings(prev => ({
-                          ...prev,
-                          showWeeklyAverage: e.target.checked
-                        }))}
-                      />
-                      <span>Weekly Average</span>
                     </label>
                     <label className="insight-checkbox-label">
                       <input
@@ -987,6 +966,9 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
       
       {/* Bottom stats section with insights and tier progress */}
       {insights && habit.insight_settings && isPremium && (
+        (habit.insight_settings.showCurrentStreak || 
+         habit.insight_settings.showTotalDays || 
+         habit.insight_settings.showProgressBar) && (
         <div className="bottom-stats-section">
           {/* Premium insights section */}
           <div className="insights-bottom">
@@ -998,11 +980,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
             {habit.insight_settings.showTotalDays && (
               <span className="insight-item">
                 <span className="insight-value">{insights.totalCompletions}</span> total
-              </span>
-            )}
-            {habit.insight_settings.showWeeklyAverage && (
-              <span className="insight-item">
-                <span className="insight-value">{insights.weeklyAverage}</span>/week avg
               </span>
             )}
           </div>
@@ -1031,7 +1008,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, isReadOnly = f
             </div>
           )}
         </div>
-      )}
+      ))}
       
       {/* Show premium upsell for non-premium users with insights enabled */}
       {habit.has_insights && !isPremium && (

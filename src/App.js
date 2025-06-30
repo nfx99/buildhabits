@@ -8,6 +8,7 @@ const SignIn = lazy(() => import('./Sign-In/SignIn'));
 const MainPage = lazy(() => import('./MainPage/MainPage'));
 const LandingPage = lazy(() => import('./LandingPage/LandingPage'));
 const UserProfile = lazy(() => import('./UserProfile/UserProfile'));
+const Archive = lazy(() => import('./Archive/Archive'));
 const PaymentSuccess = lazy(() => import('./PaymentSuccess'));
 const PaymentCancelled = lazy(() => import('./PaymentCancelled'));
 const EmailConfirmation = lazy(() => import('./EmailConfirmation'));
@@ -147,6 +148,16 @@ function App() {
             <Route 
               path="/user/:userId" 
               element={<UserProfile session={session} />} 
+            />
+            <Route 
+              path="/archive" 
+              element={
+                session ? (
+                  <Archive session={session} />
+                ) : (
+                  <Navigate to="/signin" />
+                )
+              } 
             />
             <Route path="/email-confirmed" element={<EmailConfirmation />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />

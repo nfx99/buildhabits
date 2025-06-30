@@ -11,8 +11,7 @@ const createDemoHabit = (completions) => ({
   has_insights: true,
   insight_settings: {
     showCurrentStreak: true,
-    showTotalDays: true,
-    showWeeklyAverage: true
+    showTotalDays: true
   },
   habit_completions: completions
 });
