@@ -859,34 +859,27 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
               </p>
             </div>
             <div className="form-group">
-              <label>Analytics {!isPremium && <span className="premium-badge">Premium</span>}</label>
+              <label>Analytics</label>
               <div className="insights-toggle">
                 <button
                   type="button"
                   className={`insights-option ${!editHasInsights ? 'active' : ''}`}
-                  onClick={() => isPremium ? setEditHasInsights(false) : null}
-
-                  disabled={!isPremium && editHasInsights}
+                  onClick={() => setEditHasInsights(false)}
                 >
                   Disabled
                 </button>
                 <button
                   type="button"
                   className={`insights-option ${editHasInsights ? 'active' : ''}`}
-                  onClick={() => isPremium ? setEditHasInsights(true) : null}
-
-                  disabled={!isPremium}
+                  onClick={() => setEditHasInsights(true)}
                 >
                   Enabled
                 </button>
               </div>
               <p className="insights-description">
-                {isPremium 
-                  ? "Get powerful analytics including streaks, trends, and ranked progression"
-                  : "🔒 Premium feature: Advanced habit analytics with ranked progress tracking"
-                }
+                Get powerful analytics including streaks, trends, and ranked progression
               </p>
-              {editHasInsights && isPremium && (
+              {editHasInsights && (
                 <div className="insight-settings">
                   <p className="insight-settings-label">Choose which insights to display:</p>
                   <div className="insight-checkboxes">
@@ -1012,12 +1005,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
         </div>
       ))}
       
-      {/* Show premium upsell for non-premium users with insights enabled */}
-      {habit.has_insights && !isPremium && (
-        <div className="insights-premium-upsell">
-          <span>🔒 Upgrade to Premium to unlock powerful habit insights</span>
-        </div>
-      )}
+
     </div>
   );
 };

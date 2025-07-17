@@ -10,7 +10,7 @@ const LandingPage = lazy(() => import('./LandingPage/LandingPage'));
 const UserProfile = lazy(() => import('./UserProfile/UserProfile'));
 const Archive = lazy(() => import('./Archive/Archive'));
 const PaymentSuccess = lazy(() => import('./PaymentSuccess'));
-const PaymentCancelled = lazy(() => import('./PaymentCancelled'));
+
 const EmailConfirmation = lazy(() => import('./EmailConfirmation'));
 
 // Preload critical components for better UX
@@ -161,7 +161,7 @@ function App() {
             />
             <Route path="/email-confirmed" element={<EmailConfirmation />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+
           </Routes>
         </Suspense>
         <Toast.Viewport className="toast-viewport" />

@@ -49,18 +49,7 @@ const PaymentSuccess = () => {
               <span className="feature-icon">✨</span>
               <span>Unlimited habits</span>
             </div>
-            <div className="feature-item">
-              <span className="feature-icon">📊</span>
-              <span>Smart insights & analytics</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-icon">🏆</span>
-              <span>Achievement badges</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-icon">📈</span>
-              <span>Trend analysis</span>
-            </div>
+
           </div>
           
           <button onClick={handleGoToDashboard} className="payment-success-button">

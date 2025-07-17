@@ -1251,34 +1251,27 @@ const MainPage = ({ session }) => {
                   </p>
                 </div>
                             <div className="form-group">
-              <label>Insights {!hasPaid && <span className="premium-badge">Premium</span>}</label>
+              <label>Insights</label>
               <div className="insights-toggle">
                 <button
                   type="button"
                   className={`insights-option ${!hasInsights ? 'active' : ''}`}
-                  onClick={() => hasPaid ? setHasInsights(false) : handleUpgrade()}
-
-                  disabled={!hasPaid && hasInsights}
+                  onClick={() => setHasInsights(false)}
                 >
                   Disabled
                 </button>
                 <button
                   type="button"
                   className={`insights-option ${hasInsights ? 'active' : ''}`}
-                  onClick={() => hasPaid ? setHasInsights(true) : handleUpgrade()}
-
-                  disabled={!hasPaid}
+                  onClick={() => setHasInsights(true)}
                 >
                   Enabled
                 </button>
               </div>
               <p className="insights-description">
-                {hasPaid 
-                  ? "Get powerful analytics including streaks, trends, and ranked progression"
-                  : "🔒 Premium feature: Advanced habit analytics with ranked progress tracking"
-                }
+                Get powerful analytics including streaks, trends, and ranked progression
               </p>
-              {hasInsights && hasPaid && (
+              {hasInsights && (
                 <div className="insight-settings">
                   <p className="insight-settings-label">Choose which insights to display:</p>
                   <div className="insight-checkboxes">
@@ -1323,9 +1316,6 @@ const MainPage = ({ session }) => {
                   <h4>🚀 Upgrade to Premium</h4>
                   <ul>
                     <li>♾️ Unlimited habits (no more 2-habit limit!)</li>
-                    <li>📊 Advanced analytics & insights</li>
-                    <li>📈 Trend analysis & predictions</li>
-                    <li>🏆 Achievement badges & milestones</li>
                   </ul>
                   <button 
                     className="upgrade-insights-button"
@@ -1359,7 +1349,7 @@ const MainPage = ({ session }) => {
             <Dialog.Description>
               <div className="payment-content">
                 <h3>🚀 Unlock Unlimited Habits!</h3>
-                <p>Break free from the 2-habit limit! Upgrade to Premium and create unlimited habits with advanced analytics, smart insights, trend analysis, and achievement badges to supercharge your habit building journey.</p>
+                <p>Break free from the 2-habit limit! Upgrade to Premium and create unlimited habits.</p>
                 
                 <button 
                   className="payment-price-button"
@@ -1463,7 +1453,7 @@ const MainPage = ({ session }) => {
                 {!hasPaid && (
                   <div className="profile-upgrade">
                     <h4>🚀 Unlock Unlimited Habits!</h4>
-                    <p>Break free from the 2-habit limit! Get unlimited habits plus smart insights, trend analysis, and achievement badges</p>
+                    <p>Break free from the 2-habit limit! Get unlimited habits.</p>
                     <button 
                       className="upgrade-button"
                       onClick={handleUpgrade}
