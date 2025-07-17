@@ -1256,7 +1256,7 @@ const MainPage = ({ session }) => {
                 <button
                   type="button"
                   className={`insights-option ${!hasInsights ? 'active' : ''}`}
-                  onClick={() => hasPaid ? setHasInsights(false) : setIsPaymentDialogOpen(true)}
+                  onClick={() => hasPaid ? setHasInsights(false) : handleUpgrade}
 
                   disabled={!hasPaid && hasInsights}
                 >
@@ -1265,7 +1265,7 @@ const MainPage = ({ session }) => {
                 <button
                   type="button"
                   className={`insights-option ${hasInsights ? 'active' : ''}`}
-                  onClick={() => hasPaid ? setHasInsights(true) : setIsPaymentDialogOpen(true)}
+                  onClick={() => hasPaid ? setHasInsights(true) : handleUpgrade}
 
                   disabled={!hasPaid}
                 >
@@ -1329,9 +1329,10 @@ const MainPage = ({ session }) => {
                   </ul>
                   <button 
                     className="upgrade-insights-button"
-                    onClick={() => setIsPaymentDialogOpen(true)}
+                    onClick={handleUpgrade}
+                    disabled={isPaymentLoading}
                   >
-                    Upgrade to Premium - $4.99
+                    {isPaymentLoading ? 'Processing...' : 'Upgrade to Premium - $4.99'}
                   </button>
                 </div>
               )}
