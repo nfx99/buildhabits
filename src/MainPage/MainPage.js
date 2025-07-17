@@ -1256,7 +1256,7 @@ const MainPage = ({ session }) => {
                 <button
                   type="button"
                   className={`insights-option ${!hasInsights ? 'active' : ''}`}
-                  onClick={() => hasPaid ? setHasInsights(false) : handleUpgrade}
+                  onClick={() => hasPaid ? setHasInsights(false) : handleUpgrade()}
 
                   disabled={!hasPaid && hasInsights}
                 >
@@ -1265,7 +1265,7 @@ const MainPage = ({ session }) => {
                 <button
                   type="button"
                   className={`insights-option ${hasInsights ? 'active' : ''}`}
-                  onClick={() => hasPaid ? setHasInsights(true) : handleUpgrade}
+                  onClick={() => hasPaid ? setHasInsights(true) : handleUpgrade()}
 
                   disabled={!hasPaid}
                 >
