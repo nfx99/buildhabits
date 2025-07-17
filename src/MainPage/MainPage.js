@@ -3,7 +3,6 @@ import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Toast from '@radix-ui/react-toast';
-import './MainPage.css';
 import { loadStripe } from '@stripe/stripe-js';
 import { format } from 'date-fns';
 import { getHabitStats } from '../utils/tierSystem';
@@ -21,8 +20,14 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import DraggablePlannerWidget from '../Planner/DraggablePlannerWidget';
 import { useNavigate } from 'react-router-dom';
+import './MainPage.css';
+
+// Preload Stripe to improve payment performance
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+
+// Lazy load heavy components for better performance
+const DraggablePlannerWidget = lazy(() => import('../Planner/DraggablePlannerWidget'));
 
 // Lazy load Friends component
 const Friends = lazy(() => import('../Friends/Friends'));
@@ -53,6 +58,7 @@ const MainPage = ({ session }) => {
     showProgressBar: true
   });
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -310,40 +316,49 @@ const MainPage = ({ session }) => {
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('session_id');
       
+      // Start loading data immediately in parallel
+      const dataPromises = [
+        fetchHabits(),
+        fetchUserPoints()
+      ];
+      
+      // Handle payment verification separately
       if (sessionId) {
         let attempts = 0;
         const maxAttempts = 5;
         const delayMs = 2000;
         
-        while (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-          
-          const paymentConfirmed = await checkPaymentStatus();
-          if (!paymentConfirmed) {
-            const stripeVerified = await verifyPaymentWithStripe(sessionId);
-            if (stripeVerified) {
+        const paymentPromise = (async () => {
+          while (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+            
+            const paymentConfirmed = await checkPaymentStatus();
+            if (!paymentConfirmed) {
+              const stripeVerified = await verifyPaymentWithStripe(sessionId);
+              if (stripeVerified) {
+                break;
+              }
+            } else {
               break;
             }
-          } else {
-            break;
+            
+            attempts++;
           }
-          
-          attempts++;
-        }
+          window.history.replaceState({}, document.title, window.location.pathname);
+        })();
         
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // Wait for both data and payment verification in parallel
+        await Promise.all([...dataPromises, paymentPromise]);
       } else {
-        await checkPaymentStatus();
+        // For non-payment flows, check payment status in parallel with data loading
+        await Promise.all([...dataPromises, checkPaymentStatus()]);
       }
       
-      await fetchHabits();
-      await fetchUserPoints();
       setLoading(false);
+      setInitialLoad(false);
     };
 
     initialize();
-    
-
   }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits, fetchUserPoints, session.user.id]);
 
   const handleCreateHabit = async (e) => {
@@ -535,16 +550,28 @@ const MainPage = ({ session }) => {
 
       setIsPaymentLoading(true);
 
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: session.user.id,
-          priceId: 'price_1RXMtIEVtge1S4ocSIFIGoG1',
+      // Create a promise for the API call with timeout
+      const createSessionPromise = Promise.race([
+        fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: session.user.id,
+            priceId: 'price_1RXMtIEVtge1S4ocSIFIGoG1',
+          }),
         }),
-      });
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 10000)
+        )
+      ]);
+
+      // Parallelize Stripe loading and API call for better performance
+      const [response, stripe] = await Promise.all([
+        createSessionPromise,
+        stripePromise
+      ]);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -568,14 +595,13 @@ const MainPage = ({ session }) => {
         return;
       }
 
-      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-      
       if (!stripe) {
         setToastMessage('Payment system unavailable. Please disable ad blockers and try again.');
         setShowToast(true);
         return;
       }
 
+      // Redirect to Stripe checkout
       const { error: stripeError } = await stripe.redirectToCheckout({
         sessionId,
       });
@@ -587,7 +613,10 @@ const MainPage = ({ session }) => {
       }
     } catch (error) {
       console.error('Upgrade Error:', error);
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      if (error.message === 'Request timeout') {
+        setToastMessage('Payment setup is taking longer than expected. Please try again.');
+        setShowToast(true);
+      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
         setToastMessage('Network error. Please check your connection and try again.');
       } else {
         setToastMessage('Error creating checkout session. Please try again.');
@@ -1016,8 +1045,18 @@ const MainPage = ({ session }) => {
     }
   };
 
+  // Improved loading component
+  const LoadingScreen = () => (
+    <div className="loading-screen">
+      <div className="loading-content">
+        <div className="loading-spinner"></div>
+        <p className="loading-text">Loading your habits...</p>
+      </div>
+    </div>
+  );
+
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return <LoadingScreen />;
   }
 
   return (
@@ -1322,7 +1361,7 @@ const MainPage = ({ session }) => {
                     onClick={handleUpgrade}
                     disabled={isPaymentLoading}
                   >
-                    {isPaymentLoading ? 'Processing...' : 'Upgrade to Premium - $4.99'}
+                    {isPaymentLoading ? 'Redirecting to payment...' : 'Upgrade to Premium - $4.99'}
                   </button>
                 </div>
               )}
@@ -1356,8 +1395,17 @@ const MainPage = ({ session }) => {
                   onClick={handleUpgrade}
                   disabled={isPaymentLoading}
                 >
-                  <div className="price">$4.99</div>
-                  <div className="price-note">One-time payment</div>
+                  {isPaymentLoading ? (
+                    <>
+                      <div className="price">Redirecting...</div>
+                      <div className="price-note">Please wait</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="price">$4.99</div>
+                      <div className="price-note">One-time payment</div>
+                    </>
+                  )}
                 </button>
               </div>
             </Dialog.Description>
@@ -1457,8 +1505,9 @@ const MainPage = ({ session }) => {
                     <button 
                       className="upgrade-button"
                       onClick={handleUpgrade}
+                      disabled={isPaymentLoading}
                     >
-                      Upgrade Now - $4.99
+                      {isPaymentLoading ? 'Redirecting to payment...' : 'Upgrade Now - $4.99'}
                     </button>
                   </div>
                 )}
@@ -1524,7 +1573,7 @@ const MainPage = ({ session }) => {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <React.Suspense fallback={<div className="loading">Loading...</div>}>
+      <React.Suspense fallback={<div style={{ display: 'none' }}></div>}>
         <Friends 
           session={session}
           isOpen={isFriendsDialogOpen}

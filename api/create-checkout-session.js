@@ -1,11 +1,22 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe with optimized configuration
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2023-10-16',
+  maxNetworkRetries: 2,
+  timeout: 8000, // 8 second timeout
+});
 
 export default async function handler(req, res) {
+  // Set performance headers
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
+
+  const startTime = Date.now();
 
   try {
     const { userId, priceId } = req.body;
@@ -40,7 +51,10 @@ export default async function handler(req, res) {
       client_reference_id: userId,
     });
 
-    console.log('Checkout session created:', session.id);
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    
+    console.log(`Checkout session created: ${session.id} (${duration}ms)`);
 
     res.status(200).json({ sessionId: session.id });
   } catch (error) {
