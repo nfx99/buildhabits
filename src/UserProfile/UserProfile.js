@@ -33,12 +33,12 @@ const UserProfile = ({ session }) => {
 
   const fetchUserHabits = useCallback(async () => {
     try {
-      console.log('Fetching habits for user:', userId);
+
       const { data, error } = await supabase
         .from('habits')
         .select(`
           *,
-          habit_completions!fk_habit_completions_habit_id(*)
+          habit_completions(*)
         `)
         .eq('user_id', userId)
         .eq('is_private', false) // Only fetch public habits
@@ -51,7 +51,8 @@ const UserProfile = ({ session }) => {
         throw error;
       }
       
-      console.log('Fetched habits:', data);
+
+      
       setHabits(data || []);
     } catch (error) {
       console.error('Error fetching user habits:', error);
@@ -67,7 +68,7 @@ const UserProfile = ({ session }) => {
     }
 
     try {
-      console.log('Checking friend status between', session.user.id, 'and', userId);
+
       // Check if they are friends
       const { data: friendship, error } = await supabase
         .from('friendships')
@@ -80,21 +81,15 @@ const UserProfile = ({ session }) => {
         throw error;
       }
 
-      console.log('Friendship data:', friendship);
-
       if (friendship) {
         if (friendship.status === 'accepted') {
-          console.log('Setting friend status to: friend');
           setFriendStatus('friend');
         } else if (friendship.user_id === session.user.id) {
-          console.log('Setting friend status to: pending (outgoing request)');
           setFriendStatus('pending');
         } else {
-          console.log('Setting friend status to: incoming (incoming request)');
           setFriendStatus('incoming');
         }
       } else {
-        console.log('Setting friend status to: none (no friendship)');
         setFriendStatus('none');
       }
     } catch (error) {
