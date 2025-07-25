@@ -10,9 +10,9 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       name: 'Monthly',
       price: '$5.00',
       period: '/month',
-      // TODO: Replace with actual price ID from Stripe dashboard for monthly plan
-      // This should correspond to: https://buy.stripe.com/7sYcN52ul79sbiDgiD0Ny02
-      priceId: 'price_monthly_buildhabits_2024', 
+      // REPLACE THIS with your actual Stripe price ID for monthly plan
+      // Go to dashboard.stripe.com > Products > find your monthly product > copy the Price ID
+      priceId: 'prod_SkN4AMm6R7Wqs6', 
       description: 'Perfect for getting started',
       popular: false
     },
@@ -21,9 +21,9 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       name: '6 Months',
       price: '$25.00',
       period: '/6 months',
-      // TODO: Replace with actual price ID from Stripe dashboard for 6-month plan
-      // This should correspond to: https://buy.stripe.com/fZu5kDc4V3XgeuPfez0Ny03
-      priceId: 'price_6month_buildhabits_2024',
+      // REPLACE THIS with your actual Stripe price ID for 6-month plan
+      // Go to dashboard.stripe.com > Products > find your 6-month product > copy the Price ID
+      priceId: 'prod_SkN8GZqieJHiGT',
       description: 'Great value for committed users',
       popular: false,
       savings: 'Save 17%' // $25 vs $30 (6 x $5)
@@ -33,9 +33,9 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       name: 'Annual',
       price: '$40.00', 
       period: '/year',
-      // TODO: Replace with actual price ID from Stripe dashboard for yearly plan
-      // This should correspond to: https://buy.stripe.com/bJe3cv8SJalEbiD8Qb0Ny04
-      priceId: 'price_yearly_buildhabits_2024',
+      // REPLACE THIS with your actual Stripe price ID for yearly plan
+      // Go to dashboard.stripe.com > Products > find your yearly product > copy the Price ID
+      priceId: 'prod_SkNAG6CKuNOwMb',
       description: 'Maximum savings for power users',
       popular: true,
       savings: 'Save 33%' // $40 vs $60 (12 x $5)
