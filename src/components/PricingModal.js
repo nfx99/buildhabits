@@ -10,9 +10,7 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       name: 'Monthly',
       price: '$5.00',
       period: '/month',
-      // REPLACE THIS with your actual Stripe price ID for monthly plan
-      // Go to dashboard.stripe.com > Products > find your monthly product > copy the Price ID
-      priceId: 'prod_SkN4AMm6R7Wqs6', 
+      priceId: 'price_1RosKmEVtge1S4ocLAKvbWZH', 
       description: 'Perfect for getting started',
       popular: false
     },
@@ -21,9 +19,7 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       name: '6 Months',
       price: '$25.00',
       period: '/6 months',
-      // REPLACE THIS with your actual Stripe price ID for 6-month plan
-      // Go to dashboard.stripe.com > Products > find your 6-month product > copy the Price ID
-      priceId: 'prod_SkN8GZqieJHiGT',
+      priceId: 'price_1RosOEEVtge1S4oc5zVB2el7',
       description: 'Great value for committed users',
       popular: false,
       savings: 'Save 17%' // $25 vs $30 (6 x $5)
@@ -33,9 +29,7 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       name: 'Annual',
       price: '$40.00', 
       period: '/year',
-      // REPLACE THIS with your actual Stripe price ID for yearly plan
-      // Go to dashboard.stripe.com > Products > find your yearly product > copy the Price ID
-      priceId: 'prod_SkNAG6CKuNOwMb',
+      priceId: 'price_1RosQ6EVtge1S4ocPMeL7HDW',
       description: 'Maximum savings for power users',
       popular: true,
       savings: 'Save 33%' // $40 vs $60 (12 x $5)
