@@ -48,9 +48,9 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
   // Year navigation state
   const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
   
-  // Enhanced insights calculation with premium features
+  // Enhanced insights calculation - now available for all users
   const insights = React.useMemo(() => {
-    if (!habit.has_insights || !isPremium || !habit.habit_completions) return null;
+    if (!habit.has_insights || !habit.habit_completions) return null;
     
     const completions = habit.habit_completions;
     const totalDays = completions.length;
@@ -77,7 +77,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
       currentStreak,
       totalCompletions: totalDays
     };
-  }, [habit.has_insights, habit.habit_completions, isPremium]);
+  }, [habit.has_insights, habit.habit_completions]);
 
   // Tier system stats
   const tierStats = React.useMemo(() => {
@@ -144,9 +144,9 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     setSelectedYear(prev => prev + 1);
   };
   
-  // Allow going back to any reasonable year (e.g., 2020 onwards) and forward to any future year
-  const minAllowedYear = 2020;
-  const maxAllowedYear = currentYear + 5; // Cap at 5 years in the future
+  // Allow going back to any reasonable year (e.g., 2015 onwards) and forward to any future year
+  const minAllowedYear = 2015;
+  const maxAllowedYear = currentYear + 10; // Cap at 10 years in the future
   const canGoToPreviousYear = selectedYear > minAllowedYear;
   const canGoToNextYear = selectedYear < maxAllowedYear;
 
@@ -517,6 +517,32 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
           </h3>
         </div>
         <div className="habit-actions">
+          {/* Year navigation - only show in year view mode */}
+          {viewMode === 'year' && (
+            <div className="year-navigation-inline">
+              <button 
+                className="year-nav-button-inline"
+                onClick={goToPreviousYear}
+                disabled={!canGoToPreviousYear}
+                title="Previous year"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </button>
+              <div className="year-display-inline">{selectedYear}</div>
+              <button 
+                className="year-nav-button-inline"
+                onClick={goToNextYear}
+                disabled={!canGoToNextYear}
+                title="Next year"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </button>
+            </div>
+          )}
           {!isReadOnly && !isArchived && (
             <button 
               className="log-button" 
@@ -960,12 +986,12 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
       </Dialog.Root>
       
       {/* Bottom stats section with insights and tier progress */}
-      {insights && habit.insight_settings && isPremium && (
+      {insights && habit.insight_settings && (
         (habit.insight_settings.showCurrentStreak || 
          habit.insight_settings.showTotalDays || 
          habit.insight_settings.showProgressBar) && (
         <div className="bottom-stats-section">
-          {/* Premium insights section */}
+          {/* Insights section */}
           <div className="insights-bottom">
             {habit.insight_settings.showCurrentStreak && (
               <span className="insight-item">

@@ -8,7 +8,7 @@
   box-shadow: var(--shadow-primary);
   margin: 1rem;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1200px;
   border: 1px solid var(--border-primary);
   overflow: visible;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -606,14 +606,12 @@
   background: var(--gradient-error) !important;
   color: white !important;
   border: none !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .habit-card .dialog-buttons .delete-confirm:hover,
 .dialog-buttons .delete-confirm:hover,
 .delete-habit-button:hover {
   background: var(--gradient-error-hover) !important;
-  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
   transform: translateY(-1px);
 }
 
@@ -681,7 +679,7 @@
 }
 
 /* Mobile responsiveness for habit cards */
-@media (max-width: 1200px) {
+@media (max-width: 1300px) {
   .habit-card {
     margin: 0.5rem auto;
     padding: 0.75rem;
@@ -1234,16 +1232,7 @@
 
 
 /* Premium upsell */
-.insights-premium-upsell {
-  margin-top: 0.5rem;
-  padding: 0.75rem;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.1) 100%);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 8px;
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
+
 
 /* Disabled state for insights buttons */
 .insights-option:disabled {

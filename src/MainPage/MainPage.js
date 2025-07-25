@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, lazy } from 'react';
 import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
+import PricingModal from '../components/PricingModal';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Toast from '@radix-ui/react-toast';
 import { loadStripe } from '@stripe/stripe-js';
@@ -37,6 +38,7 @@ const MainPage = ({ session }) => {
   const [habits, setHabits] = useState([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] = useState(false);
   const [isFriendsDialogOpen, setIsFriendsDialogOpen] = useState(false);
@@ -548,7 +550,24 @@ const MainPage = ({ session }) => {
         return;
       }
 
+      // Close any open dialogs and immediately open pricing modal
+      setIsPaymentDialogOpen(false);
+      setIsProfileDialogOpen(false);
+      setIsCreateDialogOpen(false);
+      setIsDeleteAccountDialogOpen(false);
+      setIsFriendsDialogOpen(false);
+      setIsPricingModalOpen(true);
+    } catch (error) {
+      console.error('Error opening pricing modal:', error);
+      setToastMessage('Error opening pricing modal. Please try again.');
+      setShowToast(true);
+    }
+  };
+
+  const handleSelectPlan = async (priceId, planType) => {
+    try {
       setIsPaymentLoading(true);
+      setIsPricingModalOpen(false);
 
       // Create a promise for the API call with timeout
       const createSessionPromise = Promise.race([
@@ -559,7 +578,8 @@ const MainPage = ({ session }) => {
           },
           body: JSON.stringify({
             userId: session.user.id,
-            priceId: 'price_1RXMtIEVtge1S4ocSIFIGoG1',
+            priceId: priceId,
+            planType: planType,
           }),
         }),
         new Promise((_, reject) => 
@@ -1066,6 +1086,15 @@ const MainPage = ({ session }) => {
         </div>
         <h1> {'Build Habits'}</h1>
         <div className="header-right">
+          {!hasPaid && (
+            <button 
+              className="homescreen-upgrade-button"
+              onClick={handleUpgrade}
+              disabled={isPaymentLoading}
+            >
+              {isPaymentLoading ? 'Opening...' : 'Upgrade to Pro'}
+            </button>
+          )}
           <button 
             className="archive-button"
             onClick={() => navigate('/archive')}
@@ -1101,7 +1130,7 @@ const MainPage = ({ session }) => {
                 className="create-habit-button"
                 onClick={() => {
                   if (!hasPaid && habits.length >= 2) {
-                    setIsPaymentDialogOpen(true);
+                    setIsPricingModalOpen(true);
                   } else {
                     setIsCreateDialogOpen(true);
                   }
@@ -1350,21 +1379,7 @@ const MainPage = ({ session }) => {
                   </div>
                 </div>
               )}
-              {!hasPaid && (
-                <div className="premium-insights-preview">
-                  <h4>🚀 Upgrade to Premium</h4>
-                  <ul>
-                    <li>♾️ Unlimited habits (no more 2-habit limit!)</li>
-                  </ul>
-                  <button 
-                    className="upgrade-insights-button"
-                    onClick={handleUpgrade}
-                    disabled={isPaymentLoading}
-                  >
-                    {isPaymentLoading ? 'Redirecting to payment...' : 'Upgrade to Premium - $4.99'}
-                  </button>
-                </div>
-              )}
+
             </div>
               <div className="dialog-buttons">
                 <button type="submit">Create</button>
@@ -1380,57 +1395,7 @@ const MainPage = ({ session }) => {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <Dialog.Root open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="dialog-overlay" />
-          <Dialog.Content className="dialog-content payment-dialog">
-            <Dialog.Title>Upgrade to Premium</Dialog.Title>
-            <Dialog.Description>
-              <div className="payment-content">
-                <h3>🚀 Unlock Unlimited Habits!</h3>
-                <p>Break free from the 2-habit limit! Upgrade to Premium and create unlimited habits.</p>
-                
-                <button 
-                  className="payment-price-button"
-                  onClick={handleUpgrade}
-                  disabled={isPaymentLoading}
-                >
-                  {isPaymentLoading ? (
-                    <>
-                      <div className="price">Redirecting...</div>
-                      <div className="price-note">Please wait</div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="price">$4.99</div>
-                      <div className="price-note">One-time payment</div>
-                    </>
-                  )}
-                </button>
-              </div>
-            </Dialog.Description>
-            <div className="dialog-buttons">
-              <a 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsPaymentDialogOpen(false);
-                }}
-                style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.9rem',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  opacity: 0.6,
-                  marginTop: '-0.5rem'
-                }}
-              >
-                Maybe Later
-              </a>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+
 
       <Dialog.Root open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
         <Dialog.Portal>
@@ -1498,19 +1463,7 @@ const MainPage = ({ session }) => {
                   </div>
                 </div>
 
-                {!hasPaid && (
-                  <div className="profile-upgrade">
-                    <h4>🚀 Unlock Unlimited Habits!</h4>
-                    <p>Break free from the 2-habit limit! Get unlimited habits.</p>
-                    <button 
-                      className="upgrade-button"
-                      onClick={handleUpgrade}
-                      disabled={isPaymentLoading}
-                    >
-                      {isPaymentLoading ? 'Redirecting to payment...' : 'Upgrade Now - $4.99'}
-                    </button>
-                  </div>
-                )}
+
               </div>
             </Dialog.Description>
             <div className="dialog-buttons">
@@ -1595,6 +1548,13 @@ const MainPage = ({ session }) => {
           <span aria-hidden>×</span>
         </Toast.Close>
       </Toast.Root>
+
+      <PricingModal 
+        isOpen={isPricingModalOpen}
+        onClose={() => setIsPricingModalOpen(false)}
+        onSelectPlan={handleSelectPlan}
+        isLoading={isPaymentLoading}
+      />
 
       <footer className="footer">
         <div className="footer-content">

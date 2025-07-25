@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   const startTime = Date.now();
 
   try {
-    const { userId, priceId } = req.body;
+    const { userId, priceId, planType } = req.body;
 
     if (!userId || !priceId) {
       return res.status(400).json({ message: 'Missing required fields' });
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ message: 'Payment system not configured' });
     }
 
-    console.log('Creating checkout session for:', { userId, priceId });
+    console.log('Creating subscription checkout session for:', { userId, priceId, planType });
 
     // Use your actual domain or fallback to localhost for development
     const baseUrl = process.env.BASE_URL || process.env.REACT_APP_BASE_URL || 'https://buildhabits.net';
@@ -44,17 +44,27 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      mode: 'payment',
+      mode: 'subscription',
       allow_promotion_codes: true,
       success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/`,
       client_reference_id: userId,
+      metadata: {
+        userId: userId,
+        planType: planType || 'unknown'
+      },
+      subscription_data: {
+        metadata: {
+          userId: userId,
+          planType: planType || 'unknown'
+        }
+      }
     });
 
     const endTime = Date.now();
     const duration = endTime - startTime;
     
-    console.log(`Checkout session created: ${session.id} (${duration}ms)`);
+    console.log(`Subscription checkout session created: ${session.id} (${duration}ms)`);
 
     res.status(200).json({ sessionId: session.id });
   } catch (error) {

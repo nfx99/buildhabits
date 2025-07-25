@@ -84,87 +84,214 @@ export default async function handler(req, res) {
     }
   }
 
-  // Handle the checkout.session.completed event
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    console.log('Processing completed checkout session:', {
-      userId: session.client_reference_id,
-      paymentIntent: session.payment_intent,
-      amount: session.amount_total,
-      sessionId: session.id
-    });
-    
-    if (!session.client_reference_id) {
-      console.error('No client_reference_id found in session');
-      return res.status(400).json({ message: 'No user ID found in session' });
-    }
-    
-    try {
-      // First, check if this payment has already been processed
-      const { data: existingPayment } = await supabase
-        .from('payments')
-        .select('id')
-        .eq('stripe_payment_id', session.payment_intent)
-        .single();
-
-      if (existingPayment) {
-        console.log('Payment already processed, skipping');
-        return res.json({ received: true, message: 'Already processed' });
+  try {
+    // Handle subscription checkout completion
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      console.log('Processing completed checkout session:', {
+        userId: session.client_reference_id,
+        subscriptionId: session.subscription,
+        sessionId: session.id,
+        mode: session.mode
+      });
+      
+      if (!session.client_reference_id) {
+        console.error('No client_reference_id found in session');
+        return res.status(400).json({ message: 'No user ID found in session' });
       }
 
-      // Create payment record
-      const { data: paymentData, error: paymentError } = await supabase
-        .from('payments')
-        .insert([
-          {
-            user_id: session.client_reference_id,
-            stripe_payment_id: session.payment_intent,
-            amount: session.amount_total / 100, // Convert from cents to dollars
-            status: 'succeeded'
-          }
-        ])
-        .select();
-
-      if (paymentError) {
-        console.error('Error creating payment record:', paymentError);
-        console.error('Payment error details:', JSON.stringify(paymentError, null, 2));
-        return res.status(500).json({ message: 'Error creating payment record', error: paymentError });
-      }
-
-      console.log('Payment record created:', paymentData);
-
-      // Update or create user profile with premium status
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .upsert(
-          {
-            user_id: session.client_reference_id,
-            is_premium: true,
-            premium_since: new Date().toISOString()
-          },
-          {
-            onConflict: 'user_id'
-          }
-        )
-        .select();
-
-      if (profileError) {
-        console.error('Error updating user profile:', profileError);
-        console.error('Profile error details:', JSON.stringify(profileError, null, 2));
+      if (session.mode === 'subscription') {
+        // Handle subscription checkout
+        const subscription = await stripe.subscriptions.retrieve(session.subscription);
         
-        // If profile update fails, we still want to return success since payment was recorded
-        // The frontend can retry the profile update
-        console.log('Payment recorded but profile update failed - frontend should retry');
-      } else {
-        console.log('Profile updated successfully:', profileData);
-      }
+        // Create or update subscription record
+        const { data: subscriptionData, error: subscriptionError } = await supabase
+          .from('subscriptions')
+          .upsert([
+            {
+              user_id: session.client_reference_id,
+              stripe_subscription_id: subscription.id,
+              stripe_customer_id: subscription.customer,
+              status: subscription.status,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              plan_type: session.metadata?.planType || 'unknown',
+              price_id: subscription.items.data[0]?.price?.id
+            }
+          ], {
+            onConflict: 'stripe_subscription_id'
+          })
+          .select();
 
-      console.log('Webhook processing completed');
-    } catch (error) {
-      console.error('Error processing webhook:', error);
-      console.error('Error stack:', error.stack);
-      return res.status(500).json({ message: 'Error processing webhook', error: error.message });
+        if (subscriptionError) {
+          console.error('Error creating subscription record:', subscriptionError);
+          return res.status(500).json({ message: 'Error creating subscription record', error: subscriptionError });
+        }
+
+        console.log('Subscription record created/updated:', subscriptionData);
+
+        // Update user profile to premium
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .upsert(
+            {
+              user_id: session.client_reference_id,
+              is_premium: true,
+              premium_since: new Date().toISOString(),
+              subscription_status: subscription.status
+            },
+            {
+              onConflict: 'user_id'
+            }
+          )
+          .select();
+
+        if (profileError) {
+          console.error('Error updating user profile:', profileError);
+          return res.status(500).json({ message: 'Error updating user profile', error: profileError });
+        }
+
+        console.log('User profile updated to premium:', profileData);
+      }
     }
+
+    // Handle successful subscription payments
+    if (event.type === 'invoice.payment_succeeded') {
+      const invoice = event.data.object;
+      const subscriptionId = invoice.subscription;
+      
+      if (subscriptionId) {
+        console.log('Processing successful subscription payment:', {
+          subscriptionId,
+          invoiceId: invoice.id,
+          amount: invoice.amount_paid
+        });
+
+        // Get subscription details
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const userId = subscription.metadata?.userId;
+
+        if (userId) {
+          // Update subscription record
+          const { error: subscriptionError } = await supabase
+            .from('subscriptions')
+            .update({
+              status: subscription.status,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
+            })
+            .eq('stripe_subscription_id', subscriptionId);
+
+          if (subscriptionError) {
+            console.error('Error updating subscription:', subscriptionError);
+          }
+
+          // Ensure user profile is premium
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .update({
+              is_premium: true,
+              subscription_status: subscription.status
+            })
+            .eq('user_id', userId);
+
+          if (profileError) {
+            console.error('Error updating user profile:', profileError);
+          }
+
+          console.log('Subscription payment processed successfully');
+        }
+      }
+    }
+
+    // Handle subscription updates (cancellations, plan changes, etc.)
+    if (event.type === 'customer.subscription.updated') {
+      const subscription = event.data.object;
+      const userId = subscription.metadata?.userId;
+
+      console.log('Processing subscription update:', {
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        userId
+      });
+
+      if (userId) {
+        // Update subscription record
+        const { error: subscriptionError } = await supabase
+          .from('subscriptions')
+          .update({
+            status: subscription.status,
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
+          })
+          .eq('stripe_subscription_id', subscription.id);
+
+        if (subscriptionError) {
+          console.error('Error updating subscription:', subscriptionError);
+        }
+
+        // Update user profile based on subscription status
+        const isPremium = ['active', 'trialing'].includes(subscription.status);
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .update({
+            is_premium: isPremium,
+            subscription_status: subscription.status
+          })
+          .eq('user_id', userId);
+
+        if (profileError) {
+          console.error('Error updating user profile:', profileError);
+        }
+
+        console.log('Subscription updated successfully');
+      }
+    }
+
+    // Handle subscription deletions
+    if (event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object;
+      const userId = subscription.metadata?.userId;
+
+      console.log('Processing subscription deletion:', {
+        subscriptionId: subscription.id,
+        userId
+      });
+
+      if (userId) {
+        // Update subscription record
+        const { error: subscriptionError } = await supabase
+          .from('subscriptions')
+          .update({
+            status: 'canceled'
+          })
+          .eq('stripe_subscription_id', subscription.id);
+
+        if (subscriptionError) {
+          console.error('Error updating subscription:', subscriptionError);
+        }
+
+        // Remove premium status from user profile
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .update({
+            is_premium: false,
+            subscription_status: 'canceled'
+          })
+          .eq('user_id', userId);
+
+        if (profileError) {
+          console.error('Error updating user profile:', profileError);
+        }
+
+        console.log('Subscription canceled successfully');
+      }
+    }
+
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    console.error('Error stack:', error.stack);
+    return res.status(500).json({ message: 'Error processing webhook', error: error.message });
   }
 
   res.json({ received: true });

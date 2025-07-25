@@ -639,9 +639,6 @@
   font-weight: 800;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .stat-label {
@@ -1195,6 +1192,70 @@
   box-shadow: 0 6px 12px rgba(255, 215, 0, 0.4);
 }
 
+/* Pricing preview in payment dialog */
+.pricing-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.price-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.price-option:hover {
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.price-option.popular {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  position: relative;
+}
+
+.price-option.popular::after {
+  content: "Best Choice";
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  background: #10b981;
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.price-option .price {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.price-option .plan-name {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.price-option.popular .plan-name {
+  color: #059669;
+  font-weight: 500;
+}
+
 /* Disabled state for insights buttons */
 .insights-option:disabled {
   opacity: 0.5;
@@ -1600,4 +1661,30 @@
   font-size: 0.875rem;
   transition: all 0.2s ease;
   box-shadow: none;
+} 
+
+/* Homescreen upgrade button */
+.homescreen-upgrade-button {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #000;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  margin-right: 0.75rem;
+}
+
+.homescreen-upgrade-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.homescreen-upgrade-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 } 
