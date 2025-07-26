@@ -22,7 +22,7 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       priceId: 'price_1RosOEEVtge1S4oc5zVB2el7',
       description: 'Great value for committed users',
       popular: false,
-      savings: 'Save 17%' // $25 vs $30 (6 x $5)
+      savings: 'Save 17%' 
     },
     yearly: {
       id: 'yearly',
@@ -32,7 +32,7 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       priceId: 'price_1RosQ6EVtge1S4ocPMeL7HDW',
       description: 'Maximum savings for power users',
       popular: true,
-      savings: 'Save 33%' // $40 vs $60 (12 x $5)
+      savings: 'Save 33%'
     }
   };
 

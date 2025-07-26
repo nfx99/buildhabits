@@ -669,7 +669,17 @@ const MainPage = ({ session }) => {
         }),
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError);
+        console.error('Response status:', response.status);
+        console.error('Response text:', await response.text().catch(() => 'Could not read response text'));
+        setToastMessage(`Server error (${response.status}). Please try again or contact support.`);
+        setShowToast(true);
+        return;
+      }
 
       if (!response.ok) {
         console.error('Cancel subscription error:', result);

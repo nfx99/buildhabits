@@ -9,10 +9,22 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 // Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+let supabase;
+try {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL not configured');
+  }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY not configured');
+  }
+  
+  supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+} catch (supabaseError) {
+  console.error('Supabase initialization error:', supabaseError);
+}
 
 export default async function handler(req, res) {
   // Set performance headers
@@ -26,6 +38,12 @@ export default async function handler(req, res) {
   const startTime = Date.now();
 
   try {
+    // Check if Supabase is properly initialized
+    if (!supabase) {
+      console.error('Supabase not initialized');
+      return res.status(500).json({ message: 'Database connection not configured' });
+    }
+
     const { userId } = req.body;
 
     if (!userId) {
