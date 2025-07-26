@@ -754,6 +754,79 @@
   outline: none !important;
 }
 
+/* Cancel subscription button styles */
+.cancel-subscription-button {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  border: none !important;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.cancel-subscription-button:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  transform: translateY(-1px);
+}
+
+/* Cancel subscription dialog styles */
+.cancel-subscription-dialog {
+  max-width: 500px;
+}
+
+.cancel-subscription-content {
+  text-align: center;
+}
+
+.cancel-subscription-content p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.cancel-subscription-content ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.cancel-subscription-content li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.cancel-subscription-confirm-button {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  border: none !important;
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  box-shadow: none !important;
+  transform: none !important;
+  outline: none !important;
+}
+
+.cancel-subscription-confirm-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: translateY(-1px) !important;
+  outline: none !important;
+}
+
+.cancel-subscription-confirm-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
 /* Sign out button styles */
 .sign-out-button {
   background-color: var(--bg-secondary);

@@ -63,6 +63,8 @@ const MainPage = ({ session }) => {
   const [initialLoad, setInitialLoad] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  const [isCancelSubscriptionDialogOpen, setIsCancelSubscriptionDialogOpen] = useState(false);
+  const [isCancelSubscriptionLoading, setIsCancelSubscriptionLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -647,24 +649,99 @@ const MainPage = ({ session }) => {
     }
   };
 
-  const handleSignOut = async () => {
+  const handleCancelSubscription = async () => {
     try {
-      const { data: currentSession } = await supabase.auth.getSession();
-      
-      if (!currentSession.session) {
-        setHabits([]);
-        setHasPaid(false);
-        setToastMessage('Signed out successfully');
+      setIsCancelSubscriptionLoading(true);
+
+      if (!session || !session.user) {
+        setToastMessage('Please sign in to cancel subscription');
         setShowToast(true);
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1000);
         return;
       }
 
-      const { error } = await supabase.auth.signOut();
+      const response = await fetch('/api/cancel-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: session.user.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Cancel subscription error:', result);
+        setToastMessage(result.message || 'Failed to cancel subscription');
+        setShowToast(true);
+        return;
+      }
+
+      // Close the confirmation dialog
+      setIsCancelSubscriptionDialogOpen(false);
       
-      if (error) throw error;
+      // Show success message
+      setToastMessage('Subscription canceled successfully. You will retain access until the end of your billing period.');
+      setShowToast(true);
+
+      // Refresh user data
+      await checkPaymentStatus();
+
+    } catch (error) {
+      console.error('Cancel subscription error:', error);
+      setToastMessage('Error canceling subscription. Please try again.');
+      setShowToast(true);
+    } finally {
+      setIsCancelSubscriptionLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      // Clear local state immediately
+      setHabits([]);
+      setHasPaid(false);
+      setLoading(false);
+      setInitialLoad(true);
+      
+      // Clear any local storage items that might contain session data
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Sign out from Supabase with comprehensive options
+      const { error } = await supabase.auth.signOut({
+        scope: 'global' // Sign out from all tabs/windows
+      });
+      
+      if (error && !error.message.includes('Auth session missing')) {
+        console.error('Sign out error:', error);
+      }
+      
+      // Force clear any remaining Supabase auth storage
+      try {
+        const storageKey = `sb-${supabase.supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
+        localStorage.removeItem(storageKey);
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('sb-auth-token');
+      } catch (storageError) {
+        console.log('Storage cleanup error (non-critical):', storageError);
+      }
+      
+      setToastMessage('Signed out successfully');
+      setShowToast(true);
+      
+      // Use replace instead of href to prevent browser history issues
+      setTimeout(() => {
+        window.location.replace('/');
+      }, 500);
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      
+      // Force logout even if there's an error
+      localStorage.clear();
+      sessionStorage.clear();
       
       setHabits([]);
       setHasPaid(false);
@@ -672,22 +749,8 @@ const MainPage = ({ session }) => {
       setShowToast(true);
       
       setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
-      
-    } catch (error) {
-      if (error.message.includes('Auth session missing')) {
-        setHabits([]);
-        setHasPaid(false);
-        setToastMessage('Signed out successfully');
-        setShowToast(true);
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1000);
-      } else {
-        setToastMessage(`Failed to sign out: ${error.message}`);
-        setShowToast(true);
-      }
+        window.location.replace('/');
+      }, 500);
     }
   };
 
@@ -1080,7 +1143,7 @@ const MainPage = ({ session }) => {
   }
 
   return (
-    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen || isDeleteAccountDialogOpen || isAnyEditDialogOpen || isAnyDeleteDialogOpen || isAnyLogProgressDialogOpen || isFriendsDialogOpen) ? 'dialog-active' : ''}`}>
+    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen || isDeleteAccountDialogOpen || isCancelSubscriptionDialogOpen || isAnyEditDialogOpen || isAnyDeleteDialogOpen || isAnyLogProgressDialogOpen || isFriendsDialogOpen) ? 'dialog-active' : ''}`}>
       <header className="header">
         <div className="header-left">
         </div>
@@ -1467,6 +1530,17 @@ const MainPage = ({ session }) => {
               </div>
             </Dialog.Description>
             <div className="dialog-buttons">
+              {hasPaid && (
+                <button 
+                  onClick={() => {
+                    setIsProfileDialogOpen(false);
+                    setIsCancelSubscriptionDialogOpen(true);
+                  }}
+                  className="cancel-subscription-button"
+                >
+                  Cancel Subscription
+                </button>
+              )}
               <button 
                 onClick={() => {
                   setIsProfileDialogOpen(false);
@@ -1520,6 +1594,35 @@ const MainPage = ({ session }) => {
               </button>
               <button onClick={() => setIsDeleteAccountDialogOpen(false)}>
                 Cancel
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={isCancelSubscriptionDialogOpen} onOpenChange={setIsCancelSubscriptionDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content cancel-subscription-dialog">
+            <Dialog.Title>Cancel Subscription</Dialog.Title>
+            <Dialog.Description>
+              <div className="cancel-subscription-content">
+                <p><strong>Are you sure you want to cancel your subscription?</strong></p>
+              </div>
+            </Dialog.Description>
+            <div className="dialog-buttons">
+              <button 
+                onClick={handleCancelSubscription}
+                className="cancel-subscription-confirm-button"
+                disabled={isCancelSubscriptionLoading}
+              >
+                {isCancelSubscriptionLoading ? 'Canceling...' : 'Yes, Cancel Subscription'}
+              </button>
+              <button 
+                onClick={() => setIsCancelSubscriptionDialogOpen(false)}
+                disabled={isCancelSubscriptionLoading}
+              >
+                Keep Subscription
               </button>
             </div>
           </Dialog.Content>

@@ -98,6 +98,13 @@ function App() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       
+      // Handle sign out event
+      if (event === 'SIGNED_OUT') {
+        // Ensure session is properly cleared
+        setSession(null);
+        return;
+      }
+      
       // Handle regular sign in redirect (not email confirmation)
       if (event === 'SIGNED_IN' && session && !isEmailConfirmation) {
         const currentPath = window.location.pathname;
