@@ -68,25 +68,7 @@ function App() {
   const [session, setSession] = React.useState(null);
   const [isEmailConfirmation, setIsEmailConfirmation] = React.useState(false);
   
-  // Check if this is an account deletion redirect
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAccountDeleted = urlParams.get('account_deleted') === 'true';
-  
-  // Clean up the account_deleted parameter after a delay
-  React.useEffect(() => {
-    if (isAccountDeleted) {
-      // Ensure session is cleared when account was deleted
-      setSession(null);
-      
-      const timer = setTimeout(() => {
-        const newUrl = new URL(window.location);
-        newUrl.searchParams.delete('account_deleted');
-        window.history.replaceState({}, '', newUrl.toString());
-      }, 3000); // Clear after 3 seconds
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isAccountDeleted]);
+
 
   // Check for email confirmation on page load
   React.useEffect(() => {
@@ -116,12 +98,10 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔍 Auth state change:', { event, session: !!session });
       setSession(session);
       
       // Handle sign out event
       if (event === 'SIGNED_OUT') {
-        console.log('🔍 User signed out, clearing session');
         // Ensure session is properly cleared
         setSession(null);
         return;
@@ -155,7 +135,7 @@ function App() {
               element={
                 isEmailConfirmation ? (
                   <Navigate to="/email-confirmed" />
-                ) : (session && !isAccountDeleted) ? (
+                ) : session ? (
                   <MainPage session={session} />
                 ) : (
                   <LandingPage onGetStarted={handleGetStarted} />
@@ -167,7 +147,7 @@ function App() {
               element={
                 isEmailConfirmation ? (
                   <Navigate to="/email-confirmed" />
-                ) : (session && !isAccountDeleted) ? (
+                ) : session ? (
                   <Navigate to="/" />
                 ) : (
                   <SignIn />

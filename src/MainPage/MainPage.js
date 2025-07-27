@@ -999,12 +999,6 @@ const MainPage = ({ session }) => {
         throw new Error(data.error || 'Failed to delete account');
       }
 
-      console.log('🔍 Account deletion successful, starting cleanup...');
-      
-      // Show success message first
-      setToastMessage('Account completely deleted. Redirecting...');
-      setShowToast(true);
-      
       // Close the dialog
       setIsDeleteAccountDialogOpen(false);
       
@@ -1028,30 +1022,24 @@ const MainPage = ({ session }) => {
         console.warn('Storage clear error:', storageError);
       }
       
-      // Sign out and immediately redirect (don't wait for React state)
-      console.log('🔍 Signing out user...');
+      // Sign out and immediately redirect to landing page
       try {
         await supabase.auth.signOut({ scope: 'global' });
-        console.log('🔍 Sign out completed');
       } catch (signOutError) {
         console.warn('Sign out error (expected after account deletion):', signOutError);
       }
       
-      // Immediate redirect without waiting for React state updates
-      console.log('🔍 Starting redirect...');
-      // Use a small timeout to ensure the toast is visible, but don't wait for React state
+      // Immediate redirect to landing page
       setTimeout(() => {
-        console.log('🔍 Executing redirect to signin page');
-        window.location.replace('/signin?account_deleted=true');
-      }, 500); // Very short delay just for toast visibility
+        window.location.replace('/');
+      }, 200);
       
       // Backup redirect in case the first one doesn't work
       setTimeout(() => {
-        if (window.location.pathname !== '/signin') {
-          console.log('Backup redirect triggered');
-          window.location.href = '/signin?account_deleted=true';
+        if (window.location.pathname !== '/') {
+          window.location.href = '/';
         }
-      }, 1000);
+      }, 500);
       
     } catch (error) {
       console.error('Error deleting account:', error);
