@@ -110,22 +110,24 @@ export default async function handler(req, res) {
       // Delete excess habits (keep only first 2)
       console.log('Deleting excess habits for user:', userId);
       
-      // Get all user's habits, ordered by creation date (oldest first)
+      // Get all user's habits, ordered by homepage order (top habits first)
       const { data: habits, error: fetchError } = await supabase
         .from('habits')
-        .select('id, name')
+        .select('id, name, order')
         .eq('user_id', userId)
         .eq('is_archived', false)
-        .order('created_at', { ascending: true });
+        .order('order', { ascending: true, nullsFirst: false });
 
-      if (fetchError) {
-        console.error('Error fetching habits for deletion:', fetchError);
-      } else if (habits && habits.length > 2) {
-        // Keep first 2 habits, delete the rest
-        const habitsToDelete = habits.slice(2);
-        const habitIdsToDelete = habitsToDelete.map(h => h.id);
-        
-        console.log(`Deleting ${habitIdsToDelete.length} excess habits:`, habitsToDelete.map(h => h.name));
+              if (fetchError) {
+          console.error('Error fetching habits for deletion:', fetchError);
+        } else if (habits && habits.length > 2) {
+          // Keep top 2 habits (as they appear on homepage), delete the rest
+          const habitsToKeep = habits.slice(0, 2);
+          const habitsToDelete = habits.slice(2);
+          const habitIdsToDelete = habitsToDelete.map(h => h.id);
+          
+          console.log(`Keeping top 2 habits:`, habitsToKeep.map(h => h.name));
+          console.log(`Deleting ${habitIdsToDelete.length} excess habits:`, habitsToDelete.map(h => h.name));
         
         // Delete habit completions first
         const { error: completionsError } = await supabase

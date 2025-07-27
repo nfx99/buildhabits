@@ -1627,7 +1627,7 @@ const MainPage = ({ session }) => {
               <div className="cancel-subscription-content">
                 <p><strong>Are you sure you want to cancel your subscription?</strong></p>
                 <p>You will immediately lose access to premium features and be limited to 2 habits.</p>
-                <p><strong>Warning:</strong> All habits beyond your first 2 will be permanently deleted.</p>
+                <p><strong>Warning:</strong> All habits beyond your top 2 will be permanently deleted.</p>
               </div>
             </Dialog.Description>
             <div className="dialog-buttons">
