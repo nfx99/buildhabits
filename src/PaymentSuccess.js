@@ -44,13 +44,7 @@ const PaymentSuccess = () => {
             Thank you for your purchase. Your account has been upgraded to premium.
           </p>
           
-          <div className="payment-success-features">
-            <div className="feature-item">
-              <span className="feature-icon">✨</span>
-              <span>Unlimited habits</span>
-            </div>
 
-          </div>
           
           <button onClick={handleGoToDashboard} className="payment-success-button">
             Go to Dashboard

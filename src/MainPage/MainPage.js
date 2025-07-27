@@ -652,7 +652,7 @@ const MainPage = ({ session }) => {
   const handleCancelSubscription = async () => {
     try {
       setIsCancelSubscriptionLoading(true);
-
+      
       if (!session || !session.user) {
         setToastMessage('Please sign in to cancel subscription');
         setShowToast(true);
@@ -753,12 +753,12 @@ const MainPage = ({ session }) => {
       localStorage.clear();
       sessionStorage.clear();
       
-      setHabits([]);
-      setHasPaid(false);
-      setToastMessage('Signed out successfully');
-      setShowToast(true);
+        setHabits([]);
+        setHasPaid(false);
+        setToastMessage('Signed out successfully');
+        setShowToast(true);
       
-      setTimeout(() => {
+        setTimeout(() => {
         window.location.replace('/');
       }, 500);
     }
@@ -1541,7 +1541,7 @@ const MainPage = ({ session }) => {
             </Dialog.Description>
             <div className="dialog-buttons">
               {hasPaid && (
-                <button 
+                    <button 
                   onClick={() => {
                     setIsProfileDialogOpen(false);
                     setIsCancelSubscriptionDialogOpen(true);
@@ -1549,8 +1549,8 @@ const MainPage = ({ session }) => {
                   className="cancel-subscription-button"
                 >
                   Cancel Subscription
-                </button>
-              )}
+                    </button>
+                )}
               <button 
                 onClick={() => {
                   setIsProfileDialogOpen(false);
