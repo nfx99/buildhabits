@@ -118,11 +118,16 @@ const MainPage = ({ session }) => {
         .eq('user_id', session.user.id);
 
       if (error) {
+        console.error('Error fetching user profile:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details
+        });
         
-        // Handle specific RLS/permission errors
-        if (error.code === 'PGRST301' || error.code === '42501' || error.message.includes('row-level security') || error.message.includes('permission denied')) {
-          
-          // Try to create a new profile
+        // Only create new profile if we're absolutely sure it doesn't exist
+        if (error.code === 'PGRST116' || error.message.includes('no rows returned')) {
+          // Profile doesn't exist - safe to create new one
           try {
             const newUsername = `User${Math.floor(Math.random() * 10000)}`;
             
@@ -156,18 +161,45 @@ const MainPage = ({ session }) => {
             setHasPaid(false);
             return false;
           }
+        } else {
+          // For other errors (RLS, permissions, etc.), don't create new profile
+          // Just use defaults and continue - the profile likely exists
+          console.warn('Using default values due to database error, but not creating new profile');
+          setUsername('User');
+          setHasPaid(false);
+          return false;
         }
-        
-        // For other errors, also set defaults and continue
-        console.error('Other profile error:', error);
-        setUsername(`User${Math.floor(Math.random() * 10000)}`);
-        setHasPaid(false);
-        return false;
       }
       
       if (!data || data.length === 0) {
+        console.warn('No user profile data returned - this might indicate database issues or duplicate profiles');
+        
+        // Check if profile actually exists first
+        const { data: existingProfiles, error: checkError } = await supabase
+          .from('user_profiles')
+          .select('user_id, username, is_premium, points')
+          .eq('user_id', session.user.id);
+
+        if (checkError) {
+          console.error('Error checking for existing profiles:', checkError);
+          setUsername('User');
+          setHasPaid(false);
+          return false;
+        }
+
+        if (existingProfiles && existingProfiles.length > 0) {
+          console.warn('Profile exists but wasn\'t returned in first query - using existing profile');
+          const profile = existingProfiles[0];
+          setHasPaid(profile.is_premium || false);
+          setUsername(profile.username || 'User');
+          setUserPoints(profile.points || 0);
+          return profile.is_premium || false;
+        }
+
+        // Only create new profile if absolutely none exists
         try {
           const newUsername = `User${Math.floor(Math.random() * 10000)}`;
+          console.log('Creating new profile for user:', session.user.id);
           
           const { data: newProfile, error: createError } = await supabase
             .from('user_profiles')
