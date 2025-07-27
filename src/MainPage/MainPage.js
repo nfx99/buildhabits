@@ -62,6 +62,11 @@ const MainPage = ({ session }) => {
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
+  
+  // Debug logging for hasPaid changes
+  useEffect(() => {
+    console.log('🔍 DEBUG: hasPaid state changed to:', hasPaid);
+  }, [hasPaid]);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [isCancelSubscriptionDialogOpen, setIsCancelSubscriptionDialogOpen] = useState(false);
   const [isCancelSubscriptionLoading, setIsCancelSubscriptionLoading] = useState(false);
@@ -112,10 +117,14 @@ const MainPage = ({ session }) => {
 
   const checkPaymentStatus = useCallback(async () => {
     try {
+      console.log('🔍 DEBUG: Checking payment status for user:', session.user.id);
+      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('username, is_premium, points')
         .eq('user_id', session.user.id);
+
+      console.log('🔍 DEBUG: Database response:', { data, error });
 
       if (error) {
         console.error('Error fetching user profile:', error);
@@ -233,9 +242,19 @@ const MainPage = ({ session }) => {
         const profile = data[0]; // Get first (and should be only) result
         const isPremium = profile.is_premium || false;
         const wasAlreadyPremium = hasPaid; // Store previous state
+        
+        console.log('🔍 DEBUG: Profile data:', {
+          profile,
+          isPremium,
+          currentHasPaid: hasPaid,
+          wasAlreadyPremium
+        });
+        
         setHasPaid(isPremium);
         setUsername(profile.username || '');
         setUserPoints(profile.points || 0);
+        
+        console.log('🔍 DEBUG: Set hasPaid to:', isPremium);
         
         // Only show congratulations if:
         // 1. User is now premium
