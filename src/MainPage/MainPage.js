@@ -722,7 +722,14 @@ const MainPage = ({ session }) => {
 
       if (!response.ok) {
         console.error('Cancel subscription error:', result);
-        setToastMessage(result.message || 'Failed to cancel subscription');
+        console.error('🔍 DEBUG INFO from server:', result.debug);
+        
+        let errorMessage = result.message || 'Failed to cancel subscription';
+        if (result.debug) {
+          errorMessage += ` (Debug: URL=${result.debug.hasSupabaseUrl}, Key=${result.debug.hasServiceKey})`;
+        }
+        
+        setToastMessage(errorMessage);
         setShowToast(true);
         return;
       }

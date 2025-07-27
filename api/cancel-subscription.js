@@ -8,22 +8,32 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   timeout: 8000, // 8 second timeout
 });
 
-// Initialize Supabase client
+// Initialize Supabase client with fallback approach
 let supabase;
+let initializationError = null;
+
 try {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL not configured');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  console.log('🔍 Supabase init attempt:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!serviceKey,
+    urlSource: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'NEXT_PUBLIC_SUPABASE_URL' : 'SUPABASE_URL'
+  });
+  
+  if (!supabaseUrl) {
+    throw new Error('SUPABASE_URL not configured (tried NEXT_PUBLIC_SUPABASE_URL and SUPABASE_URL)');
   }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!serviceKey) {
     throw new Error('SUPABASE_SERVICE_ROLE_KEY not configured');
   }
   
-  supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  supabase = createClient(supabaseUrl, serviceKey);
+  console.log('✅ Supabase client initialized successfully');
 } catch (supabaseError) {
-  console.error('Supabase initialization error:', supabaseError);
+  console.error('❌ Supabase initialization error:', supabaseError);
+  initializationError = supabaseError.message;
 }
 
 export default async function handler(req, res) {
@@ -38,10 +48,25 @@ export default async function handler(req, res) {
   const startTime = Date.now();
 
   try {
+    // Debug environment variables
+    console.log('🔍 DEBUG: Environment check in cancel-subscription:');
+    console.log('NEXT_PUBLIC_SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+    console.log('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
+    
     // Check if Supabase is properly initialized
     if (!supabase) {
       console.error('Supabase not initialized');
-      return res.status(500).json({ message: 'Database connection not configured' });
+      console.error('Initialization error:', initializationError);
+      return res.status(500).json({ 
+        message: 'Database connection not configured',
+        error: initializationError,
+        debug: {
+          hasSupabaseUrl: !!(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL),
+          hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+          initError: initializationError
+        }
+      });
     }
 
     const { userId } = req.body;
