@@ -999,15 +999,51 @@ const MainPage = ({ session }) => {
         throw new Error(data.error || 'Failed to delete account');
       }
 
+      // Close the dialog
+      setIsDeleteAccountDialogOpen(false);
+      
       // Show success message
       setToastMessage('Account completely deleted. Redirecting...');
       setShowToast(true);
       
-      // Wait a moment for the toast to show, then reload page
-      // The user will be automatically signed out since their auth record no longer exists
+      // Immediately clear all local state
+      setSession(null);
+      setHasPaid(false);
+      setUsername('');
+      setHabits([]);
+      
+      // Sign out immediately and clear all session data
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (signOutError) {
+        console.warn('Sign out error (expected after account deletion):', signOutError);
+      }
+      
+      // Clear all browser storage
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Also clear any Supabase-specific storage
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('supabase') || key.includes('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.includes('supabase') || key.includes('sb-')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      } catch (storageError) {
+        console.warn('Storage clear error:', storageError);
+      }
+      
+      // Wait a moment for the toast to show, then force redirect to landing page
       setTimeout(() => {
-        window.location.href = '/';
-      }, 2000);
+        // Use replace to avoid back button issues and add a flag to prevent auto-redirect
+        window.location.replace('/signin?account_deleted=true');
+      }, 1500);
       
     } catch (error) {
       console.error('Error deleting account:', error);

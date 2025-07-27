@@ -150,6 +150,15 @@ const SignIn = () => {
   });
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  
+  // Check if account was just deleted
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('account_deleted') === 'true') {
+      setToastMessage('✅ Account successfully deleted. You can create a new account if you wish.');
+      setShowToast(true);
+    }
+  }, []);
 
   const handleAuth = async (e) => {
     e.preventDefault();
