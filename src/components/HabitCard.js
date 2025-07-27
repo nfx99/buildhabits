@@ -588,26 +588,28 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                       Edit
                     </button>
                   )}
-                  {isArchived ? (
-                    <button 
-                      className="menu-item" 
-                      onClick={() => {
-                        setIsMoreOpen(false);
-                        onUnarchive && onUnarchive(habit.id);
-                      }}
-                    >
-                      Unarchive
-                    </button>
-                  ) : (
-                    <button 
-                      className="menu-item" 
-                      onClick={() => {
-                        setIsMoreOpen(false);
-                        onArchive && onArchive(habit.id);
-                      }}
-                    >
-                      Archive
-                    </button>
+                  {isPremium && (
+                    isArchived ? (
+                      <button 
+                        className="menu-item" 
+                        onClick={() => {
+                          setIsMoreOpen(false);
+                          onUnarchive && onUnarchive(habit.id);
+                        }}
+                      >
+                        Unarchive
+                      </button>
+                    ) : (
+                      <button 
+                        className="menu-item" 
+                        onClick={() => {
+                          setIsMoreOpen(false);
+                          onArchive && onArchive(habit.id);
+                        }}
+                      >
+                        Archive
+                      </button>
+                    )
                   )}
                   <button 
                     className="menu-item delete" 

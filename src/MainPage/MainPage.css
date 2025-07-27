@@ -268,10 +268,26 @@
 .profile-button:hover,
 .friends-button:hover,
 .quick-share-button:hover,
-.archive-button:hover {
+.archive-button:hover:not(.premium-only) {
   background: var(--accent-hover);
   color: white;
   border-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.archive-button.premium-only {
+  opacity: 0.6;
+  color: #666;
+  cursor: pointer;
+  background: var(--bg-secondary);
+  border-color: #ccc;
+}
+
+.archive-button.premium-only:hover {
+  opacity: 0.8;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
   transform: translateY(-1px);
 }
 

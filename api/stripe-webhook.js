@@ -244,6 +244,57 @@ export default async function handler(req, res) {
           console.error('Error updating user profile:', profileError);
         }
 
+        // If user lost premium status, delete excess habits
+        if (!isPremium) {
+          try {
+            console.log('User lost premium status, deleting excess habits for user:', userId);
+            
+            // Get all user's habits, ordered by creation date (oldest first)
+            const { data: habits, error: fetchError } = await supabase
+              .from('habits')
+              .select('id, name')
+              .eq('user_id', userId)
+              .eq('is_archived', false)
+              .order('created_at', { ascending: true });
+
+            if (fetchError) {
+              console.error('Error fetching habits for deletion:', fetchError);
+            } else if (habits && habits.length > 2) {
+              // Keep first 2 habits, delete the rest
+              const habitsToDelete = habits.slice(2);
+              const habitIdsToDelete = habitsToDelete.map(h => h.id);
+              
+              console.log(`Deleting ${habitIdsToDelete.length} excess habits:`, habitsToDelete.map(h => h.name));
+              
+              // Delete habit completions first
+              const { error: completionsError } = await supabase
+                .from('habit_completions')
+                .delete()
+                .in('habit_id', habitIdsToDelete);
+
+              if (completionsError) {
+                console.error('Error deleting habit completions:', completionsError);
+              }
+
+              // Delete the habits
+              const { error: habitsError } = await supabase
+                .from('habits')
+                .delete()
+                .in('id', habitIdsToDelete);
+
+              if (habitsError) {
+                console.error('Error deleting excess habits:', habitsError);
+              } else {
+                console.log(`Successfully deleted ${habitIdsToDelete.length} excess habits`);
+              }
+            } else {
+              console.log('User has 2 or fewer habits, no deletion needed');
+            }
+          } catch (habitDeletionError) {
+            console.error('Error in habit deletion process:', habitDeletionError);
+          }
+        }
+
         console.log('Subscription updated successfully');
       }
     }
@@ -282,6 +333,55 @@ export default async function handler(req, res) {
 
         if (profileError) {
           console.error('Error updating user profile:', profileError);
+        }
+
+        // Delete excess habits (keep only first 2) when user loses premium
+        try {
+          console.log('Deleting excess habits for user:', userId);
+          
+          // Get all user's habits, ordered by creation date (oldest first)
+          const { data: habits, error: fetchError } = await supabase
+            .from('habits')
+            .select('id, name')
+            .eq('user_id', userId)
+            .eq('is_archived', false)
+            .order('created_at', { ascending: true });
+
+          if (fetchError) {
+            console.error('Error fetching habits for deletion:', fetchError);
+          } else if (habits && habits.length > 2) {
+            // Keep first 2 habits, delete the rest
+            const habitsToDelete = habits.slice(2);
+            const habitIdsToDelete = habitsToDelete.map(h => h.id);
+            
+            console.log(`Deleting ${habitIdsToDelete.length} excess habits:`, habitsToDelete.map(h => h.name));
+            
+            // Delete habit completions first
+            const { error: completionsError } = await supabase
+              .from('habit_completions')
+              .delete()
+              .in('habit_id', habitIdsToDelete);
+
+            if (completionsError) {
+              console.error('Error deleting habit completions:', completionsError);
+            }
+
+            // Delete the habits
+            const { error: habitsError } = await supabase
+              .from('habits')
+              .delete()
+              .in('id', habitIdsToDelete);
+
+            if (habitsError) {
+              console.error('Error deleting excess habits:', habitsError);
+            } else {
+              console.log(`Successfully deleted ${habitIdsToDelete.length} excess habits`);
+            }
+          } else {
+            console.log('User has 2 or fewer habits, no deletion needed');
+          }
+        } catch (habitDeletionError) {
+          console.error('Error in habit deletion process:', habitDeletionError);
         }
 
         console.log('Subscription canceled successfully');

@@ -63,10 +63,7 @@ const MainPage = ({ session }) => {
   const [initialLoad, setInitialLoad] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   
-  // Debug logging for hasPaid changes
-  useEffect(() => {
-    console.log('🔍 DEBUG: hasPaid state changed to:', hasPaid);
-  }, [hasPaid]);
+
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [isCancelSubscriptionDialogOpen, setIsCancelSubscriptionDialogOpen] = useState(false);
   const [isCancelSubscriptionLoading, setIsCancelSubscriptionLoading] = useState(false);
@@ -119,28 +116,13 @@ const MainPage = ({ session }) => {
 
   const checkPaymentStatus = useCallback(async () => {
     try {
-      console.log('🔍 DEBUG: Checking payment status for user:', session.user.id);
-      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('username, is_premium')
         .eq('user_id', session.user.id);
-
-      console.log('🔍 DEBUG: Database response:', { data, error });
       
       if (error) {
-        console.error('🚨 DETAILED ERROR INFO:');
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        console.error('Error details:', error.details);
-        console.error('Error hint:', error.hint);
-        console.error('Full error object:', error);
         console.error('Error fetching user profile:', error);
-        console.error('Error details:', {
-          code: error.code,
-          message: error.message,
-          details: error.details
-        });
         
         // Only create new profile if we're absolutely sure it doesn't exist
         if (error.code === 'PGRST116' || error.message.includes('no rows returned')) {
@@ -250,17 +232,8 @@ const MainPage = ({ session }) => {
         const isPremium = profile.is_premium || false;
         const wasAlreadyPremium = hasPaid; // Store previous state
         
-        console.log('🔍 DEBUG: Profile data:', {
-          profile,
-          isPremium,
-          currentHasPaid: hasPaid,
-          wasAlreadyPremium
-        });
-        
         setHasPaid(isPremium);
         setUsername(profile.username || '');
-        
-        console.log('🔍 DEBUG: Set hasPaid to:', isPremium);
         
         // Only show congratulations if:
         // 1. User is now premium
@@ -722,14 +695,7 @@ const MainPage = ({ session }) => {
 
       if (!response.ok) {
         console.error('Cancel subscription error:', result);
-        console.error('🔍 DEBUG INFO from server:', result.debug);
-        
-        let errorMessage = result.message || 'Failed to cancel subscription';
-        if (result.debug) {
-          errorMessage += ` (Debug: URL=${result.debug.hasSupabaseUrl}, Key=${result.debug.hasServiceKey})`;
-        }
-        
-        setToastMessage(errorMessage);
+        setToastMessage(result.message || 'Failed to cancel subscription');
         setShowToast(true);
         return;
       }
@@ -738,11 +704,14 @@ const MainPage = ({ session }) => {
       setIsCancelSubscriptionDialogOpen(false);
       
       // Show success message
-      setToastMessage('Subscription canceled successfully. You will retain access until the end of your billing period.');
+      setToastMessage('Subscription canceled successfully.');
       setShowToast(true);
 
-      // Refresh user data
-      await checkPaymentStatus();
+      // Refresh user data and habits
+      await Promise.all([
+        checkPaymentStatus(),
+        fetchHabits()
+      ]);
 
     } catch (error) {
       console.error('Cancel subscription error:', error);
@@ -1215,9 +1184,10 @@ const MainPage = ({ session }) => {
             </button>
           )}
           <button 
-            className="archive-button"
-            onClick={() => navigate('/archive')}
-            title="View archived habits"
+            className={`archive-button ${!hasPaid ? 'premium-only' : ''}`}
+            onClick={() => hasPaid ? navigate('/archive') : setIsPricingModalOpen(true)}
+            title={hasPaid ? "View archived habits" : "Archive is a premium feature - upgrade to access"}
+            disabled={!hasPaid}
           >
             📦 Archive
           </button>
@@ -1656,6 +1626,8 @@ const MainPage = ({ session }) => {
             <Dialog.Description>
               <div className="cancel-subscription-content">
                 <p><strong>Are you sure you want to cancel your subscription?</strong></p>
+                <p>You will immediately lose access to premium features and be limited to 2 habits.</p>
+                <p><strong>Warning:</strong> All habits beyond your first 2 will be permanently deleted.</p>
               </div>
             </Dialog.Description>
             <div className="dialog-buttons">

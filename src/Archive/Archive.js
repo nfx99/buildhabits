@@ -8,7 +8,31 @@ const Archive = ({ session }) => {
   const [archivedHabits, setArchivedHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isPremium, setIsPremium] = useState(false);
+  const [premiumLoading, setPremiumLoading] = useState(true);
   const navigate = useNavigate();
+
+  const checkPremiumStatus = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('is_premium')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error checking premium status:', error);
+        setIsPremium(false);
+      } else {
+        setIsPremium(data?.is_premium || false);
+      }
+    } catch (error) {
+      console.error('Premium status check error:', error);
+      setIsPremium(false);
+    } finally {
+      setPremiumLoading(false);
+    }
+  }, [session.user.id]);
 
   const fetchArchivedHabits = useCallback(async () => {
     try {
@@ -36,8 +60,14 @@ const Archive = ({ session }) => {
   }, [session.user.id]);
 
   useEffect(() => {
-    fetchArchivedHabits();
-  }, [fetchArchivedHabits]);
+    checkPremiumStatus();
+  }, [checkPremiumStatus]);
+
+  useEffect(() => {
+    if (isPremium) {
+      fetchArchivedHabits();
+    }
+  }, [fetchArchivedHabits, isPremium]);
 
   const handleUnarchiveHabit = async (habitId) => {
     try {
@@ -124,6 +154,61 @@ const Archive = ({ session }) => {
   const filteredHabits = archivedHabits.filter(habit =>
     habit.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (premiumLoading) {
+    return (
+      <>
+        <button 
+          className="back-button"
+          onClick={() => navigate('/')}
+          title="Back to main page"
+          style={{ position: 'absolute', top: '4rem', left: '2rem', zIndex: 100 }}
+        >
+          ← Back to Home
+        </button>
+        <div className="archive-container">
+          <div className="loading">Loading...</div>
+        </div>
+      </>
+    );
+  }
+
+  if (!isPremium) {
+    return (
+      <>
+        <button 
+          className="back-button"
+          onClick={() => navigate('/')}
+          title="Back to main page"
+          style={{ position: 'absolute', top: '4rem', left: '2rem', zIndex: 100 }}
+        >
+          ← Back to Home
+        </button>
+        <div className="archive-container">
+          <h1 className="archive-title">Premium Feature</h1>
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p>Archive is a premium feature.</p>
+            <p>Upgrade to access your archived habits.</p>
+            <button 
+              className="upgrade-button"
+              onClick={() => navigate('/')}
+              style={{ 
+                padding: '0.75rem 1.5rem', 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+                color: 'white', 
+                border: 'none', 
+                borderRadius: '0.5rem', 
+                marginTop: '1rem',
+                cursor: 'pointer'
+              }}
+            >
+              Upgrade to Premium
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (loading) {
     return (

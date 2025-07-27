@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   timeout: 8000, // 8 second timeout
 });
 
-// TEMPORARY: Initialize Supabase client with environment variable bypass
+// Initialize Supabase client with multiple naming convention support
 let supabase;
 let initializationError = null;
 
@@ -21,16 +21,7 @@ try {
   let serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ||    // Backend service key
                    process.env.REACT_APP_SUPABASE_SERVICE_KEY; // Alternate naming
   
-  console.log('🔍 Supabase init attempt with all naming conventions:', {
-    reactAppUrl: !!process.env.REACT_APP_SUPABASE_URL,
-    nextPublicUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    genericUrl: !!process.env.SUPABASE_URL,
-    hasServiceKey: !!serviceKey,
-    finalUrl: !!supabaseUrl,
-    urlSource: process.env.REACT_APP_SUPABASE_URL ? 'REACT_APP_SUPABASE_URL' :
-               process.env.NEXT_PUBLIC_SUPABASE_URL ? 'NEXT_PUBLIC_SUPABASE_URL' : 
-               process.env.SUPABASE_URL ? 'SUPABASE_URL' : 'NONE'
-  });
+  
   
   if (!supabaseUrl) {
     throw new Error('SUPABASE_URL not found (tried REACT_APP_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_URL)');
@@ -40,9 +31,8 @@ try {
   }
   
   supabase = createClient(supabaseUrl, serviceKey);
-  console.log('✅ Supabase client initialized successfully');
 } catch (supabaseError) {
-  console.error('❌ Supabase initialization error:', supabaseError);
+  console.error('Supabase initialization error:', supabaseError);
   initializationError = supabaseError.message;
 }
 
@@ -58,24 +48,11 @@ export default async function handler(req, res) {
   const startTime = Date.now();
 
   try {
-    // Debug environment variables
-    console.log('🔍 DEBUG: Environment check in cancel-subscription:');
-    console.log('NEXT_PUBLIC_SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-    console.log('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
-    
     // Check if Supabase is properly initialized
     if (!supabase) {
       console.error('Supabase not initialized');
-      console.error('Initialization error:', initializationError);
       return res.status(500).json({ 
-        message: 'Database connection not configured',
-        error: initializationError,
-        debug: {
-          hasSupabaseUrl: !!(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL),
-          hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-          initError: initializationError
-        }
+        message: 'Database connection not configured'
       });
     }
 
@@ -115,12 +92,74 @@ export default async function handler(req, res) {
     // Cancel subscription immediately via Stripe
     const canceledSubscription = await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
 
+    // Immediately update user status and delete excess habits
+    try {
+      // Update user profile to remove premium status
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .update({
+          is_premium: false,
+          subscription_status: 'canceled'
+        })
+        .eq('user_id', userId);
+
+      if (profileError) {
+        console.error('Error updating user profile:', profileError);
+      }
+
+      // Delete excess habits (keep only first 2)
+      console.log('Deleting excess habits for user:', userId);
+      
+      // Get all user's habits, ordered by creation date (oldest first)
+      const { data: habits, error: fetchError } = await supabase
+        .from('habits')
+        .select('id, name')
+        .eq('user_id', userId)
+        .eq('is_archived', false)
+        .order('created_at', { ascending: true });
+
+      if (fetchError) {
+        console.error('Error fetching habits for deletion:', fetchError);
+      } else if (habits && habits.length > 2) {
+        // Keep first 2 habits, delete the rest
+        const habitsToDelete = habits.slice(2);
+        const habitIdsToDelete = habitsToDelete.map(h => h.id);
+        
+        console.log(`Deleting ${habitIdsToDelete.length} excess habits:`, habitsToDelete.map(h => h.name));
+        
+        // Delete habit completions first
+        const { error: completionsError } = await supabase
+          .from('habit_completions')
+          .delete()
+          .in('habit_id', habitIdsToDelete);
+
+        if (completionsError) {
+          console.error('Error deleting habit completions:', completionsError);
+        }
+
+        // Delete the habits
+        const { error: habitsError } = await supabase
+          .from('habits')
+          .delete()
+          .in('id', habitIdsToDelete);
+
+        if (habitsError) {
+          console.error('Error deleting excess habits:', habitsError);
+        } else {
+          console.log(`Successfully deleted ${habitIdsToDelete.length} excess habits`);
+        }
+      } else {
+        console.log('User has 2 or fewer habits, no deletion needed');
+      }
+    } catch (habitDeletionError) {
+      console.error('Error in immediate habit deletion process:', habitDeletionError);
+    }
+
     const endTime = Date.now();
     const duration = endTime - startTime;
     
     console.log(`Subscription canceled: ${canceledSubscription.id} (${duration}ms)`);
 
-    // The webhook will handle updating the database when the cancellation event comes through
     res.status(200).json({ 
       message: 'Subscription canceled successfully',
       subscriptionId: canceledSubscription.id,
