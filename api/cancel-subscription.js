@@ -59,29 +59,26 @@ export default async function handler(req, res) {
     console.log(`Cancel subscription request for user: ${userId}`);
 
     // Get user's current subscription from database
-    const { data: userProfile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('subscription_id, subscription_status')
+    const { data: subscription, error: subscriptionError } = await supabase
+      .from('subscriptions')
+      .select('stripe_subscription_id, status')
       .eq('user_id', userId)
+      .eq('status', 'active')
       .single();
 
-    if (profileError) {
-      console.error('Error fetching user profile:', profileError);
-      return res.status(500).json({ message: 'Failed to fetch user profile' });
+    if (subscriptionError) {
+      console.error('Error fetching subscription:', subscriptionError);
+      return res.status(500).json({ message: 'Failed to fetch subscription' });
     }
 
-    if (!userProfile?.subscription_id) {
+    if (!subscription?.stripe_subscription_id) {
       return res.status(400).json({ message: 'No active subscription found' });
     }
 
-    if (userProfile.subscription_status !== 'active') {
-      return res.status(400).json({ message: 'Subscription is not active' });
-    }
-
-    console.log(`Canceling Stripe subscription: ${userProfile.subscription_id}`);
+    console.log(`Canceling Stripe subscription: ${subscription.stripe_subscription_id}`);
 
     // Cancel subscription immediately via Stripe
-    const canceledSubscription = await stripe.subscriptions.cancel(userProfile.subscription_id);
+    const canceledSubscription = await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
 
     const endTime = Date.now();
     const duration = endTime - startTime;
