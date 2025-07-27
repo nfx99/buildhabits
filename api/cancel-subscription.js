@@ -8,22 +8,32 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   timeout: 8000, // 8 second timeout
 });
 
-// Initialize Supabase client with fallback approach
+// TEMPORARY: Initialize Supabase client with environment variable bypass
 let supabase;
 let initializationError = null;
 
 try {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Try ALL possible environment variable names (frontend + backend)
+  let supabaseUrl = process.env.REACT_APP_SUPABASE_URL ||      // Frontend naming
+                    process.env.NEXT_PUBLIC_SUPABASE_URL ||    // Next.js naming  
+                    process.env.SUPABASE_URL;                  // Generic naming
+                    
+  let serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ||    // Backend service key
+                   process.env.REACT_APP_SUPABASE_SERVICE_KEY; // Alternate naming
   
-  console.log('🔍 Supabase init attempt:', {
-    hasUrl: !!supabaseUrl,
-    hasKey: !!serviceKey,
-    urlSource: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'NEXT_PUBLIC_SUPABASE_URL' : 'SUPABASE_URL'
+  console.log('🔍 Supabase init attempt with all naming conventions:', {
+    reactAppUrl: !!process.env.REACT_APP_SUPABASE_URL,
+    nextPublicUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    genericUrl: !!process.env.SUPABASE_URL,
+    hasServiceKey: !!serviceKey,
+    finalUrl: !!supabaseUrl,
+    urlSource: process.env.REACT_APP_SUPABASE_URL ? 'REACT_APP_SUPABASE_URL' :
+               process.env.NEXT_PUBLIC_SUPABASE_URL ? 'NEXT_PUBLIC_SUPABASE_URL' : 
+               process.env.SUPABASE_URL ? 'SUPABASE_URL' : 'NONE'
   });
   
   if (!supabaseUrl) {
-    throw new Error('SUPABASE_URL not configured (tried NEXT_PUBLIC_SUPABASE_URL and SUPABASE_URL)');
+    throw new Error('SUPABASE_URL not found (tried REACT_APP_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_URL)');
   }
   if (!serviceKey) {
     throw new Error('SUPABASE_SERVICE_ROLE_KEY not configured');

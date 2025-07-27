@@ -11,7 +11,28 @@ export default async function handler(req, res) {
       hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       hasSupabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
       nodeVersion: process.version,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      
+      // DETAILED DEBUG INFO
+      actualSupabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT SET',
+      alternateSupabaseUrl: process.env.SUPABASE_URL || 'NOT SET',
+      serviceKeyExists: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      stripeKeyExists: !!process.env.STRIPE_SECRET_KEY,
+      
+      // Show all environment keys that might be relevant
+      allRelevantEnvKeys: Object.keys(process.env).filter(key => 
+        key.includes('SUPABASE') || 
+        key.includes('STRIPE') || 
+        key.includes('DATABASE') ||
+        key.includes('URL')
+      ).sort(),
+      
+      // Platform detection
+      platform: {
+        vercel: !!process.env.VERCEL,
+        netlify: !!process.env.NETLIFY,
+        nodeEnv: process.env.NODE_ENV
+      }
     };
 
     // Test Supabase connection
