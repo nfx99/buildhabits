@@ -76,20 +76,19 @@ const MainPage = ({ session }) => {
   const [username, setUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [editingUsername, setEditingUsername] = useState('');
-  const [showUserPoints, setShowUserPoints] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [calendarViewMode, setCalendarViewMode] = useState('year');
   const [currentView, setCurrentView] = useState('habits'); // 'habits' or 'planner'
   const [plannerRefreshTrigger, setPlannerRefreshTrigger] = useState(0);
 
-  // State for stored user points
-  const [userPoints, setUserPoints] = useState(0);
+
 
   const navigate = useNavigate();
 
   // Calculate overall stats from all habits
   const overallStats = React.useMemo(() => {
-    if (!habits.length) return { totalPoints: userPoints, totalDays: 0, currentStreak: 0 };
+    if (!habits.length) return { totalPoints: 0, totalDays: 0, currentStreak: 0 };
     
     let totalDays = 0;
     let maxStreak = 0;
@@ -100,12 +99,15 @@ const MainPage = ({ session }) => {
       maxStreak = Math.max(maxStreak, stats.currentStreak);
     });
     
+    // Calculate points based on habit data (10 points per day)
+    const totalPoints = totalDays * 10;
+    
     return {
-      totalPoints: userPoints, // Use stored points from database
+      totalPoints,
       totalDays,
       currentStreak: maxStreak
     };
-  }, [habits, userPoints]);
+  }, [habits]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -121,12 +123,18 @@ const MainPage = ({ session }) => {
       
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('username, is_premium, points')
+        .select('username, is_premium')
         .eq('user_id', session.user.id);
 
       console.log('🔍 DEBUG: Database response:', { data, error });
-
+      
       if (error) {
+        console.error('🚨 DETAILED ERROR INFO:');
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
+        console.error('Full error object:', error);
         console.error('Error fetching user profile:', error);
         console.error('Error details:', {
           code: error.code,
@@ -186,7 +194,7 @@ const MainPage = ({ session }) => {
         // Check if profile actually exists first
         const { data: existingProfiles, error: checkError } = await supabase
           .from('user_profiles')
-          .select('user_id, username, is_premium, points')
+          .select('user_id, username, is_premium')
           .eq('user_id', session.user.id);
 
         if (checkError) {
@@ -201,7 +209,6 @@ const MainPage = ({ session }) => {
           const profile = existingProfiles[0];
           setHasPaid(profile.is_premium || false);
           setUsername(profile.username || 'User');
-          setUserPoints(profile.points || 0);
           return profile.is_premium || false;
         }
 
@@ -252,7 +259,6 @@ const MainPage = ({ session }) => {
         
         setHasPaid(isPremium);
         setUsername(profile.username || '');
-        setUserPoints(profile.points || 0);
         
         console.log('🔍 DEBUG: Set hasPaid to:', isPremium);
         
@@ -317,24 +323,7 @@ const MainPage = ({ session }) => {
     }
   }, [session.user.id]);
 
-  const fetchUserPoints = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('points')
-        .eq('user_id', session.user.id)
-        .single();
 
-      if (error) {
-        console.error('Error fetching user points:', error);
-        return;
-      }
-      
-      setUserPoints(data?.points || 0);
-    } catch (error) {
-      console.error('fetchUserPoints error:', error);
-    }
-  }, [session.user.id]);
 
   const fetchHabits = useCallback(async () => {
     try {
@@ -373,8 +362,7 @@ const MainPage = ({ session }) => {
       
       // Start loading data immediately in parallel
       const dataPromises = [
-        fetchHabits(),
-        fetchUserPoints()
+        fetchHabits()
       ];
       
       // Handle payment verification separately
@@ -414,7 +402,7 @@ const MainPage = ({ session }) => {
     };
 
     initialize();
-  }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits, fetchUserPoints, session.user.id]);
+  }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits, session.user.id]);
 
   const handleCreateHabit = async (e) => {
     e.preventDefault();
@@ -587,8 +575,8 @@ const MainPage = ({ session }) => {
         // Removed toast notifications for habit completions
       }
 
-      // Refetch habits and user points to ensure data consistency
-      await Promise.all([fetchHabits(), fetchUserPoints()]);
+      // Refetch habits to ensure data consistency
+      await fetchHabits();
     } catch (error) {
       setToastMessage(isUndo ? 'Error removing habit completion' : 'Error completing habit');
       setShowToast(true);
@@ -1264,15 +1252,7 @@ const MainPage = ({ session }) => {
               </button>
             </div>
             <div className="habits-header-controls">
-              {showUserPoints && hasPaid && (
-                <div className="global-stats">
-                  <div className="global-points">
-                    <span className="points-icon">⭐</span>
-                    <span className="points-value">{overallStats.totalPoints.toLocaleString()}</span>
-                    <span className="points-label">points</span>
-                  </div>
-                </div>
-              )}
+
               <div className="calendar-view-toggle">
                 <button
                   className={`view-toggle-btn ${calendarViewMode === 'year' ? 'active' : ''}`}
