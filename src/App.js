@@ -116,10 +116,12 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔍 Auth state change:', { event, session: !!session });
       setSession(session);
       
       // Handle sign out event
       if (event === 'SIGNED_OUT') {
+        console.log('🔍 User signed out, clearing session');
         // Ensure session is properly cleared
         setSession(null);
         return;

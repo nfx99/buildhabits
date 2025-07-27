@@ -999,27 +999,16 @@ const MainPage = ({ session }) => {
         throw new Error(data.error || 'Failed to delete account');
       }
 
-      // Close the dialog
-      setIsDeleteAccountDialogOpen(false);
+      console.log('🔍 Account deletion successful, starting cleanup...');
       
-      // Show success message
+      // Show success message first
       setToastMessage('Account completely deleted. Redirecting...');
       setShowToast(true);
       
-      // Immediately clear all local state
-      setSession(null);
-      setHasPaid(false);
-      setUsername('');
-      setHabits([]);
+      // Close the dialog
+      setIsDeleteAccountDialogOpen(false);
       
-      // Sign out immediately and clear all session data
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (signOutError) {
-        console.warn('Sign out error (expected after account deletion):', signOutError);
-      }
-      
-      // Clear all browser storage
+      // Immediately clear all browser storage
       try {
         localStorage.clear();
         sessionStorage.clear();
@@ -1039,11 +1028,30 @@ const MainPage = ({ session }) => {
         console.warn('Storage clear error:', storageError);
       }
       
-      // Wait a moment for the toast to show, then force redirect to landing page
+      // Sign out and immediately redirect (don't wait for React state)
+      console.log('🔍 Signing out user...');
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+        console.log('🔍 Sign out completed');
+      } catch (signOutError) {
+        console.warn('Sign out error (expected after account deletion):', signOutError);
+      }
+      
+      // Immediate redirect without waiting for React state updates
+      console.log('🔍 Starting redirect...');
+      // Use a small timeout to ensure the toast is visible, but don't wait for React state
       setTimeout(() => {
-        // Use replace to avoid back button issues and add a flag to prevent auto-redirect
+        console.log('🔍 Executing redirect to signin page');
         window.location.replace('/signin?account_deleted=true');
-      }, 1500);
+      }, 500); // Very short delay just for toast visibility
+      
+      // Backup redirect in case the first one doesn't work
+      setTimeout(() => {
+        if (window.location.pathname !== '/signin') {
+          console.log('Backup redirect triggered');
+          window.location.href = '/signin?account_deleted=true';
+        }
+      }, 1000);
       
     } catch (error) {
       console.error('Error deleting account:', error);
