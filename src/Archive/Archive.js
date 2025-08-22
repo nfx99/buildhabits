@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
+import { getBackgroundImageStyles } from '../utils/backgroundImageUpload';
 import './Archive.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,13 +11,14 @@ const Archive = ({ session }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isPremium, setIsPremium] = useState(false);
   const [premiumLoading, setPremiumLoading] = useState(true);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
   const navigate = useNavigate();
 
   const checkPremiumStatus = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('is_premium')
+        .select('is_premium, background_image_url')
         .eq('user_id', session.user.id)
         .single();
 
@@ -25,6 +27,7 @@ const Archive = ({ session }) => {
         setIsPremium(false);
       } else {
         setIsPremium(data?.is_premium || false);
+        setBackgroundImageUrl(data?.background_image_url || '');
       }
     } catch (error) {
       console.error('Premium status check error:', error);
@@ -157,7 +160,7 @@ const Archive = ({ session }) => {
 
   if (premiumLoading) {
     return (
-      <>
+      <div style={getBackgroundImageStyles(backgroundImageUrl)}>
         <button 
           className="back-button"
           onClick={() => navigate('/')}
@@ -169,13 +172,13 @@ const Archive = ({ session }) => {
         <div className="archive-container">
           <div className="loading">Loading...</div>
         </div>
-      </>
+      </div>
     );
   }
 
   if (!isPremium) {
     return (
-      <>
+      <div style={getBackgroundImageStyles(backgroundImageUrl)}>
         <button 
           className="back-button"
           onClick={() => navigate('/')}
@@ -206,13 +209,13 @@ const Archive = ({ session }) => {
             </button>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <>
+      <div style={getBackgroundImageStyles(backgroundImageUrl)}>
         <button 
           className="back-button"
           onClick={() => navigate('/')}
@@ -224,12 +227,12 @@ const Archive = ({ session }) => {
         <div className="archive-container">
           <div className="loading">Loading archived habits...</div>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div style={getBackgroundImageStyles(backgroundImageUrl)}>
       <button 
         className="back-button"
         onClick={() => navigate('/')}
@@ -279,7 +282,7 @@ const Archive = ({ session }) => {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

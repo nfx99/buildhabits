@@ -4,6 +4,7 @@ import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
 import ProfilePictureUpload from '../components/ProfilePictureUpload';
 import { getDefaultAvatarUrl } from '../utils/profilePictureUpload';
+import { getBackgroundImageStyles } from '../utils/backgroundImageUpload';
 import './UserProfile.css';
 
 const UserProfile = ({ session }) => {
@@ -23,7 +24,7 @@ const UserProfile = ({ session }) => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('user_id, username, profile_picture_url')
+        .select('user_id, username, profile_picture_url, background_image_url')
         .eq('user_id', userId)
         .single();
 
@@ -296,7 +297,10 @@ const UserProfile = ({ session }) => {
   }
 
   return (
-    <div className="user-profile">
+    <div 
+      className="user-profile"
+      style={getBackgroundImageStyles(userProfile?.background_image_url)}
+    >
       <header className="user-profile-header">
         <button onClick={handleBackToHome} className="back-button">
           ← Back to Home
