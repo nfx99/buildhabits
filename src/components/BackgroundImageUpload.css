@@ -1,0 +1,255 @@
+/* Background Image Upload Component Styles */
+.background-image-upload {
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.background-upload-section h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.background-description {
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.background-upload-area {
+  width: 100%;
+  min-height: 140px;
+  border: 2px dashed var(--border-primary);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.background-upload-area:hover {
+  border-color: var(--primary-color, #007bff);
+  background: var(--bg-primary);
+}
+
+.background-upload-area.drag-over {
+  border-color: var(--primary-color, #007bff);
+  background: var(--primary-light, #f0f8ff);
+  border-style: solid;
+}
+
+.background-upload-area.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.background-upload-area.disabled:hover {
+  border-color: var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.background-preview {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.background-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.background-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: white;
+}
+
+.background-upload-area:hover .background-overlay {
+  opacity: 1;
+}
+
+.background-actions {
+  text-align: center;
+}
+
+.change-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.background-upload-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1rem;
+  height: 100%;
+  min-height: 140px;
+}
+
+.background-upload-prompt svg {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.background-upload-prompt h5 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.background-upload-prompt p {
+  margin: 0 0 0.75rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.file-requirements {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.upload-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.progress-bar {
+  width: 120px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: white;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.background-actions-footer {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.remove-background-btn {
+  background: var(--error, #dc3545);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.remove-background-btn:hover {
+  background: var(--error-dark, #c82333);
+  transform: translateY(-1px);
+}
+
+.remove-background-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .background-upload-area {
+    min-height: 120px;
+  }
+  
+  .background-preview {
+    height: 120px;
+  }
+  
+  .background-upload-prompt {
+    padding: 1.5rem 1rem;
+    min-height: 120px;
+  }
+  
+  .background-upload-prompt svg {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .background-upload-prompt h5 {
+    font-size: 0.9rem;
+  }
+  
+  .background-upload-prompt p {
+    font-size: 0.8rem;
+  }
+  
+  .file-requirements {
+    font-size: 0.7rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .background-upload-area {
+    background: var(--bg-secondary-dark, #2d3748);
+    border-color: var(--border-primary-dark, #4a5568);
+  }
+  
+  .background-upload-area:hover {
+    background: var(--bg-primary-dark, #1a202c);
+  }
+  
+  .background-upload-prompt svg {
+    color: var(--text-secondary-dark, #a0aec0);
+  }
+  
+  .background-upload-prompt h5 {
+    color: var(--text-primary-dark, #f7fafc);
+  }
+  
+  .background-upload-prompt p {
+    color: var(--text-secondary-dark, #a0aec0);
+  }
+  
+  .file-requirements {
+    color: var(--text-secondary-dark, #a0aec0);
+  }
+}

@@ -8,7 +8,9 @@ import { loadStripe } from '@stripe/stripe-js';
 import { format } from 'date-fns';
 import { getHabitStats } from '../utils/tierSystem';
 import { getDefaultAvatarUrl, uploadProfilePicture, updateUserProfilePicture, extractFilePathFromUrl } from '../utils/profilePictureUpload';
+import { getBackgroundImageStyles } from '../utils/backgroundImageUpload';
 import ProfilePictureUpload from '../components/ProfilePictureUpload';
+import BackgroundImageUpload from '../components/BackgroundImageUpload';
 import {
   DndContext,
   closestCenter,
@@ -74,9 +76,12 @@ const MainPage = ({ session }) => {
 
   const [username, setUsername] = useState('');
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [profileUploadError, setProfileUploadError] = useState(null);
   const [profileUploadSuccess, setProfileUploadSuccess] = useState(false);
+  const [backgroundUploadError, setBackgroundUploadError] = useState(null);
+  const [backgroundUploadSuccess, setBackgroundUploadSuccess] = useState(false);
   const [editingUsername, setEditingUsername] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,7 +128,7 @@ const MainPage = ({ session }) => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('username, is_premium, profile_picture_url')
+        .select('username, is_premium, profile_picture_url, background_image_url')
         .eq('user_id', session.user.id);
       
       if (error) {
@@ -181,7 +186,7 @@ const MainPage = ({ session }) => {
         // Check if profile actually exists first
         const { data: existingProfiles, error: checkError } = await supabase
           .from('user_profiles')
-          .select('user_id, username, is_premium, profile_picture_url')
+          .select('user_id, username, is_premium, profile_picture_url, background_image_url')
           .eq('user_id', session.user.id);
 
         if (checkError) {
@@ -197,6 +202,7 @@ const MainPage = ({ session }) => {
           setHasPaid(profile.is_premium || false);
           setUsername(profile.username || 'User');
           setProfilePictureUrl(profile.profile_picture_url || '');
+          setBackgroundImageUrl(profile.background_image_url || '');
           return profile.is_premium || false;
         }
 
@@ -241,6 +247,7 @@ const MainPage = ({ session }) => {
         setHasPaid(isPremium);
         setUsername(profile.username || '');
         setProfilePictureUrl(profile.profile_picture_url || '');
+        setBackgroundImageUrl(profile.background_image_url || '');
         
         // Only show congratulations if:
         // 1. User is now premium
@@ -1095,6 +1102,38 @@ const MainPage = ({ session }) => {
     }, 5000);
   };
 
+  const handleBackgroundUploadSuccess = (newImageUrl, updatedProfile) => {
+    setBackgroundImageUrl(newImageUrl);
+    setBackgroundUploadSuccess(true);
+    setBackgroundUploadError(null);
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      setBackgroundUploadSuccess(false);
+    }, 3000);
+  };
+
+  const handleBackgroundUploadError = (errorMessage) => {
+    setBackgroundUploadError(errorMessage);
+    setBackgroundUploadSuccess(false);
+    
+    // Clear error message after 5 seconds
+    setTimeout(() => {
+      setBackgroundUploadError(null);
+    }, 5000);
+  };
+
+  const handleBackgroundRemoveSuccess = (updatedProfile) => {
+    setBackgroundImageUrl('');
+    setBackgroundUploadSuccess(true);
+    setBackgroundUploadError(null);
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      setBackgroundUploadSuccess(false);
+    }, 3000);
+  };
+
   const handleDragEnd = useCallback(async (event) => {
     const { active, over } = event;
 
@@ -1228,7 +1267,10 @@ const MainPage = ({ session }) => {
   }
 
   return (
-    <div className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen || isDeleteAccountDialogOpen || isCancelSubscriptionDialogOpen || isAnyEditDialogOpen || isAnyDeleteDialogOpen || isAnyLogProgressDialogOpen || isFriendsDialogOpen) ? 'dialog-active' : ''}`}>
+    <div 
+      className={`main-page ${(isCreateDialogOpen || isPaymentDialogOpen || isProfileDialogOpen || isDeleteAccountDialogOpen || isCancelSubscriptionDialogOpen || isAnyEditDialogOpen || isAnyDeleteDialogOpen || isAnyLogProgressDialogOpen || isFriendsDialogOpen) ? 'dialog-active' : ''}`}
+      style={getBackgroundImageStyles(backgroundImageUrl)}
+    >
       <header className="header">
         <div className="header-left">
         </div>
@@ -1623,6 +1665,27 @@ const MainPage = ({ session }) => {
                   </div>
                 </div>
 
+                {/* Background Image Upload Section */}
+                <BackgroundImageUpload
+                  userId={session?.user?.id}
+                  currentImageUrl={backgroundImageUrl}
+                  onUploadSuccess={handleBackgroundUploadSuccess}
+                  onUploadError={handleBackgroundUploadError}
+                  onRemoveSuccess={handleBackgroundRemoveSuccess}
+                  disabled={false}
+                />
+                
+                {/* Background upload feedback messages */}
+                {backgroundUploadSuccess && (
+                  <div className="upload-message success">
+                    ✅ Background updated successfully!
+                  </div>
+                )}
+                {backgroundUploadError && (
+                  <div className="upload-message error">
+                    ❌ {backgroundUploadError}
+                  </div>
+                )}
 
               </div>
             </Dialog.Description>
