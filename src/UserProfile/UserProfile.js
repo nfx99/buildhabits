@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
+import ProfilePictureUpload from '../components/ProfilePictureUpload';
+import { getDefaultAvatarUrl } from '../utils/profilePictureUpload';
 import './UserProfile.css';
 
 const UserProfile = ({ session }) => {
@@ -14,12 +16,14 @@ const UserProfile = ({ session }) => {
   const [showShareSuccess, setShowShareSuccess] = useState(false);
   const [friendStatus, setFriendStatus] = useState('none'); // 'none', 'friend', 'pending', 'incoming'
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const fetchUserProfile = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('user_id, username')
+        .select('user_id, username, profile_picture_url')
         .eq('user_id', userId)
         .single();
 
@@ -239,6 +243,37 @@ const UserProfile = ({ session }) => {
     }
   };
 
+  const handleUploadSuccess = (newImageUrl, updatedProfile) => {
+    setUserProfile(prevProfile => ({
+      ...prevProfile,
+      profile_picture_url: newImageUrl
+    }));
+    setUploadSuccess(true);
+    setUploadError(null);
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      setUploadSuccess(false);
+    }, 3000);
+  };
+
+  const handleUploadError = (errorMessage) => {
+    setUploadError(errorMessage);
+    setUploadSuccess(false);
+    
+    // Clear error message after 5 seconds
+    setTimeout(() => {
+      setUploadError(null);
+    }, 5000);
+  };
+
+  const getProfileImageUrl = () => {
+    if (userProfile?.profile_picture_url) {
+      return userProfile.profile_picture_url;
+    }
+    return getDefaultAvatarUrl(userProfile?.username);
+  };
+
   if (loading) {
     return <div className="loading">Loading user profile...</div>;
   }
@@ -262,10 +297,48 @@ const UserProfile = ({ session }) => {
           ← Back to Home
         </button>
         <div className="user-info">
-          <h1>{userProfile?.username || 'Unknown User'}</h1>
-          <p className="user-stats">
-            {habits.length} public habit{habits.length !== 1 ? 's' : ''}
-          </p>
+          <div className="profile-picture-section">
+            {/* Profile Picture Display */}
+            {!isOwnProfile ? (
+              <div className="profile-picture-display">
+                <img
+                  src={getProfileImageUrl()}
+                  alt={`${userProfile?.username}'s profile`}
+                  className="profile-image-readonly"
+                />
+              </div>
+            ) : (
+              <div className="profile-picture-upload-section">
+                <ProfilePictureUpload
+                  userId={session?.user?.id}
+                  currentImageUrl={userProfile?.profile_picture_url}
+                  username={userProfile?.username}
+                  onUploadSuccess={handleUploadSuccess}
+                  onUploadError={handleUploadError}
+                  disabled={!isOwnProfile}
+                />
+                
+                {/* Upload feedback messages */}
+                {uploadSuccess && (
+                  <div className="upload-message success">
+                    ✅ Profile picture updated successfully!
+                  </div>
+                )}
+                {uploadError && (
+                  <div className="upload-message error">
+                    ❌ {uploadError}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <div className="user-details">
+            <h1>{userProfile?.username || 'Unknown User'}</h1>
+            <p className="user-stats">
+              {habits.length} public habit{habits.length !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
         <div className="header-actions">
           {!isOwnProfile && (

@@ -7,6 +7,8 @@ import * as Toast from '@radix-ui/react-toast';
 import { loadStripe } from '@stripe/stripe-js';
 import { format } from 'date-fns';
 import { getHabitStats } from '../utils/tierSystem';
+import { getDefaultAvatarUrl, uploadProfilePicture, updateUserProfilePicture, extractFilePathFromUrl } from '../utils/profilePictureUpload';
+import ProfilePictureUpload from '../components/ProfilePictureUpload';
 import {
   DndContext,
   closestCenter,
@@ -71,7 +73,10 @@ const MainPage = ({ session }) => {
   const [toastMessage, setToastMessage] = useState('');
 
   const [username, setUsername] = useState('');
+  const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [profileUploadError, setProfileUploadError] = useState(null);
+  const [profileUploadSuccess, setProfileUploadSuccess] = useState(false);
   const [editingUsername, setEditingUsername] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,7 +123,7 @@ const MainPage = ({ session }) => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('username, is_premium')
+        .select('username, is_premium, profile_picture_url')
         .eq('user_id', session.user.id);
       
       if (error) {
@@ -176,7 +181,7 @@ const MainPage = ({ session }) => {
         // Check if profile actually exists first
         const { data: existingProfiles, error: checkError } = await supabase
           .from('user_profiles')
-          .select('user_id, username, is_premium')
+          .select('user_id, username, is_premium, profile_picture_url')
           .eq('user_id', session.user.id);
 
         if (checkError) {
@@ -191,6 +196,7 @@ const MainPage = ({ session }) => {
           const profile = existingProfiles[0];
           setHasPaid(profile.is_premium || false);
           setUsername(profile.username || 'User');
+          setProfilePictureUrl(profile.profile_picture_url || '');
           return profile.is_premium || false;
         }
 
@@ -234,6 +240,7 @@ const MainPage = ({ session }) => {
         
         setHasPaid(isPremium);
         setUsername(profile.username || '');
+        setProfilePictureUrl(profile.profile_picture_url || '');
         
         // Only show congratulations if:
         // 1. User is now premium
@@ -1065,6 +1072,27 @@ const MainPage = ({ session }) => {
       setToastMessage('Error copying link to clipboard');
       setShowToast(true);
     }
+  }
+
+  const handleProfileUploadSuccess = (newImageUrl, updatedProfile) => {
+    setProfilePictureUrl(newImageUrl);
+    setProfileUploadSuccess(true);
+    setProfileUploadError(null);
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      setProfileUploadSuccess(false);
+    }, 3000);
+  };
+
+  const handleProfileUploadError = (errorMessage) => {
+    setProfileUploadError(errorMessage);
+    setProfileUploadSuccess(false);
+    
+    // Clear error message after 5 seconds
+    setTimeout(() => {
+      setProfileUploadError(null);
+    }, 5000);
   };
 
   const handleDragEnd = useCallback(async (event) => {
@@ -1518,8 +1546,27 @@ const MainPage = ({ session }) => {
             <Dialog.Description>
               <div className="profile-content">
                 <div className="profile-info">
-                  <div className="profile-avatar">
-                    {username?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase() || '👤'}
+                  <div className="profile-picture-upload-container">
+                    <ProfilePictureUpload
+                      userId={session?.user?.id}
+                      currentImageUrl={profilePictureUrl}
+                      username={username}
+                      onUploadSuccess={handleProfileUploadSuccess}
+                      onUploadError={handleProfileUploadError}
+                      disabled={false}
+                    />
+                    
+                    {/* Upload feedback messages */}
+                    {profileUploadSuccess && (
+                      <div className="upload-message success">
+                        ✅ Profile picture updated!
+                      </div>
+                    )}
+                    {profileUploadError && (
+                      <div className="upload-message error">
+                        ❌ {profileUploadError}
+                      </div>
+                    )}
                   </div>
                   <div className="profile-details">
                     <div className="username-section">
