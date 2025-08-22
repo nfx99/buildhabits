@@ -21,16 +21,15 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 3px solid transparent;
 }
 
 .image-container:hover {
-  border-color: #000000;
+  border: 3px solid #000000;
   transform: scale(1.02);
 }
 
 .image-container.drag-over {
-  border-color: #000000;
+  border: 3px solid #000000;
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -41,7 +40,7 @@
 
 .image-container.disabled:hover {
   transform: none;
-  border-color: transparent;
+  border: none;
 }
 
 .profile-image {
