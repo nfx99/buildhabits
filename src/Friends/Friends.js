@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../config/supabase';
+import { getDefaultAvatarUrl } from '../utils/profilePictureUpload';
 import * as Dialog from '@radix-ui/react-dialog';
 import './Friends.css';
 
@@ -19,7 +20,7 @@ const Friends = ({ session, isOpen, onClose }) => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('user_id, username')
+        .select('user_id, username, profile_picture_url')
         .eq('user_id', userId)
         .single();
 
@@ -152,7 +153,7 @@ const Friends = ({ session, isOpen, onClose }) => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('user_id, username')
+        .select('user_id, username, profile_picture_url')
         .not('username', 'is', null)
         .ilike('username', `%${query}%`)
         .neq('user_id', session.user.id)
@@ -276,6 +277,14 @@ const Friends = ({ session, isOpen, onClose }) => {
     }
   };
 
+  // Get profile image URL with fallback to default avatar
+  const getProfileImageUrl = (user) => {
+    if (user?.profile_picture_url) {
+      return user.profile_picture_url;
+    }
+    return getDefaultAvatarUrl(user?.username);
+  };
+
   // Check if user is already a friend or has pending request
   const getFriendStatus = (userId) => {
     const isFriend = friends.some(f => f.friend_id === userId);
@@ -357,7 +366,11 @@ const Friends = ({ session, isOpen, onClose }) => {
                         <div key={friendship.id} className="friend-item">
                           <div className="friend-info">
                             <div className="friend-avatar">
-                              {friendship.friend?.username?.[0]?.toUpperCase() || '👤'}
+                              <img
+                                src={getProfileImageUrl(friendship.friend)}
+                                alt={`${friendship.friend?.username}'s profile`}
+                                className="avatar-image"
+                              />
                             </div>
                             <div className="friend-details">
                               <div className="friend-name">{friendship.friend?.username}</div>
@@ -403,7 +416,11 @@ const Friends = ({ session, isOpen, onClose }) => {
                           <div key={request.id} className="request-item incoming">
                             <div className="request-info">
                               <div className="request-avatar">
-                                {request.requester?.username?.[0]?.toUpperCase() || '👤'}
+                                <img
+                                  src={getProfileImageUrl(request.requester)}
+                                  alt={`${request.requester?.username}'s profile`}
+                                  className="avatar-image"
+                                />
                               </div>
                               <div className="request-details">
                                 <div className="request-name">{request.requester?.username}</div>
@@ -443,7 +460,11 @@ const Friends = ({ session, isOpen, onClose }) => {
                           <div key={request.id} className="request-item pending">
                             <div className="request-info">
                               <div className="request-avatar">
-                                {request.friend?.username?.[0]?.toUpperCase() || '👤'}
+                                <img
+                                  src={getProfileImageUrl(request.friend)}
+                                  alt={`${request.friend?.username}'s profile`}
+                                  className="avatar-image"
+                                />
                               </div>
                               <div className="request-details">
                                 <div className="request-name">{request.friend?.username}</div>
@@ -507,7 +528,11 @@ const Friends = ({ session, isOpen, onClose }) => {
                             <div key={user.user_id} className="search-result">
                               <div className="result-info">
                                 <div className="result-avatar">
-                                  {user.username?.[0]?.toUpperCase() || '👤'}
+                                  <img
+                                    src={getProfileImageUrl(user)}
+                                    alt={`${user.username}'s profile`}
+                                    className="avatar-image"
+                                  />
                                 </div>
                                 <div className="result-details">
                                   <div className="result-name">{user.username}</div>
