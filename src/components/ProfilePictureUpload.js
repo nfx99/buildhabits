@@ -104,13 +104,12 @@ const ProfilePictureUpload = ({
       return currentImageUrl;
     }
     
-    // Default avatar using initials
-    if (username) {
-      const seed = encodeURIComponent(username);
-      return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundColor=random`;
-    }
-    
-    return null;
+    return null; // Return null to show initials instead of generated avatar
+  };
+
+  const getUserInitials = () => {
+    if (!username) return '👤';
+    return username[0]?.toUpperCase() || '👤';
   };
 
   return (
@@ -149,16 +148,7 @@ const ProfilePictureUpload = ({
           />
         ) : (
           <div className="default-avatar">
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <circle cx="20" cy="16" r="6" fill="currentColor" opacity="0.6"/>
-              <path 
-                d="M8 32c0-6.627 5.373-12 12-12s12 5.373 12 12" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                opacity="0.6"
-                fill="none"
-              />
-            </svg>
+            {getUserInitials()}
           </div>
         )}
         

@@ -271,7 +271,12 @@ const UserProfile = ({ session }) => {
     if (userProfile?.profile_picture_url) {
       return userProfile.profile_picture_url;
     }
-    return getDefaultAvatarUrl(userProfile?.username);
+    return null; // Return null to show initials instead
+  };
+
+  const getUserInitials = (username) => {
+    if (!username) return '👤';
+    return username[0]?.toUpperCase() || '👤';
   };
 
   if (loading) {
@@ -301,11 +306,17 @@ const UserProfile = ({ session }) => {
             {/* Profile Picture Display */}
             {!isOwnProfile ? (
               <div className="profile-picture-display">
-                <img
-                  src={getProfileImageUrl()}
-                  alt={`${userProfile?.username}'s profile`}
-                  className="profile-image-readonly"
-                />
+                {getProfileImageUrl() ? (
+                  <img
+                    src={getProfileImageUrl()}
+                    alt={`${userProfile?.username}'s profile`}
+                    className="profile-image-readonly"
+                  />
+                ) : (
+                  <div className="profile-initials">
+                    {getUserInitials(userProfile?.username)}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="profile-picture-upload-section">

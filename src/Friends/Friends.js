@@ -277,12 +277,18 @@ const Friends = ({ session, isOpen, onClose }) => {
     }
   };
 
-  // Get profile image URL with fallback to default avatar
+  // Get profile image or return null to show initials
   const getProfileImageUrl = (user) => {
     if (user?.profile_picture_url) {
       return user.profile_picture_url;
     }
-    return getDefaultAvatarUrl(user?.username);
+    return null; // Return null to show initials instead
+  };
+
+  // Get user initials for default avatar
+  const getUserInitials = (username) => {
+    if (!username) return '👤';
+    return username[0]?.toUpperCase() || '👤';
   };
 
   // Check if user is already a friend or has pending request
@@ -366,11 +372,15 @@ const Friends = ({ session, isOpen, onClose }) => {
                         <div key={friendship.id} className="friend-item">
                           <div className="friend-info">
                             <div className="friend-avatar">
-                              <img
-                                src={getProfileImageUrl(friendship.friend)}
-                                alt={`${friendship.friend?.username}'s profile`}
-                                className="avatar-image"
-                              />
+                              {getProfileImageUrl(friendship.friend) ? (
+                                <img
+                                  src={getProfileImageUrl(friendship.friend)}
+                                  alt={`${friendship.friend?.username}'s profile`}
+                                  className="avatar-image"
+                                />
+                              ) : (
+                                getUserInitials(friendship.friend?.username)
+                              )}
                             </div>
                             <div className="friend-details">
                               <div className="friend-name">{friendship.friend?.username}</div>
@@ -416,11 +426,15 @@ const Friends = ({ session, isOpen, onClose }) => {
                           <div key={request.id} className="request-item incoming">
                             <div className="request-info">
                               <div className="request-avatar">
-                                <img
-                                  src={getProfileImageUrl(request.requester)}
-                                  alt={`${request.requester?.username}'s profile`}
-                                  className="avatar-image"
-                                />
+                                {getProfileImageUrl(request.requester) ? (
+                                  <img
+                                    src={getProfileImageUrl(request.requester)}
+                                    alt={`${request.requester?.username}'s profile`}
+                                    className="avatar-image"
+                                  />
+                                ) : (
+                                  getUserInitials(request.requester?.username)
+                                )}
                               </div>
                               <div className="request-details">
                                 <div className="request-name">{request.requester?.username}</div>
@@ -460,11 +474,15 @@ const Friends = ({ session, isOpen, onClose }) => {
                           <div key={request.id} className="request-item pending">
                             <div className="request-info">
                               <div className="request-avatar">
-                                <img
-                                  src={getProfileImageUrl(request.friend)}
-                                  alt={`${request.friend?.username}'s profile`}
-                                  className="avatar-image"
-                                />
+                                {getProfileImageUrl(request.friend) ? (
+                                  <img
+                                    src={getProfileImageUrl(request.friend)}
+                                    alt={`${request.friend?.username}'s profile`}
+                                    className="avatar-image"
+                                  />
+                                ) : (
+                                  getUserInitials(request.friend?.username)
+                                )}
                               </div>
                               <div className="request-details">
                                 <div className="request-name">{request.friend?.username}</div>
@@ -528,11 +546,15 @@ const Friends = ({ session, isOpen, onClose }) => {
                             <div key={user.user_id} className="search-result">
                               <div className="result-info">
                                 <div className="result-avatar">
-                                  <img
-                                    src={getProfileImageUrl(user)}
-                                    alt={`${user.username}'s profile`}
-                                    className="avatar-image"
-                                  />
+                                  {getProfileImageUrl(user) ? (
+                                    <img
+                                      src={getProfileImageUrl(user)}
+                                      alt={`${user.username}'s profile`}
+                                      className="avatar-image"
+                                    />
+                                  ) : (
+                                    getUserInitials(user.username)
+                                  )}
                                 </div>
                                 <div className="result-details">
                                   <div className="result-name">{user.username}</div>
