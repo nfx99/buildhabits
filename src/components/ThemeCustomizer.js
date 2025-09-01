@@ -17,13 +17,24 @@ const ThemeCustomizer = ({
   onThemePreview, // New prop for preview changes
   disabled = false 
 }) => {
-  const [theme, setTheme] = useState(initialTheme);
+  // Ensure theme has all required properties with fallbacks
+  const safeInitialTheme = {
+    ...DEFAULT_THEME,
+    ...initialTheme
+  };
+  
+  const [theme, setTheme] = useState(safeInitialTheme);
   const [isSaving, setIsSaving] = useState(false);
   const [expandedSection, setExpandedSection] = useState(null);
 
   // Update local theme when initialTheme changes
   useEffect(() => {
-    setTheme(initialTheme);
+    // Ensure theme has all required properties with fallbacks
+    const safeTheme = {
+      ...DEFAULT_THEME,
+      ...initialTheme
+    };
+    setTheme(safeTheme);
   }, [initialTheme]);
 
   // Call preview function when theme changes (for local preview only)
@@ -100,6 +111,11 @@ const ThemeCustomizer = ({
   };
 
   const getContrastWarning = (bgColor, textColor) => {
+    // Validate inputs before calling analyzeContrast
+    if (!bgColor || !textColor || typeof bgColor !== 'string' || typeof textColor !== 'string') {
+      return null; // Return null for invalid inputs
+    }
+    
     const analysis = analyzeContrast(bgColor, textColor);
     return !analysis.isAccessible ? analysis.suggestion : null;
   };
@@ -220,8 +236,12 @@ const ThemeCustomizer = ({
               <button 
                 className="preview-button"
                 style={{
-                  backgroundColor: `rgba(${parseInt(theme.buttonColor.slice(1, 3), 16)}, ${parseInt(theme.buttonColor.slice(3, 5), 16)}, ${parseInt(theme.buttonColor.slice(5, 7), 16)}, ${theme.buttonOpacity})`,
-                  color: `rgba(${parseInt(theme.buttonTextColor.slice(1, 3), 16)}, ${parseInt(theme.buttonTextColor.slice(3, 5), 16)}, ${parseInt(theme.buttonTextColor.slice(5, 7), 16)}, ${theme.buttonTextOpacity})`
+                  backgroundColor: theme.buttonColor && theme.buttonColor.startsWith('#') ? 
+                    `rgba(${parseInt(theme.buttonColor.slice(1, 3), 16)}, ${parseInt(theme.buttonColor.slice(3, 5), 16)}, ${parseInt(theme.buttonColor.slice(5, 7), 16)}, ${theme.buttonOpacity || 1})` :
+                    'rgba(0, 0, 0, 1)',
+                  color: theme.buttonTextColor && theme.buttonTextColor.startsWith('#') ? 
+                    `rgba(${parseInt(theme.buttonTextColor.slice(1, 3), 16)}, ${parseInt(theme.buttonTextColor.slice(3, 5), 16)}, ${parseInt(theme.buttonTextColor.slice(5, 7), 16)}, ${theme.buttonTextOpacity || 1})` :
+                    'rgba(255, 255, 255, 1)'
                 }}
               >
                 Preview Button
@@ -338,8 +358,12 @@ const ThemeCustomizer = ({
               <div 
                 className="preview-card"
                 style={{
-                  backgroundColor: `rgba(${parseInt(theme.habitCardColor.slice(1, 3), 16)}, ${parseInt(theme.habitCardColor.slice(3, 5), 16)}, ${parseInt(theme.habitCardColor.slice(5, 7), 16)}, ${theme.habitCardOpacity})`,
-                  color: `rgba(${parseInt(theme.habitCardTextColor.slice(1, 3), 16)}, ${parseInt(theme.habitCardTextColor.slice(3, 5), 16)}, ${parseInt(theme.habitCardTextColor.slice(5, 7), 16)}, ${theme.habitCardTextOpacity})`
+                  backgroundColor: theme.habitCardColor && theme.habitCardColor.startsWith('#') ? 
+                    `rgba(${parseInt(theme.habitCardColor.slice(1, 3), 16)}, ${parseInt(theme.habitCardColor.slice(3, 5), 16)}, ${parseInt(theme.habitCardColor.slice(5, 7), 16)}, ${theme.habitCardOpacity || 1})` :
+                    'rgba(255, 255, 255, 1)',
+                  color: theme.habitCardTextColor && theme.habitCardTextColor.startsWith('#') ? 
+                    `rgba(${parseInt(theme.habitCardTextColor.slice(1, 3), 16)}, ${parseInt(theme.habitCardTextColor.slice(3, 5), 16)}, ${parseInt(theme.habitCardTextColor.slice(5, 7), 16)}, ${theme.habitCardTextOpacity || 1})` :
+                    'rgba(20, 0, 10, 1)'
                 }}
               >
                 <h5>Sample Habit</h5>
@@ -492,7 +516,9 @@ const ThemeCustomizer = ({
                 <div 
                   className="preview-cell completed"
                   style={{
-                    backgroundColor: `rgba(${parseInt(theme.completedCellColor.slice(1, 3), 16)}, ${parseInt(theme.completedCellColor.slice(3, 5), 16)}, ${parseInt(theme.completedCellColor.slice(5, 7), 16)}, ${theme.completedCellOpacity})`
+                    backgroundColor: theme.completedCellColor && theme.completedCellColor.startsWith('#') ? 
+                      `rgba(${parseInt(theme.completedCellColor.slice(1, 3), 16)}, ${parseInt(theme.completedCellColor.slice(3, 5), 16)}, ${parseInt(theme.completedCellColor.slice(5, 7), 16)}, ${theme.completedCellOpacity || 1})` :
+                      'rgba(0, 0, 0, 1)'
                   }}
                   title="Completed"
                 >
@@ -500,7 +526,9 @@ const ThemeCustomizer = ({
                 <div 
                   className="preview-cell uncompleted"
                   style={{
-                    backgroundColor: `rgba(${parseInt(theme.uncompletedCellColor.slice(1, 3), 16)}, ${parseInt(theme.uncompletedCellColor.slice(3, 5), 16)}, ${parseInt(theme.uncompletedCellColor.slice(5, 7), 16)}, ${theme.uncompletedCellOpacity})`
+                    backgroundColor: theme.uncompletedCellColor && theme.uncompletedCellColor.startsWith('#') ? 
+                      `rgba(${parseInt(theme.uncompletedCellColor.slice(1, 3), 16)}, ${parseInt(theme.uncompletedCellColor.slice(3, 5), 16)}, ${parseInt(theme.uncompletedCellColor.slice(5, 7), 16)}, ${theme.uncompletedCellOpacity || 1})` :
+                      'rgba(249, 250, 251, 1)'
                   }}
                   title="Uncompleted"
                 >
@@ -508,7 +536,9 @@ const ThemeCustomizer = ({
                 <div 
                   className="preview-cell future"
                   style={{
-                    backgroundColor: `rgba(${parseInt(theme.futureCellColor.slice(1, 3), 16)}, ${parseInt(theme.futureCellColor.slice(3, 5), 16)}, ${parseInt(theme.futureCellColor.slice(5, 7), 16)}, ${theme.futureCellOpacity})`
+                    backgroundColor: theme.futureCellColor && theme.futureCellColor.startsWith('#') ? 
+                      `rgba(${parseInt(theme.futureCellColor.slice(1, 3), 16)}, ${parseInt(theme.futureCellColor.slice(3, 5), 16)}, ${parseInt(theme.futureCellColor.slice(5, 7), 16)}, ${theme.futureCellOpacity || 1})` :
+                      'rgba(249, 250, 251, 1)'
                   }}
                   title="Future"
                 >

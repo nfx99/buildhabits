@@ -136,8 +136,8 @@
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-primary);
   border-radius: 6px;
-  background: #000000;
-  color: #ffffff;
+  background: #ffffff;
+  color: #000000;
   font-size: 0.875rem;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
@@ -393,9 +393,9 @@
   }
   
   .color-text-input {
-    background: #000000;
+    background: #ffffff;
     border-color: var(--border-primary-dark, #4a5568);
-    color: #ffffff;
+    color: #000000;
   }
   
   .theme-preview {

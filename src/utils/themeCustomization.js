@@ -113,7 +113,11 @@ export const validateTheme = (theme) => {
  * @returns {string} - RGBA color string
  */
 export const hexToRgba = (hex, opacity = 1) => {
-  if (!isValidHexColor(hex)) return hex;
+  // Validate inputs
+  if (!hex || typeof hex !== 'string' || !isValidHexColor(hex)) {
+    // Return a safe fallback color if hex is invalid
+    return `rgba(0, 0, 0, ${opacity || 1})`;
+  }
   
   // Remove # if present
   hex = hex.replace('#', '');
@@ -136,34 +140,41 @@ export const hexToRgba = (hex, opacity = 1) => {
  * @returns {Object} - CSS custom properties object
  */
 export const generateThemeStyles = (theme = {}) => {
+  // Ensure theme has all required properties with safe fallbacks
   const mergedTheme = { ...DEFAULT_THEME, ...theme };
   
+  // Filter out any null/undefined values and use defaults
+  const safeTheme = Object.keys(DEFAULT_THEME).reduce((acc, key) => {
+    acc[key] = mergedTheme[key] || DEFAULT_THEME[key];
+    return acc;
+  }, {});
+  
   return {
-    '--custom-button-color': hexToRgba(mergedTheme.buttonColor, mergedTheme.buttonOpacity),
-    '--custom-button-text-color': hexToRgba(mergedTheme.buttonTextColor, mergedTheme.buttonTextOpacity),
-    '--custom-habit-card-color': hexToRgba(mergedTheme.habitCardColor, mergedTheme.habitCardOpacity),
-    '--custom-habit-card-text-color': hexToRgba(mergedTheme.habitCardTextColor, mergedTheme.habitCardTextOpacity),
+    '--custom-button-color': hexToRgba(safeTheme.buttonColor, safeTheme.buttonOpacity),
+    '--custom-button-text-color': hexToRgba(safeTheme.buttonTextColor, safeTheme.buttonTextOpacity),
+    '--custom-habit-card-color': hexToRgba(safeTheme.habitCardColor, safeTheme.habitCardOpacity),
+    '--custom-habit-card-text-color': hexToRgba(safeTheme.habitCardTextColor, safeTheme.habitCardTextOpacity),
     
     // Calendar cell colors
-    '--custom-completed-cell-color': hexToRgba(mergedTheme.completedCellColor, mergedTheme.completedCellOpacity),
-    '--custom-uncompleted-cell-color': hexToRgba(mergedTheme.uncompletedCellColor, mergedTheme.uncompletedCellOpacity),
-    '--custom-future-cell-color': hexToRgba(mergedTheme.futureCellColor, mergedTheme.futureCellOpacity),
+    '--custom-completed-cell-color': hexToRgba(safeTheme.completedCellColor, safeTheme.completedCellOpacity),
+    '--custom-uncompleted-cell-color': hexToRgba(safeTheme.uncompletedCellColor, safeTheme.uncompletedCellOpacity),
+    '--custom-future-cell-color': hexToRgba(safeTheme.futureCellColor, safeTheme.futureCellOpacity),
     
     // Individual color and opacity values for more complex styling
-    '--custom-button-color-solid': mergedTheme.buttonColor,
-    '--custom-button-opacity': mergedTheme.buttonOpacity,
-    '--custom-button-text-color-solid': mergedTheme.buttonTextColor,
-    '--custom-button-text-opacity': mergedTheme.buttonTextOpacity,
-    '--custom-habit-card-color-solid': mergedTheme.habitCardColor,
-    '--custom-habit-card-opacity': mergedTheme.habitCardOpacity,
-    '--custom-habit-card-text-color-solid': mergedTheme.habitCardTextColor,
-    '--custom-habit-card-text-opacity': mergedTheme.habitCardTextOpacity,
-    '--custom-completed-cell-color-solid': mergedTheme.completedCellColor,
-    '--custom-completed-cell-opacity': mergedTheme.completedCellOpacity,
-    '--custom-uncompleted-cell-color-solid': mergedTheme.uncompletedCellColor,
-    '--custom-uncompleted-cell-opacity': mergedTheme.uncompletedCellOpacity,
-    '--custom-future-cell-color-solid': mergedTheme.futureCellColor,
-    '--custom-future-cell-opacity': mergedTheme.futureCellOpacity
+    '--custom-button-color-solid': safeTheme.buttonColor,
+    '--custom-button-opacity': safeTheme.buttonOpacity,
+    '--custom-button-text-color-solid': safeTheme.buttonTextColor,
+    '--custom-button-text-opacity': safeTheme.buttonTextOpacity,
+    '--custom-habit-card-color-solid': safeTheme.habitCardColor,
+    '--custom-habit-card-opacity': safeTheme.habitCardOpacity,
+    '--custom-habit-card-text-color-solid': safeTheme.habitCardTextColor,
+    '--custom-habit-card-text-opacity': safeTheme.habitCardTextOpacity,
+    '--custom-completed-cell-color-solid': safeTheme.completedCellColor,
+    '--custom-completed-cell-opacity': safeTheme.completedCellOpacity,
+    '--custom-uncompleted-cell-color-solid': safeTheme.uncompletedCellColor,
+    '--custom-uncompleted-cell-opacity': safeTheme.uncompletedCellOpacity,
+    '--custom-future-cell-color-solid': safeTheme.futureCellColor,
+    '--custom-future-cell-opacity': safeTheme.futureCellOpacity
   };
 };
 
@@ -227,7 +238,18 @@ export const getUserTheme = async (userId) => {
       throw error;
     }
 
-    return data?.theme_customization || DEFAULT_THEME;
+    // Ensure the theme data is valid and complete
+    const userTheme = data?.theme_customization;
+    if (userTheme && typeof userTheme === 'object') {
+      // Filter out any null/undefined values and merge with defaults
+      const safeTheme = Object.keys(DEFAULT_THEME).reduce((acc, key) => {
+        acc[key] = userTheme[key] || DEFAULT_THEME[key];
+        return acc;
+      }, {});
+      return safeTheme;
+    }
+
+    return DEFAULT_THEME;
 
   } catch (error) {
     console.error('Error fetching user theme:', error);
@@ -275,12 +297,27 @@ export const resetUserTheme = async (userId) => {
  * @param {Object} theme - Theme configuration
  */
 export const applyThemeToDocument = (theme = {}) => {
-  const styles = generateThemeStyles(theme);
-  const root = document.documentElement;
-  
-  Object.entries(styles).forEach(([property, value]) => {
-    root.style.setProperty(property, value);
-  });
+  try {
+    const styles = generateThemeStyles(theme);
+    const root = document.documentElement;
+    
+    Object.entries(styles).forEach(([property, value]) => {
+      if (property && value !== undefined && value !== null) {
+        root.style.setProperty(property, value);
+      }
+    });
+  } catch (error) {
+    console.error('Error applying theme to document:', error);
+    // Fallback to default theme if there's an error
+    const defaultStyles = generateThemeStyles(DEFAULT_THEME);
+    const root = document.documentElement;
+    
+    Object.entries(defaultStyles).forEach(([property, value]) => {
+      if (property && value !== undefined && value !== null) {
+        root.style.setProperty(property, value);
+      }
+    });
+  }
 };
 
 /**
@@ -290,12 +327,27 @@ export const applyThemeToDocument = (theme = {}) => {
  * @returns {number} - Contrast ratio
  */
 export const getContrastRatio = (color1, color2) => {
+  // Validate inputs
+  if (!color1 || !color2 || typeof color1 !== 'string' || typeof color2 !== 'string') {
+    return 1; // Return neutral contrast for invalid inputs
+  }
+  
   const getLuminance = (hex) => {
-    const rgb = hex.replace('#', '').match(/.{2}/g).map(x => {
-      const val = parseInt(x, 16) / 255;
-      return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
-    });
-    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+    // Ensure hex is a valid string and starts with #
+    if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) {
+      return 0.5; // Return neutral luminance for invalid hex
+    }
+    
+    try {
+      const rgb = hex.replace('#', '').match(/.{2}/g).map(x => {
+        const val = parseInt(x, 16) / 255;
+        return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+    } catch (error) {
+      console.warn('Error calculating luminance for color:', hex, error);
+      return 0.5; // Return neutral luminance on error
+    }
   };
   
   const lum1 = getLuminance(color1);
@@ -313,6 +365,15 @@ export const getContrastRatio = (color1, color2) => {
  * @returns {Object} - Contrast analysis and suggestions
  */
 export const analyzeContrast = (backgroundColor, textColor) => {
+  // Validate inputs
+  if (!backgroundColor || !textColor || typeof backgroundColor !== 'string' || typeof textColor !== 'string') {
+    return {
+      ratio: 1,
+      isAccessible: false,
+      suggestion: 'Invalid color values provided'
+    };
+  }
+  
   const ratio = getContrastRatio(backgroundColor, textColor);
   const isAccessible = ratio >= 4.5; // WCAG AA standard
   

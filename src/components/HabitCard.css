@@ -43,7 +43,7 @@
 
 /* Custom Calendar Cell Theme Support */
 .habit-card.custom-habit-card .heatmap-cell.completed:not(.partial) {
-  background: var(--custom-completed-cell-color) !important;
+  background: var(--custom-completed-cell-color, var(--habit-color, var(--cell-completed))) !important;
 }
 
 .habit-card.custom-habit-card .heatmap-cell:not(.completed):not(.empty):not(.future):not(.quantifiable) {
@@ -601,8 +601,8 @@
 }
 
 .heatmap-cell.completed:not(.quantifiable) {
-  background: var(--cell-completed);
-  border-color: #16a34a;
+  background: var(--habit-color, var(--cell-completed));
+  border-color: var(--habit-color, #16a34a);
 }
 
 .heatmap-cell.future {
