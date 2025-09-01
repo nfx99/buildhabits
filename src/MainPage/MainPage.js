@@ -1367,18 +1367,18 @@ const MainPage = ({ session }) => {
 
               <div className="calendar-view-toggle">
                 <button
-                  className={`view-toggle-btn ${calendarViewMode === 'year' ? 'active' : ''}`}
+                  className={`view-toggle-btn custom-button ${calendarViewMode === 'year' ? 'active' : ''}`}
                   onClick={() => setCalendarViewMode('year')}
                   title="Calendar Year View"
                 >
-                  📅 Year
+                  This Year
                 </button>
                 <button
-                  className={`view-toggle-btn ${calendarViewMode === '365days' ? 'active' : ''}`}
+                  className={`view-toggle-btn custom-button ${calendarViewMode === '365days' ? 'active' : ''}`}
                   onClick={() => setCalendarViewMode('365days')}
                   title="Past 365 Days View"
                 >
-                  📊 365 Days
+                  365 Days
                 </button>
               </div>
               <div className="habit-search-container">
@@ -1634,7 +1634,7 @@ const MainPage = ({ session }) => {
                     {/* Upload feedback messages */}
                     {profileUploadSuccess && (
                       <div className="upload-message success">
-                        ✅ Profile picture updated!
+                        Profile picture updated!
                       </div>
                     )}
                     {profileUploadError && (
@@ -1721,7 +1721,7 @@ const MainPage = ({ session }) => {
                 {/* Background upload feedback messages */}
                 {backgroundUploadSuccess && (
                   <div className="upload-message success">
-                    ✅ Background updated successfully!
+                    Background updated successfully!
                   </div>
                 )}
                 {backgroundUploadError && (

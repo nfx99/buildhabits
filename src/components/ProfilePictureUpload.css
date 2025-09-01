@@ -24,13 +24,12 @@
 }
 
 .image-container:hover {
-  border: 3px solid #000000;
   transform: scale(1.02);
 }
 
 .image-container.drag-over {
-  border: 3px solid #000000;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+  border: 3px solid var(--accent-primary, #007bff);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .image-container.disabled {
@@ -166,6 +165,6 @@
 
 /* Focus styles for accessibility */
 .image-container:focus-visible {
-  outline: 2px solid #000000;
+  outline: 2px solid var(--accent-primary, #007bff);
   outline-offset: 2px;
 }

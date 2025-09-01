@@ -336,7 +336,7 @@ const UserProfile = ({ session }) => {
                 {/* Upload feedback messages */}
                 {uploadSuccess && (
                   <div className="upload-message success">
-                    ✅ Profile picture updated successfully!
+                    Profile picture updated successfully!
                   </div>
                 )}
                 {uploadError && (

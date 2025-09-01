@@ -714,7 +714,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                       (!isArchived ? `${dayName}, ${dateStr}\nClick to plan this habit` : `${dayName}, ${dateStr}`) :
                       (habit.is_quantifiable ? 
                         `${dayName}, ${dateStr}\n${cell.value || 0}/${cell.target || 1} ${habit.metric_unit || 'times'}` :
-                        `${dayName}, ${dateStr}${cell.completed ? ' ✓' : ''}`)) : '';
+                        `${dayName}, ${dateStr}${cell.completed ? ' (Completed)' : ''}`)) : '';
                   
                   return (
                     <div
