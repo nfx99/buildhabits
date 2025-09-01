@@ -1181,7 +1181,7 @@
   display: flex;
   border-radius: 6px;
   overflow: hidden;
-  border: 2px solid #000000;
+  border: 1px solid #000000;
   background: #000000;
   position: relative;
 }
@@ -1231,7 +1231,7 @@
   display: flex;
   border-radius: 6px;
   overflow: hidden;
-  border: 2px solid #000000;
+  border: 1px solid #000000;
   background: #000000;
   position: relative;
 }
@@ -1281,7 +1281,7 @@
   display: flex;
   border-radius: 8px;
   overflow: hidden;
-  border: 2px solid #000000;
+  border: 1px solid #000000;
   background: #000000;
   position: relative;
 }
