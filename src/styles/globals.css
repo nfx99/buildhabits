@@ -366,6 +366,19 @@ code {
   border-color: var(--accent-hover);
 }
 
+.dialog-buttons button:focus,
+.dialog-buttons button:focus-visible,
+.dialog-buttons button:active,
+.dialog-buttons .custom-button:focus,
+.dialog-buttons .custom-button:focus-visible,
+.dialog-buttons .custom-button:active,
+.dialog-buttons button,
+.dialog-buttons .custom-button {
+  outline: none !important;
+  border: 1px solid var(--border-primary) !important;
+  box-shadow: none !important;
+}
+
 @keyframes overlayShow {
   from {
     opacity: 0;

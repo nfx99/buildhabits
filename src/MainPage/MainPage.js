@@ -1678,35 +1678,11 @@ const MainPage = ({ session }) => {
                     </div>
                     <p>{session.user.email}</p>
                     <p>Joined {new Date(session.user.created_at).toLocaleDateString()}</p>
+                    <p>Plan: {hasPaid ? 'Pro' : 'Free'}</p>
                   </div>
                 </div>
                 
-                <div className="profile-stats">
-                  <div className="stat">
-                    <div className="stat-number">{habits.length}</div>
-                    <div className="stat-label">Active Habits</div>
-                  </div>
-                  <div className="stat">
-                    <div className="stat-number">
-                      {habits.reduce((total, habit) => {
-                        const completions = habit.habit_completions || [];
-                        // Filter out 0-value completions for quantifiable habits
-                        const validCompletions = completions.filter(completion => {
-                          if (habit.is_quantifiable) {
-                            return (completion.value || 0) > 0;
-                          }
-                          return true; // For non-quantifiable habits, all completions count
-                        });
-                        return total + validCompletions.length;
-                      }, 0)}
-                    </div>
-                    <div className="stat-label">Total Completions</div>
-                  </div>
-                  <div className="stat">
-                    <div className="stat-number">{hasPaid ? 'Pro' : 'Free'}</div>
-                    <div className="stat-label">Plan</div>
-                  </div>
-                </div>
+
 
                 {/* Background Image Upload Section */}
                 <BackgroundImageUpload

@@ -103,6 +103,7 @@
   justify-content: center !important;
   width: 100px !important;
   flex-shrink: 0 !important;
+  border: 1px solid var(--bg-secondary) !important;
 }
 
 
@@ -115,6 +116,7 @@
 .view-toggle-btn.active {
   background: var(--accent-primary);
   color: white;
+  border-color: var(--accent-primary);
   z-index: 1;
 }
 
@@ -339,11 +341,13 @@
 .view-toggle-btn:hover:not(.active) {
   background: var(--accent-hover) !important;
   color: white !important;
+  border-color: var(--accent-hover) !important;
 }
 
 .view-toggle-btn.active {
   background: var(--accent-primary) !important;
   color: white !important;
+  border-color: var(--accent-primary) !important;
 }
 
 /* Active state for custom themed toggle buttons */
@@ -351,6 +355,7 @@
   background: var(--custom-button-color-solid) !important;
   color: var(--custom-button-text-color) !important;
   opacity: var(--custom-button-opacity) !important;
+  border-color: var(--custom-button-color) !important;
 }
 
 .view-toggle-btn:first-child {
@@ -798,42 +803,7 @@
   font-size: 0.9rem;
 }
 
-.profile-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  padding: 0.5rem;
-}
 
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1.25rem 1rem;
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-  border-radius: 12px;
-  border: 1px solid var(--border-primary);
-  transition: all 0.2s ease;
-}
-
-.stat:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.stat-number {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-align: center;
-  margin-top: 0.25rem;
-}
 
 .profile-upgrade {
   padding: 2rem;
@@ -1211,21 +1181,24 @@
   display: flex;
   border-radius: 6px;
   overflow: hidden;
-  border: 2px solid var(--border-primary);
-  background: var(--bg-secondary);
+  border: 2px solid #000000;
+  background: #000000;
+  position: relative;
 }
 
 .tracking-option {
   flex: 1;
   padding: 0.5rem 1rem;
   border: none;
-  background: transparent;
+  background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-right: 1px solid var(--border-primary);
+  border-right: 1px solid #000000;
+  position: relative;
+  z-index: 1;
 }
 
 .tracking-option:last-child {
@@ -1243,7 +1216,7 @@
 .tracking-option.active {
   background: var(--accent-primary);
   color: white;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .tracking-type-description {
@@ -1258,21 +1231,24 @@
   display: flex;
   border-radius: 6px;
   overflow: hidden;
-  border: 2px solid var(--border-primary);
-  background: var(--bg-secondary);
+  border: 2px solid #000000;
+  background: #000000;
+  position: relative;
 }
 
 .privacy-option {
   flex: 1;
   padding: 0.5rem 1rem;
   border: none;
-  background: transparent;
+  background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-right: 1px solid var(--border-primary);
+  border-right: 1px solid #000000;
+  position: relative;
+  z-index: 1;
 }
 
 .privacy-option:last-child {
@@ -1290,7 +1266,7 @@
 .privacy-option.active {
   background: var(--accent-primary);
   color: white;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .privacy-description {
@@ -1305,24 +1281,27 @@
   display: flex;
   border-radius: 8px;
   overflow: hidden;
-  border: 2px solid var(--border-primary);
-  background: var(--bg-secondary);
+  border: 2px solid #000000;
+  background: #000000;
+  position: relative;
 }
 
 .insights-option {
   flex: 1;
   padding: 0.5rem 1rem;
   border: none;
-  background: transparent;
+  background: var(--bg-secondary);
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
   font-size: 0.875rem;
+  position: relative;
+  z-index: 1;
 }
 
 .insights-option:last-child {
-  border-left: 1px solid var(--border-primary);
+  border-left: 1px solid #000000;
 }
 
 .insights-option:hover:not(.active) {
@@ -1336,7 +1315,7 @@
 .insights-option.active {
   background: var(--accent-primary);
   color: white;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .insights-description {
@@ -1858,7 +1837,7 @@
   align-items: center;
   gap: 0.25rem;
   padding-left: 0.75rem;
-  border-left: 1px solid var(--border-primary);
+  border-left: 1px solid #000000;
 }
 
 .streak-icon {
