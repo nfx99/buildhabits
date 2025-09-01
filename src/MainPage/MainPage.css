@@ -769,7 +769,7 @@
 .username-edit input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .profile-preferences {
@@ -1115,7 +1115,7 @@
 
 .checkbox-label input[type="checkbox"]:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .checkbox-text {
@@ -1181,8 +1181,8 @@
   display: flex;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #000000;
-  background: #000000;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
   position: relative;
 }
 
@@ -1190,13 +1190,13 @@
   flex: 1;
   padding: 0.5rem 1rem;
   border: none;
-  background: var(--bg-secondary);
+  background: transparent;
   color: var(--text-primary);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-right: 1px solid #000000;
+  border-right: 1px solid var(--border-primary);
   position: relative;
   z-index: 1;
 }
@@ -1219,6 +1219,11 @@
   font-weight: 500;
 }
 
+.tracking-option:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
 .tracking-type-description {
   margin: 0.5rem 0 0 0;
   color: var(--text-secondary);
@@ -1231,8 +1236,8 @@
   display: flex;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #000000;
-  background: #000000;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
   position: relative;
 }
 
@@ -1240,13 +1245,13 @@
   flex: 1;
   padding: 0.5rem 1rem;
   border: none;
-  background: var(--bg-secondary);
+  background: transparent;
   color: var(--text-primary);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-right: 1px solid #000000;
+  border-right: 1px solid var(--border-primary);
   position: relative;
   z-index: 1;
 }
@@ -1269,6 +1274,11 @@
   font-weight: 500;
 }
 
+.privacy-option:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
 .privacy-description {
   margin: 0.5rem 0 0 0;
   color: var(--text-secondary);
@@ -1281,8 +1291,8 @@
   display: flex;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #000000;
-  background: #000000;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
   position: relative;
 }
 
@@ -1301,7 +1311,7 @@
 }
 
 .insights-option:last-child {
-  border-left: 1px solid #000000;
+  border-left: 1px solid var(--border-primary);
 }
 
 .insights-option:hover:not(.active) {
@@ -1316,6 +1326,11 @@
   background: var(--accent-primary);
   color: white;
   font-weight: 500;
+}
+
+.insights-option:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .insights-description {

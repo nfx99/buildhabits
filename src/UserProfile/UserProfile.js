@@ -19,8 +19,10 @@ const UserProfile = ({ session }) => {
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [friendTheme, setFriendTheme] = useState(null);
 
   const fetchUserProfile = useCallback(async () => {
+    console.log('Fetching user profile for userId:', userId);
     try {
       const { data, error } = await supabase
         .from('user_profiles')
@@ -29,6 +31,7 @@ const UserProfile = ({ session }) => {
         .single();
 
       if (error) throw error;
+      console.log('User profile fetched successfully:', data);
       setUserProfile(data);
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -37,8 +40,8 @@ const UserProfile = ({ session }) => {
   }, [userId]);
 
   const fetchUserHabits = useCallback(async () => {
+    console.log('Fetching user habits for userId:', userId);
     try {
-
       const { data, error } = await supabase
         .from('habits')
         .select(`
@@ -56,8 +59,7 @@ const UserProfile = ({ session }) => {
         throw error;
       }
       
-
-      
+      console.log('User habits fetched successfully:', data?.length || 0, 'habits');
       setHabits(data || []);
     } catch (error) {
       console.error('Error fetching user habits:', error);
@@ -65,7 +67,37 @@ const UserProfile = ({ session }) => {
     }
   }, [userId]);
 
+  const fetchFriendTheme = useCallback(async () => {
+    if (!session?.user?.id || session.user.id === userId) {
+      return; // Don't fetch theme for own profile or if no session
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('theme_customization')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching friend theme:', error);
+        return;
+      }
+
+      setFriendTheme(data.theme_customization);
+    } catch (error) {
+      console.error('Error fetching friend theme:', error);
+    }
+  }, [userId, session?.user?.id]);
+
+
+
   const checkFriendStatus = useCallback(async () => {
+    if (!session?.user?.id) {
+      setFriendStatus('none');
+      return;
+    }
+
     if (session.user.id === userId) {
       setIsOwnProfile(true);
       setFriendStatus('own');
@@ -73,47 +105,76 @@ const UserProfile = ({ session }) => {
     }
 
     try {
-
-      // Check if they are friends
-      const { data: friendship, error } = await supabase
+      // Check if they are friends - use a safer query approach
+      const { data: friendships, error } = await supabase
         .from('friendships')
         .select('*')
-        .or(`and(user_id.eq.${session.user.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${session.user.id})`)
-        .maybeSingle();
+        .or(`user_id.eq.${session.user.id},friend_id.eq.${session.user.id}`)
+        .eq('status', 'accepted');
 
       if (error) {
         console.error('Supabase error checking friend status:', error);
         throw error;
       }
 
+      // Check if there's a friendship between these two users
+      const friendship = friendships?.find(f => 
+        (f.user_id === session.user.id && f.friend_id === userId) ||
+        (f.user_id === userId && f.friend_id === session.user.id)
+      );
+
       if (friendship) {
-        if (friendship.status === 'accepted') {
-          setFriendStatus('friend');
-        } else if (friendship.user_id === session.user.id) {
-          setFriendStatus('pending');
-        } else {
-          setFriendStatus('incoming');
-        }
+        setFriendStatus('friend');
       } else {
-        setFriendStatus('none');
+        // Check for pending requests
+        const { data: pendingRequests, error: pendingError } = await supabase
+          .from('friendships')
+          .select('*')
+          .or(`user_id.eq.${session.user.id},friend_id.eq.${session.user.id}`)
+          .eq('status', 'pending');
+
+        if (!pendingError && pendingRequests) {
+          const pendingRequest = pendingRequests.find(f => 
+            (f.user_id === session.user.id && f.friend_id === userId) ||
+            (f.user_id === userId && f.friend_id === session.user.id)
+          );
+
+          if (pendingRequest) {
+            setFriendStatus(pendingRequest.user_id === session.user.id ? 'pending' : 'incoming');
+          } else {
+            setFriendStatus('none');
+          }
+        } else {
+          setFriendStatus('none');
+        }
       }
     } catch (error) {
       console.error('Error checking friend status:', error);
       setFriendStatus('none');
     }
-  }, [session, userId]);
+  }, [userId, session?.user?.id]);
 
   useEffect(() => {
     const loadUserData = async () => {
+      console.log('Starting to load user data for userId:', userId);
       setLoading(true);
-      await Promise.all([fetchUserProfile(), fetchUserHabits(), checkFriendStatus()]);
-      setLoading(false);
+      try {
+        console.log('Fetching user data...');
+        await Promise.all([fetchUserProfile(), fetchUserHabits(), checkFriendStatus(), fetchFriendTheme()]);
+        console.log('User data loaded successfully');
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        setLoading(false);
+        // Don't retry automatically - let user refresh if needed
+      }
     };
 
     if (userId) {
+      console.log('useEffect triggered for userId:', userId);
       loadUserData();
     }
-  }, [userId, fetchUserProfile, fetchUserHabits, checkFriendStatus]);
+  }, [userId]); // Only depend on userId to avoid infinite loops
 
   const handleBackToHome = () => {
     navigate('/');
@@ -296,6 +357,8 @@ const UserProfile = ({ session }) => {
     );
   }
 
+
+
   return (
     <div 
       className="user-profile"
@@ -404,6 +467,7 @@ const UserProfile = ({ session }) => {
                 isReadOnly={true}
                 isPremium={true}
                 viewMode="year"
+                friendTheme={friendTheme}
               />
             ))}
           </div>

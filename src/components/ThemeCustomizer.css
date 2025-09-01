@@ -145,7 +145,7 @@
 .color-text-input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .color-text-input:disabled {
@@ -313,6 +313,8 @@
   transform: translateY(-1px);
 }
 
+
+
 .reset-theme-btn {
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -367,43 +369,6 @@
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .contrast-warning {
-    background: #3d3d00;
-    color: #ffeb3b;
-    border-color: #5d5d00;
-  }
-  
-  .theme-customizer {
-    background: transparent;
-  }
-  
-  .theme-customizer-header {
-    background: transparent;
-  }
-  
-  .theme-section {
-    border-color: var(--border-primary-dark, #4a5568);
-  }
-  
-  .theme-section-content {
-    background: transparent;
-    border-color: var(--border-primary-dark, #4a5568);
-  }
-  
-  .color-text-input {
-    background: #ffffff;
-    border-color: var(--border-primary-dark, #4a5568);
-    color: #000000;
-  }
-  
-  .theme-preview {
-    background: #ffffff;
-    border-color: var(--border-primary-dark, #4a5568);
-  }
-  
-  .theme-actions {
-    background: transparent;
-  }
-}
+
+
+

@@ -106,6 +106,8 @@ const ThemeCustomizer = ({
     }
   };
 
+
+
   const toggleSection = (section) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
@@ -173,7 +175,7 @@ const ThemeCustomizer = ({
               <input
                 id="button-opacity"
                 type="range"
-                min="0"
+                min="0.1"
                 max="1"
                 step="0.1"
                 value={theme.buttonOpacity}
@@ -214,7 +216,7 @@ const ThemeCustomizer = ({
               <input
                 id="button-text-opacity"
                 type="range"
-                min="0"
+                min="0.1"
                 max="1"
                 step="0.1"
                 value={theme.buttonTextOpacity}
@@ -295,7 +297,7 @@ const ThemeCustomizer = ({
               <input
                 id="card-opacity"
                 type="range"
-                min="0"
+                min="0.1"
                 max="1"
                 step="0.1"
                 value={theme.habitCardOpacity}
@@ -336,7 +338,7 @@ const ThemeCustomizer = ({
               <input
                 id="card-text-opacity"
                 type="range"
-                min="0"
+                min="0.1"
                 max="1"
                 step="0.1"
                 value={theme.habitCardTextOpacity}
@@ -418,7 +420,7 @@ const ThemeCustomizer = ({
               <input
                 id="completed-cell-opacity"
                 type="range"
-                min="0"
+                min="0.1"
                 max="1"
                 step="0.1"
                 value={theme.completedCellOpacity}
@@ -459,7 +461,7 @@ const ThemeCustomizer = ({
               <input
                 id="uncompleted-cell-opacity"
                 type="range"
-                min="0"
+                min="0.1"
                 max="1"
                 step="0.1"
                 value={theme.uncompletedCellOpacity}
@@ -500,7 +502,7 @@ const ThemeCustomizer = ({
               <input
                 id="future-cell-opacity"
                 type="range"
-                min="0"
+                min="0.1"
                 max="1"
                 step="0.1"
                 value={theme.futureCellOpacity}
@@ -554,6 +556,8 @@ const ThemeCustomizer = ({
         )}
       </div>
 
+
+
       {/* Action Buttons */}
       <div className="theme-actions">
         <button
@@ -563,6 +567,7 @@ const ThemeCustomizer = ({
         >
           {isSaving ? 'Saving...' : 'Save Theme'}
         </button>
+
         <button
           className="reset-theme-btn"
           onClick={handleResetTheme}

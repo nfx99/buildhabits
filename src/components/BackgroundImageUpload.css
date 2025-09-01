@@ -223,29 +223,4 @@
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .background-upload-area {
-    background: var(--bg-secondary-dark, #2d3748);
-  }
-  
-  .background-upload-area:hover {
-    background: var(--bg-primary-dark, #1a202c);
-  }
-  
-  .background-upload-prompt svg {
-    color: var(--text-secondary-dark, #a0aec0);
-  }
-  
-  .background-upload-prompt h5 {
-    color: var(--text-primary-dark, #f7fafc);
-  }
-  
-  .background-upload-prompt p {
-    color: var(--text-secondary-dark, #a0aec0);
-  }
-  
-  .file-requirements {
-    color: var(--text-secondary-dark, #a0aec0);
-  }
-}
+

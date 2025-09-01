@@ -366,17 +366,29 @@ code {
   border-color: var(--accent-hover);
 }
 
+
+
+.dialog-buttons button,
+.dialog-buttons .custom-button {
+  outline: none !important;
+}
+
 .dialog-buttons button:focus,
 .dialog-buttons button:focus-visible,
 .dialog-buttons button:active,
 .dialog-buttons .custom-button:focus,
 .dialog-buttons .custom-button:focus-visible,
-.dialog-buttons .custom-button:active,
-.dialog-buttons button,
-.dialog-buttons .custom-button {
+.dialog-buttons button:active {
   outline: none !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
   border: 1px solid var(--border-primary) !important;
-  box-shadow: none !important;
+}
+
+.dialog-buttons button:first-child:focus,
+.dialog-buttons button:first-child:focus-visible,
+.dialog-buttons button:first-child:active {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
 }
 
 @keyframes overlayShow {

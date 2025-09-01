@@ -156,12 +156,7 @@
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .image-container {
-    background: var(--background-secondary-dark, #4a5568);
-  }
-}
+
 
 /* Focus styles for accessibility */
 .image-container:focus-visible {

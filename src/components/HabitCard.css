@@ -339,7 +339,7 @@
 .edit-input:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
   background: var(--bg-primary);
 }
 
@@ -389,7 +389,7 @@
 
 .checkbox-label input[type="checkbox"]:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(58, 79, 65, 0.1);
+  box-shadow: 0 0 0 3px rgba(58, 79, 65, 0.1);
 }
 
 .checkbox-text {
@@ -486,6 +486,11 @@
   font-weight: 600;
 }
 
+.tracking-option:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
 
 
 .heatmap-container {
@@ -580,7 +585,7 @@
 
 /* Quantifiable cells base styling */
 .heatmap-cell.quantifiable {
-  background-color: var(--custom-uncompleted-cell-color, var(--cell-empty));
+  background-color: var(--cell-empty);
 }
 
 /* Quantifiable cells with progress - background will be set by JavaScript */
@@ -1150,6 +1155,11 @@
   background: var(--accent-primary);
   color: white;
   font-weight: 600;
+}
+
+.insights-option:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .insights-description {

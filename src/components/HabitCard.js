@@ -6,8 +6,9 @@ import './HabitCard.css';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { getHabitStats } from '../utils/tierSystem';
+import { applyThemeToDocument } from '../utils/themeCustomization';
 
-const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onUnarchive, isReadOnly = false, viewMode = 'year', isPremium = false, isArchived = false, onEditDialogChange, onDeleteDialogChange, onLogProgressDialogChange, onMoreMenuChange }) => {
+const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onUnarchive, isReadOnly = false, viewMode = 'year', isPremium = false, isArchived = false, onEditDialogChange, onDeleteDialogChange, onLogProgressDialogChange, onMoreMenuChange, friendTheme = null }) => {
   const {
     attributes,
     listeners,
@@ -134,6 +135,9 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
       onMoreMenuChange(isMoreOpen);
     }
   }, [isMoreOpen]); // Only depend on isMoreOpen, not the callback function
+
+  // Note: We don't apply friend's theme globally here to avoid conflicts
+  // Instead, we pass the theme data to the component and use it conditionally
 
   const moreButtonRef = React.useRef(null);
   const tooltipRef = React.useRef(null);
@@ -503,14 +507,40 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     setIsMoreOpen(true);
   };
 
+  // Determine if this habit should use custom theme styling
+  // Apply custom theme when:
+  // 1. Not in read-only mode (own habits), OR
+  // 2. In read-only mode but friend's theme is available (friend's habits)
+  const shouldUseCustomTheme = !isReadOnly || (isReadOnly && friendTheme);
+  
+  // Determine which theme to use
+  const themeToUse = isReadOnly && friendTheme ? friendTheme : null;
+  
+  // Apply friend's theme locally if available
+  const friendThemeStyles = React.useMemo(() => {
+    if (isReadOnly && friendTheme) {
+      return {
+        '--custom-button-color': friendTheme.buttonColor ? `rgba(${parseInt(friendTheme.buttonColor.slice(1, 3), 16)}, ${parseInt(friendTheme.buttonColor.slice(3, 5), 16)}, ${parseInt(friendTheme.buttonColor.slice(5, 7), 16)}, ${friendTheme.buttonOpacity || 1})` : undefined,
+        '--custom-button-text-color': friendTheme.buttonTextColor ? `rgba(${parseInt(friendTheme.buttonTextColor.slice(1, 3), 16)}, ${parseInt(friendTheme.buttonTextColor.slice(3, 5), 16)}, ${parseInt(friendTheme.buttonTextColor.slice(5, 7), 16)}, ${friendTheme.buttonTextOpacity || 1})` : undefined,
+        '--custom-habit-card-color': friendTheme.habitCardColor ? `rgba(${parseInt(friendTheme.habitCardColor.slice(1, 3), 16)}, ${parseInt(friendTheme.habitCardColor.slice(3, 5), 16)}, ${parseInt(friendTheme.habitCardColor.slice(5, 7), 16)}, ${friendTheme.habitCardOpacity || 1})` : undefined,
+        '--custom-habit-card-text-color': friendTheme.habitCardTextColor ? `rgba(${parseInt(friendTheme.habitCardTextColor.slice(1, 3), 16)}, ${parseInt(friendTheme.habitCardTextColor.slice(3, 5), 16)}, ${parseInt(friendTheme.habitCardTextColor.slice(5, 7), 16)}, ${friendTheme.habitCardTextOpacity || 1})` : undefined,
+        '--custom-completed-cell-color': friendTheme.completedCellColor ? `rgba(${parseInt(friendTheme.completedCellColor.slice(1, 3), 16)}, ${parseInt(friendTheme.completedCellColor.slice(3, 5), 16)}, ${parseInt(friendTheme.completedCellColor.slice(5, 7), 16)}, ${friendTheme.completedCellOpacity || 1})` : undefined,
+        '--custom-uncompleted-cell-color': friendTheme.uncompletedCellColor ? `rgba(${parseInt(friendTheme.uncompletedCellColor.slice(1, 3), 16)}, ${parseInt(friendTheme.uncompletedCellColor.slice(3, 5), 16)}, ${parseInt(friendTheme.uncompletedCellColor.slice(5, 7), 16)}, ${friendTheme.uncompletedCellOpacity || 1})` : undefined,
+        '--custom-future-cell-color': friendTheme.futureCellColor ? `rgba(${parseInt(friendTheme.futureCellColor.slice(1, 3), 16)}, ${parseInt(friendTheme.futureCellColor.slice(3, 5), 16)}, ${parseInt(friendTheme.futureCellColor.slice(5, 7), 16)}, ${friendTheme.futureCellOpacity || 1})` : undefined,
+      };
+    }
+    return {};
+  }, [isReadOnly, friendTheme]);
+
   return (
     <div 
       ref={setNodeRef} 
       style={{
         ...style,
-        '--habit-color': habit.color || '#000000'
+        '--habit-color': habit.color || '#000000',
+        ...friendThemeStyles
       }} 
-      className="habit-card custom-habit-card"
+      className={`habit-card ${shouldUseCustomTheme ? 'custom-habit-card' : ''}`}
       data-habit-id={habit.id}
     >
       <div className="habit-header">
@@ -563,7 +593,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
           )}
           {!isReadOnly && !isArchived && (
             <button 
-              className="log-button custom-button" 
+              className={`log-button ${shouldUseCustomTheme ? 'custom-button' : ''}`}
               onClick={handleLogToday}
               style={{ backgroundColor: habit.color || '#000000' }}
             >
@@ -687,11 +717,19 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                       const opacity = 0.2 + (progress * 0.8);
                       
                       // Use CSS color-mix if available, otherwise fallback to opacity
-                      cellStyle.backgroundColor = `color-mix(in srgb, var(--custom-completed-cell-color, var(--cell-completed)) ${Math.round(opacity * 100)}%, var(--custom-uncompleted-cell-color, var(--cell-empty)))`;
+                      if (shouldUseCustomTheme) {
+                        cellStyle.backgroundColor = `color-mix(in srgb, var(--custom-completed-cell-color, var(--cell-completed)) ${Math.round(opacity * 100)}%, var(--custom-uncompleted-cell-color, var(--cell-empty)))`;
+                      } else {
+                        cellStyle.backgroundColor = `color-mix(in srgb, var(--cell-completed) ${Math.round(opacity * 100)}%, var(--cell-empty))`;
+                      }
                       cellStyle.borderColor = habit.color || '#000000';
                     } else {
                       // 0 value or unlogged - treat as unlogged cell
-                      cellStyle.backgroundColor = 'var(--custom-uncompleted-cell-color, var(--cell-empty))';
+                      if (shouldUseCustomTheme) {
+                        cellStyle.backgroundColor = 'var(--custom-uncompleted-cell-color, var(--cell-empty))';
+                      } else {
+                        cellStyle.backgroundColor = 'var(--cell-empty)';
+                      }
                     }
                   } else if (cell.completed) {
                     cellStyle.backgroundColor = habit.color || '#000000';

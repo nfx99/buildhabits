@@ -28,6 +28,8 @@ export const DEFAULT_THEME = {
   futureCellOpacity: 1.0
 };
 
+
+
 /**
  * Validates theme color (hex format)
  * @param {string} color - Color in hex format
@@ -291,6 +293,8 @@ export const resetUserTheme = async (userId) => {
     };
   }
 };
+
+
 
 /**
  * Applies theme styles to document root
