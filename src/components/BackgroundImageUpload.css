@@ -167,9 +167,9 @@
 }
 
 .remove-background-btn {
-  background: var(--error, #dc3545);
+  background: var(--accent-primary);
   color: white;
-  border: none;
+  border: 1px solid var(--accent-primary);
   padding: 0.5rem 1rem;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -179,7 +179,8 @@
 }
 
 .remove-background-btn:hover {
-  background: var(--error-dark, #c82333);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
   transform: translateY(-1px);
 }
 

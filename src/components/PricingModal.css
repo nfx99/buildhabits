@@ -88,40 +88,19 @@
 }
 
 .pricing-plan:hover {
-  border-color: #3b82f6;
+  border-color: #000000;
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
 .pricing-plan.selected {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  border-color: #000000;
+  background: #f3f4f6;
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
 }
 
-.pricing-plan.popular {
-  border-color: #10b981;
-  background: #f0fdf4;
-}
 
-.pricing-plan.popular.selected {
-  border-color: #10b981;
-  background: #dcfce7;
-}
-
-.popular-badge {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  padding: 0.25rem 1rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
 
 .plan-header {
   text-align: center;
@@ -170,7 +149,7 @@
 
 .pricing-modal-button {
   width: 100%;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: #000000;
   color: white;
   border: none;
   border-radius: 12px;
@@ -182,9 +161,9 @@
 }
 
 .pricing-modal-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, #111827, #000000);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px -5px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.3);
 }
 
 .pricing-modal-button:disabled {

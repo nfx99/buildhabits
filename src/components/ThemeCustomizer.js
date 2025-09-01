@@ -120,7 +120,7 @@ const ThemeCustomizer = ({
           onClick={() => toggleSection('buttons')}
           disabled={disabled}
         >
-          <span>🔘 Button Styles</span>
+          <span>Button Styles</span>
           <span className="expand-icon">{expandedSection === 'buttons' ? '−' : '+'}</span>
         </button>
         
@@ -238,7 +238,7 @@ const ThemeCustomizer = ({
           onClick={() => toggleSection('cards')}
           disabled={disabled}
         >
-          <span>📋 Habit Card Styles</span>
+          <span>Habit Card Styles</span>
           <span className="expand-icon">{expandedSection === 'cards' ? '−' : '+'}</span>
         </button>
         
@@ -357,7 +357,7 @@ const ThemeCustomizer = ({
           onClick={() => toggleSection('cells')}
           disabled={disabled}
         >
-          <span>📅 Calendar Cell Styles</span>
+          <span>Calendar Cell Styles</span>
           <span className="expand-icon">{expandedSection === 'cells' ? '−' : '+'}</span>
         </button>
         
@@ -496,7 +496,6 @@ const ThemeCustomizer = ({
                   }}
                   title="Completed"
                 >
-                  ✓
                 </div>
                 <div 
                   className="preview-cell uncompleted"
@@ -505,7 +504,6 @@ const ThemeCustomizer = ({
                   }}
                   title="Uncompleted"
                 >
-                  ✗
                 </div>
                 <div 
                   className="preview-cell future"
@@ -514,7 +512,6 @@ const ThemeCustomizer = ({
                   }}
                   title="Future"
                 >
-                  ⋯
                 </div>
               </div>
               <p className="cell-preview-labels">

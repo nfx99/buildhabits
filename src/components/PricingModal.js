@@ -11,7 +11,6 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       price: '$5.00',
       period: '/month',
       priceId: 'price_1RosKmEVtge1S4ocLAKvbWZH', 
-      description: 'Perfect for getting started',
       popular: false
     },
     sixMonth: {
@@ -20,7 +19,6 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       price: '$25.00',
       period: '/6 months',
       priceId: 'price_1RosOEEVtge1S4oc5zVB2el7',
-      description: 'Great value for committed users',
       popular: false,
       savings: 'Save 17%' 
     },
@@ -30,8 +28,7 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
       price: '$40.00', 
       period: '/year',
       priceId: 'price_1RosQ6EVtge1S4ocPMeL7HDW',
-      description: 'Maximum savings for power users',
-      popular: true,
+      popular: false,
       savings: 'Save 33%'
     }
   };
@@ -62,9 +59,7 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
               className={`pricing-plan ${selectedPlan === plan.id ? 'selected' : ''} ${plan.popular ? 'popular' : ''}`}
               onClick={() => setSelectedPlan(plan.id)}
             >
-              {plan.popular && (
-                <div className="popular-badge">Best Choice</div>
-              )}
+
               
               <div className="plan-header">
                 <h3>{plan.name}</h3>
@@ -76,8 +71,6 @@ const PricingModal = ({ isOpen, onClose, onSelectPlan, isLoading }) => {
                   <div className="savings-badge">{plan.savings}</div>
                 )}
               </div>
-              
-              <p className="plan-description">{plan.description}</p>
             </div>
           ))}
         </div>

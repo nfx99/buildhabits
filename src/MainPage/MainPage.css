@@ -55,7 +55,7 @@
   margin-right: 1rem;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid var(--border-primary);
+  border: none;
 }
 
 .view-toggle-btn {
@@ -281,7 +281,7 @@
 .calendar-view-toggle {
   display: flex;
   background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
+  border: none;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -316,6 +316,10 @@
 
 .view-toggle-btn:first-child {
   border-right: 1px solid var(--border-primary);
+}
+
+.view-toggle-btn:focus {
+  outline: none;
 }
 
 /* No results/habits messages */

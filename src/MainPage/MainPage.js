@@ -1319,19 +1319,19 @@ const MainPage = ({ session }) => {
             </button>
           )}
           <button 
+            className="quick-share-button custom-button"
+            onClick={handleShareProfile}
+            title="Share your profile"
+          >
+            Share
+          </button>
+          <button 
             className={`archive-button custom-button ${!hasPaid ? 'premium-only' : ''}`}
             onClick={() => hasPaid ? navigate('/archive') : setIsPricingModalOpen(true)}
             title={hasPaid ? "View archived habits" : "Archive is a premium feature - upgrade to access"}
             disabled={!hasPaid}
           >
             📦 Archive
-          </button>
-          <button 
-            className="quick-share-button custom-button"
-            onClick={handleShareProfile}
-            title="Share your profile"
-          >
-            Share
           </button>
           <button 
             className="friends-button custom-button"
@@ -1742,7 +1742,7 @@ const MainPage = ({ session }) => {
                 {/* Theme update feedback messages */}
                 {themeUpdateSuccess && (
                   <div className="upload-message success">
-                    ✅ Theme updated successfully!
+                    Theme updated successfully!
                   </div>
                 )}
                 {themeUpdateError && (
