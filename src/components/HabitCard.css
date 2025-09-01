@@ -1,6 +1,61 @@
 /* Import global styles */
 @import '../styles/globals.css';
 
+/* Custom Theme Support */
+.habit-card.custom-habit-card {
+  background: var(--custom-habit-card-color) !important;
+  color: var(--custom-habit-card-text-color) !important;
+}
+
+.habit-card.custom-habit-card .habit-name,
+.habit-card.custom-habit-card .habit-title,
+.habit-card.custom-habit-card .habit-description,
+.habit-card.custom-habit-card .habit-stats,
+.habit-card.custom-habit-card .tier-display,
+.habit-card.custom-habit-card .habit-header h3,
+.habit-card.custom-habit-card h3,
+.habit-card.custom-habit-card .habit-title-section h3,
+.habit-card.custom-habit-card .month-label,
+.habit-card.custom-habit-card .day-label,
+.habit-card.custom-habit-card .tier-icon,
+.habit-card.custom-habit-card .tier-name-compact,
+.habit-card.custom-habit-card .tier-days-compact,
+.habit-card.custom-habit-card .year-nav-button-inline,
+.habit-card.custom-habit-card .year-display-inline,
+.habit-card.custom-habit-card .insights-bottom,
+.habit-card.custom-habit-card .insight-item,
+.habit-card.custom-habit-card .insight-value {
+  color: var(--custom-habit-card-text-color) !important;
+}
+
+/* Custom Button Color for 3 dots (more button) */
+.habit-card.custom-habit-card .more-button {
+  background: var(--custom-button-color) !important;
+  color: var(--custom-button-text-color) !important;
+  border-color: var(--custom-button-color) !important;
+}
+
+.habit-card.custom-habit-card .more-button:hover {
+  background: var(--custom-button-color-solid) !important;
+  opacity: calc(var(--custom-button-opacity) * 0.9) !important;
+  color: var(--custom-button-text-color) !important;
+}
+
+/* Custom Calendar Cell Theme Support */
+.habit-card.custom-habit-card .heatmap-cell.completed:not(.partial) {
+  background: var(--custom-completed-cell-color) !important;
+}
+
+.habit-card.custom-habit-card .heatmap-cell:not(.completed):not(.empty):not(.future):not(.quantifiable) {
+  background: var(--custom-uncompleted-cell-color) !important;
+}
+
+.habit-card.custom-habit-card .heatmap-cell.future {
+  background: var(--custom-future-cell-color) !important;
+}
+
+/* Removed partial completion system - now using varying opacity shades */
+
 .habit-card {
   background: var(--bg-card);
   border-radius: 8px;
@@ -9,7 +64,7 @@
   margin: 1rem;
   width: 100%;
   max-width: 1200px;
-  border: 1px solid var(--border-primary);
+  border: none;
   overflow: visible;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -509,7 +564,6 @@
   width: 15px;
   height: 15px;
   border-radius: 3px;
-  background-color: var(--cell-empty);
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -520,8 +574,22 @@
   box-sizing: border-box;
 }
 
+.heatmap-cell {
+  background-color: var(--cell-empty);
+}
+
+/* Quantifiable cells base styling */
+.heatmap-cell.quantifiable {
+  background-color: var(--custom-uncompleted-cell-color, var(--cell-empty));
+}
+
+/* Quantifiable cells with progress - background will be set by JavaScript */
+.heatmap-cell.quantifiable-progress {
+  /* Background color will be set inline by JavaScript using theme colors */
+}
+
 .heatmap-cell.empty {
-  background-color: transparent;
+  background-color: transparent !important;
   cursor: default;
   border: 1px solid transparent;
 }
@@ -532,7 +600,7 @@
   box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.2);
 }
 
-.heatmap-cell.completed {
+.heatmap-cell.completed:not(.quantifiable) {
   background: var(--cell-completed);
   border-color: #16a34a;
 }

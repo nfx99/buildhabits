@@ -9,8 +9,10 @@ import { format } from 'date-fns';
 import { getHabitStats } from '../utils/tierSystem';
 import { getDefaultAvatarUrl, uploadProfilePicture, updateUserProfilePicture, extractFilePathFromUrl } from '../utils/profilePictureUpload';
 import { getBackgroundImageStyles } from '../utils/backgroundImageUpload';
+import { DEFAULT_THEME, applyThemeToDocument } from '../utils/themeCustomization';
 import ProfilePictureUpload from '../components/ProfilePictureUpload';
 import BackgroundImageUpload from '../components/BackgroundImageUpload';
+import ThemeCustomizer from '../components/ThemeCustomizer';
 import {
   DndContext,
   closestCenter,
@@ -82,6 +84,9 @@ const MainPage = ({ session }) => {
   const [profileUploadSuccess, setProfileUploadSuccess] = useState(false);
   const [backgroundUploadError, setBackgroundUploadError] = useState(null);
   const [backgroundUploadSuccess, setBackgroundUploadSuccess] = useState(false);
+  const [themeCustomization, setThemeCustomization] = useState(DEFAULT_THEME);
+  const [themeUpdateSuccess, setThemeUpdateSuccess] = useState(false);
+  const [themeUpdateError, setThemeUpdateError] = useState(null);
   const [editingUsername, setEditingUsername] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -128,7 +133,7 @@ const MainPage = ({ session }) => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('username, is_premium, profile_picture_url, background_image_url')
+        .select('username, is_premium, profile_picture_url, background_image_url, theme_customization')
         .eq('user_id', session.user.id);
       
       if (error) {
@@ -186,7 +191,7 @@ const MainPage = ({ session }) => {
         // Check if profile actually exists first
         const { data: existingProfiles, error: checkError } = await supabase
           .from('user_profiles')
-          .select('user_id, username, is_premium, profile_picture_url, background_image_url')
+          .select('user_id, username, is_premium, profile_picture_url, background_image_url, theme_customization')
           .eq('user_id', session.user.id);
 
         if (checkError) {
@@ -203,6 +208,7 @@ const MainPage = ({ session }) => {
           setUsername(profile.username || 'User');
           setProfilePictureUrl(profile.profile_picture_url || '');
           setBackgroundImageUrl(profile.background_image_url || '');
+          setThemeCustomization(profile.theme_customization || DEFAULT_THEME);
           return profile.is_premium || false;
         }
 
@@ -248,6 +254,7 @@ const MainPage = ({ session }) => {
         setUsername(profile.username || '');
         setProfilePictureUrl(profile.profile_picture_url || '');
         setBackgroundImageUrl(profile.background_image_url || '');
+        setThemeCustomization(profile.theme_customization || DEFAULT_THEME);
         
         // Only show congratulations if:
         // 1. User is now premium
@@ -390,6 +397,11 @@ const MainPage = ({ session }) => {
 
     initialize();
   }, [checkPaymentStatus, verifyPaymentWithStripe, fetchHabits, session.user.id]);
+
+  // Apply theme when it changes
+  useEffect(() => {
+    applyThemeToDocument(themeCustomization);
+  }, [themeCustomization]);
 
   const handleCreateHabit = async (e) => {
     e.preventDefault();
@@ -1134,6 +1146,27 @@ const MainPage = ({ session }) => {
     }, 3000);
   };
 
+  const handleThemeUpdate = (newTheme) => {
+    setThemeCustomization(newTheme);
+    setThemeUpdateSuccess(true);
+    setThemeUpdateError(null);
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      setThemeUpdateSuccess(false);
+    }, 3000);
+  };
+
+  const handleThemeError = (errorMessage) => {
+    setThemeUpdateError(errorMessage);
+    setThemeUpdateSuccess(false);
+    
+    // Clear error message after 5 seconds
+    setTimeout(() => {
+      setThemeUpdateError(null);
+    }, 5000);
+  };
+
   const handleDragEnd = useCallback(async (event) => {
     const { active, over } = event;
 
@@ -1278,7 +1311,7 @@ const MainPage = ({ session }) => {
         <div className="header-right">
           {!hasPaid && (
             <button 
-              className="homescreen-upgrade-button"
+              className="homescreen-upgrade-button custom-button"
               onClick={handleUpgrade}
               disabled={isPaymentLoading}
             >
@@ -1286,7 +1319,7 @@ const MainPage = ({ session }) => {
             </button>
           )}
           <button 
-            className={`archive-button ${!hasPaid ? 'premium-only' : ''}`}
+            className={`archive-button custom-button ${!hasPaid ? 'premium-only' : ''}`}
             onClick={() => hasPaid ? navigate('/archive') : setIsPricingModalOpen(true)}
             title={hasPaid ? "View archived habits" : "Archive is a premium feature - upgrade to access"}
             disabled={!hasPaid}
@@ -1294,20 +1327,20 @@ const MainPage = ({ session }) => {
             📦 Archive
           </button>
           <button 
-            className="quick-share-button"
+            className="quick-share-button custom-button"
             onClick={handleShareProfile}
             title="Share your profile"
           >
             Share
           </button>
           <button 
-            className="friends-button"
+            className="friends-button custom-button"
             onClick={() => setIsFriendsDialogOpen(true)}
             title="Manage friends"
           >
             👥 Friends
           </button>
-          <button className="profile-button" onClick={() => setIsProfileDialogOpen(true)}>
+          <button className="profile-button custom-button" onClick={() => setIsProfileDialogOpen(true)}>
             Profile
           </button>
         </div>
@@ -1318,7 +1351,7 @@ const MainPage = ({ session }) => {
           <div className="habits-header">
             <div className="habits-header-left">
               <button
-                className="create-habit-button"
+                className="create-habit-button custom-button"
                 onClick={() => {
                   if (!hasPaid && habits.length >= 2) {
                     setIsPricingModalOpen(true);
@@ -1565,7 +1598,7 @@ const MainPage = ({ session }) => {
 
             </div>
               <div className="dialog-buttons">
-                <button type="submit">Create</button>
+                <button type="submit" className="custom-button">Create</button>
                 <button
                   type="button"
                   onClick={() => setIsCreateDialogOpen(false)}
@@ -1655,7 +1688,17 @@ const MainPage = ({ session }) => {
                   </div>
                   <div className="stat">
                     <div className="stat-number">
-                      {habits.reduce((total, habit) => total + (habit.habit_completions?.length || 0), 0)}
+                      {habits.reduce((total, habit) => {
+                        const completions = habit.habit_completions || [];
+                        // Filter out 0-value completions for quantifiable habits
+                        const validCompletions = completions.filter(completion => {
+                          if (habit.is_quantifiable) {
+                            return (completion.value || 0) > 0;
+                          }
+                          return true; // For non-quantifiable habits, all completions count
+                        });
+                        return total + validCompletions.length;
+                      }, 0)}
                     </div>
                     <div className="stat-label">Total Completions</div>
                   </div>
@@ -1684,6 +1727,27 @@ const MainPage = ({ session }) => {
                 {backgroundUploadError && (
                   <div className="upload-message error">
                     ❌ {backgroundUploadError}
+                  </div>
+                )}
+
+                {/* Theme Customization Section */}
+                <ThemeCustomizer
+                  userId={session?.user?.id}
+                  initialTheme={themeCustomization}
+                  onThemeUpdate={handleThemeUpdate}
+                  onThemeError={handleThemeError}
+                  disabled={false}
+                />
+                
+                {/* Theme update feedback messages */}
+                {themeUpdateSuccess && (
+                  <div className="upload-message success">
+                    ✅ Theme updated successfully!
+                  </div>
+                )}
+                {themeUpdateError && (
+                  <div className="upload-message error">
+                    ❌ {themeUpdateError}
                   </div>
                 )}
 
@@ -1743,7 +1807,7 @@ const MainPage = ({ session }) => {
                   <li>Your premium status (if applicable)</li>
                 </ul>
                 <p>Are you absolutely sure you want to delete your account?</p>
-              </div>
+              </div>  
             </Dialog.Description>
             <div className="dialog-buttons">
               <button 

@@ -78,7 +78,14 @@ export const calculatePointsWithStreak = (basePoints, currentStreak) => {
 
 // Get habit statistics including tier and streak info
 export const getHabitStats = (habit) => {
-  const completions = habit.habit_completions || [];
+  const allCompletions = habit.habit_completions || [];
+  // Filter out 0-value completions for quantifiable habits, they should not count toward rank
+  const completions = allCompletions.filter(completion => {
+    if (habit.is_quantifiable) {
+      return (completion.value || 0) > 0;
+    }
+    return true; // For non-quantifiable habits, all completions count
+  });
   const totalDays = completions.length;
   
   // Calculate current streak (including current day)

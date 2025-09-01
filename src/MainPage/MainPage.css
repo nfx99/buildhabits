@@ -1,6 +1,92 @@
 /* Import global styles */
 @import '../styles/globals.css';
 
+/* Custom Theme Styles - Applied when user customizes theme */
+.custom-button {
+  background: var(--custom-button-color) !important;
+  color: var(--custom-button-text-color) !important;
+}
+
+.custom-button:hover {
+  background: var(--custom-button-color-solid) !important;
+  opacity: calc(var(--custom-button-opacity) * 0.9) !important;
+  color: var(--custom-button-text-color) !important;
+}
+
+.custom-habit-card {
+  background: var(--custom-habit-card-color) !important;
+  color: var(--custom-habit-card-text-color) !important;
+}
+
+/* Custom Button Theme for Header Buttons */
+.profile-button.custom-button,
+.friends-button.custom-button,
+.quick-share-button.custom-button,
+.archive-button.custom-button,
+.homescreen-upgrade-button.custom-button {
+  background: var(--custom-button-color) !important;
+  color: var(--custom-button-text-color) !important;
+  border-color: var(--custom-button-color) !important;
+}
+
+.homescreen-upgrade-button.custom-button {
+  box-shadow: 0 2px 8px var(--custom-button-color-solid) !important;
+  opacity: var(--custom-button-opacity) !important;
+}
+
+.profile-button.custom-button:hover,
+.friends-button.custom-button:hover,
+.quick-share-button.custom-button:hover,
+.archive-button.custom-button:hover:not(.premium-only),
+.homescreen-upgrade-button.custom-button:hover {
+  background: var(--custom-button-color-solid) !important;
+  opacity: calc(var(--custom-button-opacity) * 0.9) !important;
+  color: var(--custom-button-text-color) !important;
+  border-color: var(--custom-button-color) !important;
+}
+
+.homescreen-upgrade-button.custom-button:hover {
+  box-shadow: 0 4px 12px var(--custom-button-color-solid) !important;
+}
+
+/* View Toggle Buttons (Year and 365 Days) - Connected Button Group */
+.calendar-view-toggle {
+  display: flex;
+  margin-right: 1rem;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+}
+
+.view-toggle-btn {
+  background: var(--bg-secondary);
+  border: none;
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-right: 1px solid var(--border-primary);
+  position: relative;
+}
+
+.view-toggle-btn:last-child {
+  border-right: none;
+}
+
+.view-toggle-btn:hover {
+  background: var(--accent-hover);
+  color: white;
+}
+
+.view-toggle-btn.active {
+  background: var(--accent-primary);
+  color: white;
+  z-index: 1;
+}
+
 .main-page {
   min-height: 100vh;
   background: transparent;

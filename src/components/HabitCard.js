@@ -52,7 +52,14 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
   const insights = React.useMemo(() => {
     if (!habit.has_insights || !habit.habit_completions) return null;
     
-    const completions = habit.habit_completions;
+    const allCompletions = habit.habit_completions;
+    // Filter out 0-value completions for quantifiable habits
+    const completions = allCompletions.filter(completion => {
+      if (habit.is_quantifiable) {
+        return (completion.value || 0) > 0;
+      }
+      return true; // For non-quantifiable habits, all completions count
+    });
     const totalDays = completions.length;
     
     if (totalDays === 0) return null;
@@ -185,13 +192,16 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
       if (habit.is_quantifiable) {
         const value = completion?.value || 0;
         const target = habit.target_value || 1;
-        const progress = Math.min(value / target, 1); // Cap at 100%
+        // Treat 0 values as unlogged - no completion record should exist for 0
+        const isActuallyLogged = value > 0;
+        const progress = isActuallyLogged ? Math.min(value / target, 1) : 0; // Cap at 100%
         return {
           date,
           completed: value >= target,
           value,
           target,
-          progress
+          progress,
+          isLogged: isActuallyLogged
         };
       } else {
         return {
@@ -367,7 +377,15 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     try {
       if (habit.is_quantifiable) {
         const value = parseFloat(quantifiableValue) || 0;
-        await onComplete(habit.id, selectedDate, false, value);
+        // Ensure value is not negative
+        const safeValue = Math.max(0, value);
+        
+        if (safeValue === 0) {
+          // If logging 0, treat it as removing/undoing the completion
+          await onComplete(habit.id, selectedDate, true);
+        } else {
+          await onComplete(habit.id, selectedDate, false, safeValue);
+        }
       } else {
       await onComplete(habit.id, selectedDate);
       }
@@ -415,7 +433,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
         name: editName,
         color: habit.color || '#000000',
         is_quantifiable: editIsQuantifiable,
-        target_value: editIsQuantifiable ? parseFloat(editTargetValue) || 1 : null,
+        target_value: editIsQuantifiable ? Math.max(1, parseFloat(editTargetValue) || 1) : null,
         metric_unit: editIsQuantifiable ? editMetricUnit : null,
         is_private: editIsPrivate,
         has_insights: finalHasInsights,
@@ -492,7 +510,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
         ...style,
         '--habit-color': habit.color || '#000000'
       }} 
-      className="habit-card"
+      className="habit-card custom-habit-card"
       data-habit-id={habit.id}
     >
       <div className="habit-header">
@@ -545,7 +563,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
           )}
           {!isReadOnly && !isArchived && (
             <button 
-              className="log-button" 
+              className="log-button custom-button" 
               onClick={handleLogToday}
               style={{ backgroundColor: habit.color || '#000000' }}
             >
@@ -662,12 +680,18 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                   
                   const cellStyle = {};
                   if (habit.is_quantifiable) {
-                    if (cell.progress > 0) {
-                      // For quantifiable habits, show partial progress
-                      const intensity = Math.min(cell.progress, 1);
-                      const baseColor = habit.color || '#000000';
-                      cellStyle.backgroundColor = `${baseColor}${Math.round(intensity * 255).toString(16).padStart(2, '0')}`;
-                      cellStyle.borderColor = baseColor;
+                    const progress = Math.min(cell.progress || 0, 1);
+                    
+                    if (cell.isLogged && progress > 0) {
+                      // Calculate opacity and create a color blend
+                      const opacity = 0.2 + (progress * 0.8);
+                      
+                      // Use CSS color-mix if available, otherwise fallback to opacity
+                      cellStyle.backgroundColor = `color-mix(in srgb, var(--custom-completed-cell-color, var(--cell-completed)) ${Math.round(opacity * 100)}%, var(--custom-uncompleted-cell-color, var(--cell-empty)))`;
+                      cellStyle.borderColor = habit.color || '#000000';
+                    } else {
+                      // 0 value or unlogged - treat as unlogged cell
+                      cellStyle.backgroundColor = 'var(--custom-uncompleted-cell-color, var(--cell-empty))';
                     }
                   } else if (cell.completed) {
                     cellStyle.backgroundColor = habit.color || '#000000';
@@ -676,7 +700,12 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                   
                   // Style future dates differently
                   if (isFutureDate && shouldShowCell) {
-                    cellStyle.opacity = '0.3';
+                    // For quantifiable habits, multiply existing opacity; for others, set to 0.3
+                    if (habit.is_quantifiable && cellStyle.opacity) {
+                      cellStyle.opacity = cellStyle.opacity * 0.5;
+                    } else if (!habit.is_quantifiable) {
+                      cellStyle.opacity = '0.3';
+                    }
                     cellStyle.cursor = 'pointer';
                   }
                   
@@ -690,7 +719,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                   return (
                     <div
                       key={`${weekday}-${weekIndex}`}
-                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!shouldShowCell ? 'empty' : ''} ${habit.is_quantifiable && cell.progress > 0 && cell.progress < 1 ? 'partial' : ''} ${isFutureDate ? 'future' : ''}`}
+                      className={`heatmap-cell ${cell.completed ? 'completed' : ''} ${!shouldShowCell ? 'empty' : ''} ${habit.is_quantifiable && shouldShowCell ? 'quantifiable' : ''} ${habit.is_quantifiable && shouldShowCell && cell.isLogged && cell.progress > 0 ? 'quantifiable-progress' : ''} ${isFutureDate ? 'future' : ''}`}
                       style={cellStyle}
                       onClick={() => !isReadOnly && !isArchived && shouldShowCell && handleDateClick(cell.date, isFutureDate)}
                       data-tooltip={tooltipText}
@@ -753,10 +782,16 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                   id="quantifiable-value"
                   type="number"
                   value={quantifiableValue}
-                  onChange={(e) => setQuantifiableValue(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow empty string for clearing, or positive numbers (including decimals)
+                    if (value === '' || (parseFloat(value) >= 0 && !isNaN(parseFloat(value)))) {
+                      setQuantifiableValue(value);
+                    }
+                  }}
                   placeholder={`Enter ${habit.metric_unit || 'times'}`}
                   min="0"
-                  step="0.1"
+                  step="1"
                   className="edit-input"
                 />
               </div>
@@ -840,10 +875,16 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                     id="edit-target-value"
                     type="number"
                     value={editTargetValue}
-                    onChange={(e) => setEditTargetValue(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow empty string for clearing, or positive numbers (including decimals)
+                      if (value === '' || (parseFloat(value) >= 0 && !isNaN(parseFloat(value)))) {
+                        setEditTargetValue(value);
+                      }
+                    }}
                     placeholder="e.g., 8, 30, 2"
                     min="0"
-                    step="0.1"
+                    step="1"
                     className="edit-input"
                     required
                   />
