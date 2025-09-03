@@ -295,11 +295,29 @@ code {
 
 /* Global Dialog Styles */
 .dialog-overlay {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   position: fixed;
   inset: 0;
   animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 9998;
+  isolation: isolate;
+}
+
+/* Ensure backdrop filter works with Dialog components */
+[data-radix-dialog-overlay] {
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Additional specificity for Dialog overlays */
+.DialogOverlay,
+[data-radix-dialog-overlay] {
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
 }
 
 .dialog-content {
@@ -314,7 +332,6 @@ code {
   max-width: 500px;
   max-height: 85vh;
   padding: 2rem;
-  animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid var(--border-primary);
   overflow-y: auto;
   z-index: 9999;
@@ -375,13 +392,24 @@ code {
 
 .dialog-buttons button:focus,
 .dialog-buttons button:focus-visible,
-.dialog-buttons button:active,
-.dialog-buttons .custom-button:focus,
-.dialog-buttons .custom-button:focus-visible,
 .dialog-buttons button:active {
   outline: none !important;
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
   border: 1px solid var(--border-primary) !important;
+}
+
+/* Custom buttons in dialog buttons get no border at all */
+.dialog-buttons .custom-button {
+  border: none !important;
+  outline: none !important;
+}
+
+.dialog-buttons .custom-button:focus,
+.dialog-buttons .custom-button:focus-visible,
+.dialog-buttons .custom-button:active {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
+  border: none !important;
 }
 
 .dialog-buttons button:first-child:focus,
@@ -403,7 +431,7 @@ code {
 @keyframes contentShow {
   from {
     opacity: 0;
-    transform: translate(-50%, -48%) scale(0.96);
+    transform: translate(-50%, -50%) scale(0.98);
   }
   to {
     opacity: 1;
@@ -455,4 +483,35 @@ code {
 
 .h-full {
   height: 100%;
+} 
+
+/* Ensure Create New Habit dialog maintains stable dimensions */
+.dialog-content[data-radix-dialog-content] {
+  width: 90vw !important;
+  max-width: 500px !important;
+  max-height: 85vh !important;
+  padding: 2rem !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Override any responsive CSS that might change dialog dimensions */
+@media (max-width: 768px) {
+  .dialog-content[data-radix-dialog-content] {
+    width: 90vw !important;
+    max-width: 500px !important;
+    max-height: 85vh !important;
+    padding: 2rem !important;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dialog-content[data-radix-dialog-content] {
+    width: 90vw !important;
+    max-width: 500px !important;
+    max-height: 85vh !important;
+    padding: 2rem !important;
+    margin: 0 !important;
+  }
 } 

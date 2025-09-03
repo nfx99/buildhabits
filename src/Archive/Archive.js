@@ -164,44 +164,31 @@ const Archive = ({ session }) => {
   if (premiumLoading) {
     return (
       <div style={getBackgroundImageStyles(backgroundImageUrl)}>
-        <button 
-          className="back-button"
-          onClick={() => navigate('/')}
-          title="Back to main page"
-          style={{ 
-            position: 'absolute', 
-            top: '4rem', 
-            left: '2rem', 
-            zIndex: 100,
-            ...getButtonStyles(userTheme)
-          }}
-        >
-          ← Back to Home
-        </button>
         <div className="archive-container">
-          <div className="loading">Loading...</div>
         </div>
       </div>
     );
   }
 
-  if (!isPremium) {
+    if (!isPremium) {
     return (
       <div style={getBackgroundImageStyles(backgroundImageUrl)}>
-        <button 
-          className="back-button"
-          onClick={() => navigate('/')}
-          title="Back to main page"
-          style={{ 
-            position: 'absolute', 
-            top: '4rem', 
-            left: '2rem', 
-            zIndex: 100,
-            ...getButtonStyles(userTheme)
-          }}
-        >
-          ← Back to Home
-        </button>
+        {userTheme && (
+          <button 
+            className="back-button"
+            onClick={() => navigate('/')}
+            title="Back to main page"
+            style={{ 
+              position: 'absolute', 
+              top: '4rem', 
+              left: '2rem', 
+              zIndex: 100,
+              ...getButtonStyles(userTheme)
+            }}
+          >
+            ← Back to Home
+          </button>
+        )}
         <div className="archive-container">
           <h1 className="archive-title">Premium Feature</h1>
           <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -231,6 +218,15 @@ const Archive = ({ session }) => {
   if (loading) {
     return (
       <div style={getBackgroundImageStyles(backgroundImageUrl)}>
+        <div className="archive-container">
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={getBackgroundImageStyles(backgroundImageUrl)}>
+      {userTheme && (
         <button 
           className="back-button"
           onClick={() => navigate('/')}
@@ -245,29 +241,7 @@ const Archive = ({ session }) => {
         >
           ← Back to Home
         </button>
-        <div className="archive-container">
-          <div className="loading">Loading archived habits...</div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div style={getBackgroundImageStyles(backgroundImageUrl)}>
-      <button 
-        className="back-button"
-        onClick={() => navigate('/')}
-        title="Back to main page"
-        style={{ 
-          position: 'absolute', 
-          top: '4rem', 
-          left: '2rem', 
-          zIndex: 100,
-          ...getButtonStyles(userTheme)
-        }}
-      >
-        ← Back to Home
-      </button>
+      )}
       <div className="archive-container">
         <h1 className="archive-title">Archived Habits</h1>
         <div className="archive-search-bar">

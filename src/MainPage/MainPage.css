@@ -1037,34 +1037,9 @@
   background: var(--bg-secondary);
 }
 
-/* Ensure all dialog elements are never affected by blur or other filters */
+/* Ensure proper z-index for dialog portals */
 [data-radix-portal] {
-  filter: none !important;
-  backdrop-filter: none !important;
   z-index: 9990;
-}
-
-[data-radix-portal] * {
-  filter: none !important;
-  backdrop-filter: none !important;
-}
-
-/* Specifically ensure dialog overlays and content are never blurred */
-.dialog-overlay,
-.dialog-overlay *,
-.dialog-content,
-.dialog-content *,
-.dialog-content input,
-.dialog-content button,
-.dialog-content form,
-.dialog-content div,
-.dialog-content p,
-.dialog-content h1,
-.dialog-content h2,
-.dialog-content h3,
-.dialog-content label {
-  filter: none !important;
-  backdrop-filter: none !important;
 }
 
 /* Form styles now in globals.css - only custom overrides here */
