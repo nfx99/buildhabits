@@ -572,7 +572,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-  border: 1px solid var(--cell-border);
+  border: 1px solid transparent;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -596,7 +596,6 @@
 .heatmap-cell.empty {
   background-color: transparent !important;
   cursor: default;
-  border: 1px solid transparent;
 }
 
 .heatmap-cell:hover:not(.empty) {
@@ -607,7 +606,6 @@
 
 .heatmap-cell.completed:not(.quantifiable) {
   background: var(--habit-color, var(--cell-completed));
-  border-color: var(--habit-color, #16a34a);
 }
 
 .heatmap-cell.future {

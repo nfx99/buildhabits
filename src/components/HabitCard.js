@@ -722,7 +722,8 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                       } else {
                         cellStyle.backgroundColor = `color-mix(in srgb, var(--cell-completed) ${Math.round(opacity * 100)}%, var(--cell-empty))`;
                       }
-                      cellStyle.borderColor = habit.color || '#000000';
+                      // Set border color to match the cell color
+                      cellStyle.borderColor = cellStyle.backgroundColor;
                     } else {
                       // 0 value or unlogged - treat as unlogged cell
                       if (shouldUseCustomTheme) {
@@ -730,10 +731,21 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                       } else {
                         cellStyle.backgroundColor = 'var(--cell-empty)';
                       }
+                      // Set border color to match the cell color
+                      cellStyle.borderColor = cellStyle.backgroundColor;
                     }
                   } else if (cell.completed) {
                     cellStyle.backgroundColor = habit.color || '#000000';
-                    cellStyle.borderColor = habit.color || '#000000';
+                    // Set border color to match the cell color
+                    cellStyle.borderColor = cellStyle.backgroundColor;
+                  } else {
+                    // For uncompleted cells, set border to match background
+                    if (shouldUseCustomTheme) {
+                      cellStyle.backgroundColor = 'var(--custom-uncompleted-cell-color, var(--cell-empty))';
+                    } else {
+                      cellStyle.backgroundColor = 'var(--cell-empty)';
+                    }
+                    cellStyle.borderColor = cellStyle.backgroundColor;
                   }
                   
                   // Style future dates differently
