@@ -387,3 +387,52 @@ export const analyzeContrast = (backgroundColor, textColor) => {
     suggestion: !isAccessible ? 'Consider using higher contrast colors for better readability' : 'Good contrast ratio'
   };
 };
+
+/**
+ * Generates button styles based on theme configuration
+ * @param {Object} theme - Theme configuration
+ * @returns {Object} - Button styles object
+ */
+export const getButtonStyles = (theme = {}) => {
+  const mergedTheme = { ...DEFAULT_THEME, ...theme };
+  
+  return {
+    backgroundColor: hexToRgba(mergedTheme.buttonColor, mergedTheme.buttonOpacity),
+    color: hexToRgba(mergedTheme.buttonTextColor, mergedTheme.buttonTextOpacity),
+    border: 'none',
+    borderRadius: '0.5rem',
+    padding: '0.75rem 1.5rem',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: '500',
+    transition: 'all 0.2s ease-in-out',
+    textDecoration: 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem'
+  };
+};
+
+/**
+ * Generates hover styles for buttons based on theme
+ * @param {Object} theme - Theme configuration
+ * @returns {Object} - Hover styles object
+ */
+export const getButtonHoverStyles = (theme = {}) => {
+  const mergedTheme = { ...DEFAULT_THEME, ...theme };
+  
+  // Create a slightly darker version of the button color for hover
+  const buttonColor = mergedTheme.buttonColor;
+  const r = parseInt(buttonColor.slice(1, 3), 16);
+  const g = parseInt(buttonColor.slice(3, 5), 16);
+  const b = parseInt(buttonColor.slice(5, 7), 16);
+  
+  const darkerColor = `rgba(${Math.max(0, r - 20)}, ${Math.max(0, g - 20)}, ${Math.max(0, b - 20)}, ${mergedTheme.buttonOpacity})`;
+  
+  return {
+    backgroundColor: darkerColor,
+    transform: 'translateY(-1px)',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
+  };
+};

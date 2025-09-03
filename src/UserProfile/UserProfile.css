@@ -43,6 +43,16 @@
   transform: translateX(-2px);
 }
 
+/* Themed back button styles */
+.user-profile-header .back-button[style*="getButtonStyles"] {
+  transition: all 0.2s ease-in-out;
+}
+
+.user-profile-header .back-button[style*="getButtonStyles"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 .share-button {
   background: var(--accent-primary);
   border: none;

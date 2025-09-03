@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
 import { getBackgroundImageStyles } from '../utils/backgroundImageUpload';
+import { getButtonStyles } from '../utils/themeCustomization';
 import './Archive.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,13 +13,14 @@ const Archive = ({ session }) => {
   const [isPremium, setIsPremium] = useState(false);
   const [premiumLoading, setPremiumLoading] = useState(true);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
+  const [userTheme, setUserTheme] = useState(null);
   const navigate = useNavigate();
 
   const checkPremiumStatus = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('is_premium, background_image_url')
+        .select('is_premium, background_image_url, theme_customization')
         .eq('user_id', session.user.id)
         .single();
 
@@ -28,6 +30,7 @@ const Archive = ({ session }) => {
       } else {
         setIsPremium(data?.is_premium || false);
         setBackgroundImageUrl(data?.background_image_url || '');
+        setUserTheme(data?.theme_customization || null);
       }
     } catch (error) {
       console.error('Premium status check error:', error);
@@ -165,7 +168,13 @@ const Archive = ({ session }) => {
           className="back-button"
           onClick={() => navigate('/')}
           title="Back to main page"
-          style={{ position: 'absolute', top: '4rem', left: '2rem', zIndex: 100 }}
+          style={{ 
+            position: 'absolute', 
+            top: '4rem', 
+            left: '2rem', 
+            zIndex: 100,
+            ...getButtonStyles(userTheme)
+          }}
         >
           ← Back to Home
         </button>
@@ -183,7 +192,13 @@ const Archive = ({ session }) => {
           className="back-button"
           onClick={() => navigate('/')}
           title="Back to main page"
-          style={{ position: 'absolute', top: '4rem', left: '2rem', zIndex: 100 }}
+          style={{ 
+            position: 'absolute', 
+            top: '4rem', 
+            left: '2rem', 
+            zIndex: 100,
+            ...getButtonStyles(userTheme)
+          }}
         >
           ← Back to Home
         </button>
@@ -220,7 +235,13 @@ const Archive = ({ session }) => {
           className="back-button"
           onClick={() => navigate('/')}
           title="Back to main page"
-          style={{ position: 'absolute', top: '4rem', left: '2rem', zIndex: 100 }}
+          style={{ 
+            position: 'absolute', 
+            top: '4rem', 
+            left: '2rem', 
+            zIndex: 100,
+            ...getButtonStyles(userTheme)
+          }}
         >
           ← Back to Home
         </button>
@@ -237,7 +258,13 @@ const Archive = ({ session }) => {
         className="back-button"
         onClick={() => navigate('/')}
         title="Back to main page"
-        style={{ position: 'absolute', top: '4rem', left: '2rem', zIndex: 100 }}
+        style={{ 
+          position: 'absolute', 
+          top: '4rem', 
+          left: '2rem', 
+          zIndex: 100,
+          ...getButtonStyles(userTheme)
+        }}
       >
         ← Back to Home
       </button>

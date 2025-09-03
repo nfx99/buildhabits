@@ -53,6 +53,16 @@
   transform: translateX(-2px);
 }
 
+/* Themed back button styles */
+.back-button[style*="getButtonStyles"] {
+  transition: all 0.2s ease-in-out;
+}
+
+.back-button[style*="getButtonStyles"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 .archive-header .back-button {
   position: static;
   top: unset;

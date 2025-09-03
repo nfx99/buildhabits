@@ -5,6 +5,7 @@ import HabitCard from '../components/HabitCard';
 import ProfilePictureUpload from '../components/ProfilePictureUpload';
 import { getDefaultAvatarUrl } from '../utils/profilePictureUpload';
 import { getBackgroundImageStyles } from '../utils/backgroundImageUpload';
+import { getButtonStyles } from '../utils/themeCustomization';
 import './UserProfile.css';
 
 const UserProfile = ({ session }) => {
@@ -20,6 +21,7 @@ const UserProfile = ({ session }) => {
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [friendTheme, setFriendTheme] = useState(null);
+  const [currentUserTheme, setCurrentUserTheme] = useState(null);
 
   const fetchUserProfile = useCallback(async () => {
     console.log('Fetching user profile for userId:', userId);
@@ -90,6 +92,28 @@ const UserProfile = ({ session }) => {
     }
   }, [userId, session?.user?.id]);
 
+  const fetchCurrentUserTheme = useCallback(async () => {
+    if (!session?.user?.id) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('theme_customization')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching current user theme:', error);
+        return;
+      }
+
+      setCurrentUserTheme(data.theme_customization);
+    } catch (error) {
+      console.error('Error fetching current user theme:', error);
+    }
+  }, [session?.user?.id]);
 
 
   const checkFriendStatus = useCallback(async () => {
@@ -160,7 +184,7 @@ const UserProfile = ({ session }) => {
       setLoading(true);
       try {
         console.log('Fetching user data...');
-        await Promise.all([fetchUserProfile(), fetchUserHabits(), checkFriendStatus(), fetchFriendTheme()]);
+        await Promise.all([fetchUserProfile(), fetchUserHabits(), checkFriendStatus(), fetchFriendTheme(), fetchCurrentUserTheme()]);
         console.log('User data loaded successfully');
         setLoading(false);
       } catch (error) {
@@ -350,7 +374,11 @@ const UserProfile = ({ session }) => {
       <div className="user-profile-error">
         <h2>Error</h2>
         <p>{error}</p>
-        <button onClick={handleBackToHome} className="back-button">
+        <button 
+          onClick={handleBackToHome} 
+          className="back-button"
+          style={getButtonStyles(isOwnProfile ? currentUserTheme : friendTheme)}
+        >
           Back to Home
         </button>
       </div>
@@ -365,7 +393,11 @@ const UserProfile = ({ session }) => {
       style={getBackgroundImageStyles(userProfile?.background_image_url)}
     >
       <header className="user-profile-header">
-        <button onClick={handleBackToHome} className="back-button">
+        <button 
+          onClick={handleBackToHome} 
+          className="back-button"
+          style={getButtonStyles(isOwnProfile ? currentUserTheme : friendTheme)}
+        >
           ← Back to Home
         </button>
         <div className="user-info">
