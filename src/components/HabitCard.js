@@ -610,7 +610,8 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
   // Apply custom theme when:
   // 1. Not in read-only mode (own habits), OR
   // 2. In read-only mode but friend's theme is available (friend's habits)
-  const shouldUseCustomTheme = !isReadOnly || (isReadOnly && friendTheme);
+  // Exclude demo habits from custom themes
+  const shouldUseCustomTheme = (habit.id !== 'demo') && (!isReadOnly || (isReadOnly && friendTheme));
   
   // Determine which theme to use
   const themeToUse = isReadOnly && friendTheme ? friendTheme : null;
@@ -644,7 +645,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     >
       <div className="habit-header">
         <div className="habit-title-section">
-          {!isReadOnly && !isArchived && (
+          {!isReadOnly && !isArchived && habit.id !== 'demo' && (
             <button 
               className="drag-handle"
               {...attributes}
@@ -860,7 +861,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                   
                   const tooltipText = shouldShowCell ? 
                     (isFutureDate ? 
-                      (!isArchived ? `${dayName}, ${dateStr}\nClick to plan this habit` : `${dayName}, ${dateStr}`) :
+                      (!isArchived && habit.id !== 'demo' ? `${dayName}, ${dateStr}\nClick to plan this habit` : `${dayName}, ${dateStr}`) :
                       (habit.is_quantifiable ? 
                         `${dayName}, ${dateStr}\n${cell.value || 0}/${cell.target || 1} ${habit.metric_unit || 'times'}` :
                         `${dayName}, ${dateStr}${cell.completed ? ' (Completed)' : ''}`)) : '';

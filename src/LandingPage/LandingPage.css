@@ -11,28 +11,248 @@
   overflow-x: hidden;
 }
 
-/* Animated background */
+/* Animated background layers */
 .animated-bg {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(circle at 0% 0%, var(--accent-primary) 0%, transparent 50%),
-    radial-gradient(circle at 100% 0%, var(--accent-secondary) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, var(--success) 0%, transparent 50%),
-    radial-gradient(circle at 0% 100%, var(--accent-hover) 0%, transparent 50%);
-  filter: blur(80px);
-  opacity: 0.03;
-  animation: bgAnimation 20s ease infinite alternate;
+  overflow: hidden;
   z-index: 0;
 }
 
-@keyframes bgAnimation {
-  0% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.1) rotate(3deg); }
-  100% { transform: scale(1) rotate(0deg); }
+/* Floating circles */
+.floating-circles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.floating-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.05));
+  animation: float 20s infinite ease-in-out;
+}
+
+/* Add variety with different movement patterns */
+.floating-circle:nth-child(odd) {
+  animation-name: floatAlt;
+}
+
+.floating-circle:nth-child(3n) {
+  animation-name: floatCircular;
+}
+
+/* 35 randomly positioned circles for organic feel */
+.floating-circle:nth-child(1) { top: 12%; left: 8%; width: 75px; height: 75px; animation-delay: -3s; animation-duration: 24s; }
+.floating-circle:nth-child(2) { top: 67%; left: 23%; width: 58px; height: 58px; animation-delay: -17s; animation-duration: 19s; }
+.floating-circle:nth-child(3) { top: 34%; left: 91%; width: 82px; height: 82px; animation-delay: -7s; animation-duration: 27s; }
+.floating-circle:nth-child(4) { top: 89%; left: 15%; width: 64px; height: 64px; animation-delay: -22s; animation-duration: 21s; }
+.floating-circle:nth-child(5) { top: 45%; left: 67%; width: 71px; height: 71px; animation-delay: -11s; animation-duration: 25s; }
+.floating-circle:nth-child(6) { top: 78%; left: 88%; width: 59px; height: 59px; animation-delay: -29s; animation-duration: 20s; }
+.floating-circle:nth-child(7) { top: 23%; left: 42%; width: 86px; height: 86px; animation-delay: -5s; animation-duration: 28s; }
+
+.floating-circle:nth-child(8) { top: 56%; left: 12%; width: 62px; height: 62px; animation-delay: -19s; animation-duration: 22s; }
+.floating-circle:nth-child(9) { top: 8%; left: 78%; width: 77px; height: 77px; animation-delay: -2s; animation-duration: 26s; }
+.floating-circle:nth-child(10) { top: 91%; left: 56%; width: 55px; height: 55px; animation-delay: -33s; animation-duration: 18s; }
+.floating-circle:nth-child(11) { top: 38%; left: 25%; width: 83px; height: 83px; animation-delay: -14s; animation-duration: 29s; }
+.floating-circle:nth-child(12) { top: 72%; left: 74%; width: 66px; height: 66px; animation-delay: -8s; animation-duration: 23s; }
+.floating-circle:nth-child(13) { top: 15%; left: 93%; width: 74px; height: 74px; animation-delay: -25s; animation-duration: 24s; }
+.floating-circle:nth-child(14) { top: 84%; left: 37%; width: 60px; height: 60px; animation-delay: -16s; animation-duration: 27s; }
+
+.floating-circle:nth-child(15) { top: 29%; left: 6%; width: 79px; height: 79px; animation-delay: -31s; animation-duration: 20s; }
+.floating-circle:nth-child(16) { top: 63%; left: 85%; width: 57px; height: 57px; animation-delay: -4s; animation-duration: 25s; }
+.floating-circle:nth-child(17) { top: 7%; left: 51%; width: 85px; height: 85px; animation-delay: -20s; animation-duration: 19s; }
+.floating-circle:nth-child(18) { top: 52%; left: 39%; width: 68px; height: 68px; animation-delay: -12s; animation-duration: 26s; }
+.floating-circle:nth-child(19) { top: 81%; left: 9%; width: 72px; height: 72px; animation-delay: -27s; animation-duration: 22s; }
+.floating-circle:nth-child(20) { top: 36%; left: 81%; width: 61px; height: 61px; animation-delay: -6s; animation-duration: 28s; }
+.floating-circle:nth-child(21) { top: 94%; left: 71%; width: 76px; height: 76px; animation-delay: -18s; animation-duration: 21s; }
+
+.floating-circle:nth-child(22) { top: 18%; left: 28%; width: 63px; height: 63px; animation-delay: -30s; animation-duration: 24s; }
+.floating-circle:nth-child(23) { top: 74%; left: 53%; width: 81px; height: 81px; animation-delay: -9s; animation-duration: 23s; }
+.floating-circle:nth-child(24) { top: 41%; left: 14%; width: 58px; height: 58px; animation-delay: -23s; animation-duration: 27s; }
+.floating-circle:nth-child(25) { top: 87%; left: 82%; width: 73px; height: 73px; animation-delay: -1s; animation-duration: 25s; }
+.floating-circle:nth-child(26) { top: 26%; left: 64%; width: 67px; height: 67px; animation-delay: -15s; animation-duration: 20s; }
+.floating-circle:nth-child(27) { top: 69%; left: 7%; width: 84px; height: 84px; animation-delay: -32s; animation-duration: 26s; }
+.floating-circle:nth-child(28) { top: 5%; left: 87%; width: 56px; height: 56px; animation-delay: -10s; animation-duration: 18s; }
+
+.floating-circle:nth-child(29) { top: 58%; left: 46%; width: 78px; height: 78px; animation-delay: -24s; animation-duration: 29s; }
+.floating-circle:nth-child(30) { top: 32%; left: 76%; width: 65px; height: 65px; animation-delay: -13s; animation-duration: 22s; }
+.floating-circle:nth-child(31) { top: 77%; left: 31%; width: 70px; height: 70px; animation-delay: -28s; animation-duration: 24s; }
+.floating-circle:nth-child(32) { top: 14%; left: 17%; width: 80px; height: 80px; animation-delay: -21s; animation-duration: 23s; }
+.floating-circle:nth-child(33) { top: 48%; left: 58%; width: 62px; height: 62px; animation-delay: -26s; animation-duration: 27s; }
+.floating-circle:nth-child(34) { top: 85%; left: 94%; width: 69px; height: 69px; animation-delay: -35s; animation-duration: 25s; }
+.floating-circle:nth-child(35) { top: 11%; left: 73%; width: 75px; height: 75px; animation-delay: 0s; animation-duration: 21s; }
+
+/* Gradient waves */
+.gradient-waves {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 30%, rgba(147, 197, 253, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 40% 80%, rgba(191, 219, 254, 0.03) 0%, transparent 60%);
+  animation: waveAnimation 40s ease-in-out infinite;
+}
+
+/* Particle dots */
+.particle-dots {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.particle-dot {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 50%;
+  animation: sparkle 15s infinite ease-in-out;
+}
+
+.particle-dot:nth-child(1) { top: 20%; left: 15%; animation-delay: 0s; }
+.particle-dot:nth-child(2) { top: 40%; left: 85%; animation-delay: -3s; }
+.particle-dot:nth-child(3) { top: 70%; left: 25%; animation-delay: -6s; }
+.particle-dot:nth-child(4) { top: 15%; left: 75%; animation-delay: -9s; }
+.particle-dot:nth-child(5) { top: 85%; left: 55%; animation-delay: -12s; }
+.particle-dot:nth-child(6) { top: 35%; left: 45%; animation-delay: -2s; }
+.particle-dot:nth-child(7) { top: 60%; left: 70%; animation-delay: -7s; }
+.particle-dot:nth-child(8) { top: 80%; left: 20%; animation-delay: -5s; }
+
+@keyframes float {
+  0% { 
+    transform: translateY(0px) translateX(0px) scale(1) rotate(0deg);
+    opacity: 0.6;
+  }
+  20% { 
+    transform: translateY(-30px) translateX(20px) scale(1.15) rotate(5deg);
+    opacity: 0.8;
+  }
+  40% { 
+    transform: translateY(-15px) translateX(-25px) scale(0.85) rotate(-3deg);
+    opacity: 0.4;
+  }
+  60% { 
+    transform: translateY(-45px) translateX(15px) scale(1.1) rotate(8deg);
+    opacity: 0.7;
+  }
+  80% { 
+    transform: translateY(-20px) translateX(-10px) scale(0.95) rotate(-2deg);
+    opacity: 0.5;
+  }
+  100% { 
+    transform: translateY(0px) translateX(0px) scale(1) rotate(0deg);
+    opacity: 0.6;
+  }
+}
+
+/* Alternative floating animation */
+@keyframes floatAlt {
+  0% { 
+    transform: translateY(0px) translateX(0px) scale(1) rotate(0deg);
+    opacity: 0.5;
+  }
+  25% { 
+    transform: translateY(25px) translateX(-30px) scale(1.2) rotate(-6deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translateY(-20px) translateX(35px) scale(0.8) rotate(4deg);
+    opacity: 0.3;
+  }
+  75% { 
+    transform: translateY(35px) translateX(-20px) scale(1.15) rotate(-8deg);
+    opacity: 0.7;
+  }
+  100% { 
+    transform: translateY(0px) translateX(0px) scale(1) rotate(0deg);
+    opacity: 0.5;
+  }
+}
+
+/* Circular movement animation */
+@keyframes floatCircular {
+  0% { 
+    transform: translateY(0px) translateX(0px) scale(1) rotate(0deg);
+    opacity: 0.6;
+  }
+  25% { 
+    transform: translateY(-40px) translateX(40px) scale(1.1) rotate(90deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(0px) translateX(80px) scale(0.9) rotate(180deg);
+    opacity: 0.4;
+  }
+  75% { 
+    transform: translateY(40px) translateX(40px) scale(1.05) rotate(270deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(0px) translateX(0px) scale(1) rotate(360deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes waveAnimation {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  25% { 
+    transform: scale(1.1) rotate(1deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(0.95) rotate(-1deg);
+    opacity: 0.6;
+  }
+  75% { 
+    transform: scale(1.05) rotate(0.5deg);
+    opacity: 0.9;
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% { 
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+/* Responsive animations for mobile */
+@media (max-width: 768px) {
+  .floating-circle {
+    animation-duration: 15s !important;
+  }
+  
+  .gradient-waves {
+    animation-duration: 30s;
+  }
+  
+  .particle-dot {
+    animation-duration: 10s;
+  }
+  
+  /* Reduce animation intensity on mobile for better performance */
+  @media (prefers-reduced-motion: reduce) {
+    .floating-circle,
+    .gradient-waves,
+    .particle-dot {
+      animation: none;
+    }
+  }
 }
 
 /* Container utility */
@@ -873,4 +1093,4 @@
     font-size: 0.85rem;
     padding: 0.6rem 1.2rem;
   }
-}
+} 

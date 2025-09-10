@@ -94,7 +94,56 @@ const LandingPage = ({ onGetStarted }) => {
 
   return (
     <div className="landing-root">
-      <div className="animated-bg"></div>
+      <div className="animated-bg">
+        <div className="floating-circles">
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+          <div className="floating-circle"></div>
+        </div>
+        <div className="gradient-waves"></div>
+        <div className="particle-dots">
+          <div className="particle-dot"></div>
+          <div className="particle-dot"></div>
+          <div className="particle-dot"></div>
+          <div className="particle-dot"></div>
+          <div className="particle-dot"></div>
+          <div className="particle-dot"></div>
+          <div className="particle-dot"></div>
+          <div className="particle-dot"></div>
+        </div>
+      </div>
       
       {/* Hero Section */}
       <header className="landing-hero">
@@ -128,7 +177,7 @@ const LandingPage = ({ onGetStarted }) => {
           onComplete={handleComplete}
           onDelete={handleDelete}
           onEdit={handleEdit}
-          isReadOnly={true}
+          isReadOnly={false}
           isPremium={true}
         />
       </section>
