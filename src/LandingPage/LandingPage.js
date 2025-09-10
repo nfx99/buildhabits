@@ -151,7 +151,7 @@ const LandingPage = ({ onGetStarted }) => {
           <h1>Transform Your Life,</h1>
           <h1>One Habit at a Time</h1>
           <p className="landing-subtitle">
-            "We are what we repeatedly do. Excellence, then, is not an act, but a habit."
+            "We are what we repeatedly do. Excellence, then, is not an act, but a habit." - Will Durant
           </p>
           <div className="cta-container">
             <button className="landing-cta primary" onClick={onGetStarted}>
