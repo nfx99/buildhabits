@@ -34,7 +34,7 @@
 }
 
 .plan-item:hover {
-  background-color: var(--bg-primary);
+  background-color: var(--bg-card);
 }
 
 .plan-info {
@@ -89,7 +89,7 @@
 }
 
 .delete-plan-button:hover {
-  background: var(--bg-primary);
+  background: var(--bg-card);
   color: #dc3545;
 }
 
@@ -104,7 +104,7 @@
 }
 
 .planner-widget {
-  background: var(--bg-primary, #fff);
+  background: var(--bg-card, #fff);
   border-radius: 12px;
   border: 1px solid var(--border-primary, #eee);
   overflow: hidden;
@@ -179,4 +179,46 @@
 .planner-widget .no-plans {
   margin-top: 2rem;
   font-size: 0.95rem;
+} 
+
+/* Ensure Create New Habit dialog maintains stable dimensions */
+.dialog-content[data-radix-dialog-content] {
+  width: 90vw !important;
+  max-width: 500px !important;
+  max-height: 85vh !important;
+  padding: 2rem !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Override any responsive CSS that might change dialog dimensions */
+@media (max-width: 768px) {
+  .dialog-content[data-radix-dialog-content] {
+    width: 90vw !important;
+    max-width: 500px !important;
+    max-height: 85vh !important;
+    padding: 2rem !important;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dialog-content[data-radix-dialog-content] {
+    width: 90vw !important;
+    max-width: 500px !important;
+    max-height: 85vh !important;
+    padding: 2rem !important;
+    margin: 0 !important;
+  }
+}
+
+/* Prevent horizontal overflow from planner widget */
+.planner-widget {
+  max-width: calc(100vw - 2rem) !important;
+  overflow: hidden !important;
+}
+
+.planner-widget .planner-container {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
 } 

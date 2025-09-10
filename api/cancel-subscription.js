@@ -87,19 +87,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'No active subscription found' });
     }
 
-    console.log(`Canceling Stripe subscription: ${subscription.stripe_subscription_id}`);
+    console.log(`Scheduling cancellation at period end for Stripe subscription: ${subscription.stripe_subscription_id}`);
 
-    // Cancel subscription immediately via Stripe
-    const canceledSubscription = await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+    // Schedule cancellation at the end of the current billing period
+    const updatedSubscription = await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+      cancel_at_period_end: true
+    });
 
-    // Immediately update user status and delete excess habits
+    // Update user profile to show subscription is scheduled for cancellation (but still premium)
     try {
-      // Update user profile to remove premium status
       const { error: profileError } = await supabase
         .from('user_profiles')
         .update({
-          is_premium: false,
-          subscription_status: 'canceled'
+          subscription_status: 'cancel_at_period_end',
+          cancel_at: new Date(updatedSubscription.cancel_at * 1000).toISOString()
         })
         .eq('user_id', userId);
 
@@ -107,65 +108,27 @@ export default async function handler(req, res) {
         console.error('Error updating user profile:', profileError);
       }
 
-      // Delete excess habits (keep only first 2)
-      console.log('Deleting excess habits for user:', userId);
-      
-      // Get all user's habits, ordered by homepage order (top habits first)
-      const { data: habits, error: fetchError } = await supabase
-        .from('habits')
-        .select('id, name, order')
-        .eq('user_id', userId)
-        .eq('is_archived', false)
-        .order('order', { ascending: true, nullsFirst: false });
+      console.log(`Subscription will be canceled at: ${new Date(updatedSubscription.cancel_at * 1000).toISOString()}`);
 
-              if (fetchError) {
-          console.error('Error fetching habits for deletion:', fetchError);
-        } else if (habits && habits.length > 2) {
-          // Keep top 2 habits (as they appear on homepage), delete the rest
-          const habitsToKeep = habits.slice(0, 2);
-          const habitsToDelete = habits.slice(2);
-          const habitIdsToDelete = habitsToDelete.map(h => h.id);
-          
-          console.log(`Keeping top 2 habits:`, habitsToKeep.map(h => h.name));
-          console.log(`Deleting ${habitIdsToDelete.length} excess habits:`, habitsToDelete.map(h => h.name));
-        
-        // Delete habit completions first
-        const { error: completionsError } = await supabase
-          .from('habit_completions')
-          .delete()
-          .in('habit_id', habitIdsToDelete);
-
-        if (completionsError) {
-          console.error('Error deleting habit completions:', completionsError);
-        }
-
-        // Delete the habits
-        const { error: habitsError } = await supabase
-          .from('habits')
-          .delete()
-          .in('id', habitIdsToDelete);
-
-        if (habitsError) {
-          console.error('Error deleting excess habits:', habitsError);
-        } else {
-          console.log(`Successfully deleted ${habitIdsToDelete.length} excess habits`);
-        }
-      } else {
-        console.log('User has 2 or fewer habits, no deletion needed');
-      }
-    } catch (habitDeletionError) {
-      console.error('Error in immediate habit deletion process:', habitDeletionError);
+    } catch (error) {
+      console.error('Error updating subscription status:', error);
+      return res.status(500).json({ message: 'Failed to schedule subscription cancellation' });
     }
 
     const endTime = Date.now();
     const duration = endTime - startTime;
     
-    console.log(`Subscription canceled: ${canceledSubscription.id} (${duration}ms)`);
+    console.log(`Subscription scheduled for cancellation: ${updatedSubscription.id} (${duration}ms)`);
 
     res.status(200).json({ 
-      message: 'Subscription canceled successfully',
-      subscriptionId: canceledSubscription.id,
-      canceled_at: canceledSubscription.canceled_at
+      message: 'Subscription will be canceled at the end of your current billing period. You will retain premium access until then.',
+      subscription: {
+        id: updatedSubscription.id,
+        status: updatedSubscription.status,
+        cancel_at_period_end: updatedSubscription.cancel_at_period_end,
+        cancel_at: new Date(updatedSubscription.cancel_at * 1000).toISOString(),
+        current_period_end: new Date(updatedSubscription.current_period_end * 1000).toISOString()
+      }
     });
 
   } catch (error) {

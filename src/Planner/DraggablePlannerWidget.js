@@ -106,7 +106,7 @@ const DraggablePlannerWidget = ({ session, onRefresh, onHabitClick }) => {
             width: WIDGET_WIDTH,
             height: WIDGET_HEIGHT,
             zIndex: 2000,
-            background: 'var(--bg-primary, #fff)',
+            background: 'var(--bg-card, #fff)',
             borderRadius: 12,
             border: '1px solid var(--border-primary, #eee)',
             overflow: 'hidden',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, lazy } from 'react';
+import React, { useState, useEffect, useCallback, lazy, useMemo } from 'react';
 import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
 import PricingModal from '../components/PricingModal';
@@ -63,7 +63,12 @@ const MainPage = ({ session }) => {
   const [insightSettings, setInsightSettings] = useState({
     showCurrentStreak: true,
     showTotalDays: true,
-    showProgressBar: true
+    showProgressBar: true,
+    showTopStreak: false,
+    showTotalMeasurement: false,
+    showAverageMeasurement: false,
+    showAveragePerLog: false,
+    excludeDays: []
   });
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -99,7 +104,7 @@ const MainPage = ({ session }) => {
   const navigate = useNavigate();
 
   // Calculate overall stats from all habits
-  const overallStats = React.useMemo(() => {
+  const overallStats = useMemo(() => {
     if (!habits.length) return { totalPoints: 0, totalDays: 0, currentStreak: 0 };
     
     let totalDays = 0;
@@ -131,6 +136,22 @@ const MainPage = ({ session }) => {
 
   const checkPaymentStatus = useCallback(async () => {
     try {
+      // Check cache first to avoid redundant database calls
+      const cacheKey = `user_profile_${session.user.id}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const cachedData = JSON.parse(cached);
+        // Cache for 5 minutes
+        if (Date.now() - cachedData.timestamp < 300000) {
+          setUsername(cachedData.username || '');
+          setProfilePictureUrl(cachedData.profile_picture_url || '');
+          setBackgroundImageUrl(cachedData.background_image_url || '');
+          setThemeCustomization(cachedData.theme_customization || DEFAULT_THEME);
+          setHasPaid(cachedData.is_premium || false);
+          return cachedData.is_premium || false;
+        }
+      }
+
       const { data, error } = await supabase
         .from('user_profiles')
         .select('username, is_premium, profile_picture_url, background_image_url, theme_customization')
@@ -209,6 +230,18 @@ const MainPage = ({ session }) => {
           setProfilePictureUrl(profile.profile_picture_url || '');
           setBackgroundImageUrl(profile.background_image_url || '');
           setThemeCustomization(profile.theme_customization || DEFAULT_THEME);
+          
+          // Cache the profile data
+          const profileData = {
+            username: profile.username || '',
+            is_premium: profile.is_premium || false,
+            profile_picture_url: profile.profile_picture_url || '',
+            background_image_url: profile.background_image_url || '',
+            theme_customization: profile.theme_customization || DEFAULT_THEME,
+            timestamp: Date.now()
+          };
+          sessionStorage.setItem(cacheKey, JSON.stringify(profileData));
+          
           return profile.is_premium || false;
         }
 
@@ -255,6 +288,17 @@ const MainPage = ({ session }) => {
         setProfilePictureUrl(profile.profile_picture_url || '');
         setBackgroundImageUrl(profile.background_image_url || '');
         setThemeCustomization(profile.theme_customization || DEFAULT_THEME);
+        
+        // Cache the profile data
+        const profileData = {
+          username: profile.username || '',
+          is_premium: isPremium,
+          profile_picture_url: profile.profile_picture_url || '',
+          background_image_url: profile.background_image_url || '',
+          theme_customization: profile.theme_customization || DEFAULT_THEME,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem(cacheKey, JSON.stringify(profileData));
         
         // Only show congratulations if:
         // 1. User is now premium
@@ -499,7 +543,12 @@ const MainPage = ({ session }) => {
     setInsightSettings({
       showCurrentStreak: true,
       showTotalDays: true,
-      showProgressBar: true
+      showProgressBar: true,
+      showTopStreak: false,
+      showTotalMeasurement: false,
+      showAverageMeasurement: false,
+      showAveragePerLog: false,
+      excludeDays: []
     });
       setIsCreateDialogOpen(false);
     } catch (error) {
@@ -730,7 +779,7 @@ const MainPage = ({ session }) => {
       setIsCancelSubscriptionDialogOpen(false);
       
       // Show success message
-      setToastMessage('Subscription canceled successfully.');
+      setToastMessage('Subscription will be canceled at the end of your billing period. You retain premium access until then.');
       setShowToast(true);
 
       // Refresh user data and habits
@@ -1206,9 +1255,12 @@ const MainPage = ({ session }) => {
   }, [habits, fetchHabits]);
 
   // Filter habits based on search query
-  const filteredHabits = habits.filter(habit =>
-    habit.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredHabits = useMemo(() => {
+    if (!searchQuery.trim()) return habits;
+    return habits.filter(habit =>
+      habit.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [habits, searchQuery]);
 
   // Handle edit dialog state changes from habit cards
   const handleEditDialogChange = useCallback((habitId, isOpen) => {
@@ -1553,11 +1605,11 @@ const MainPage = ({ session }) => {
                 </button>
               </div>
               <p className="insights-description">
-                Get powerful analytics including streaks, trends, and ranked progression
+                Get powerful analytics including streaks, statistics, and ranked progression
               </p>
               {hasInsights && (
                 <div className="insight-settings">
-                  <p className="insight-settings-label">Choose which insights to display:</p>
+                  <p className="insight-settings-label">Choose which analytics to display:</p>
                   <div className="insight-checkboxes">
                     <label className="insight-checkbox-label">
                       <input
@@ -1592,6 +1644,83 @@ const MainPage = ({ session }) => {
                       />
                       <span>Rank Progress Bar</span>
                     </label>
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={insightSettings.showTopStreak}
+                        onChange={(e) => setInsightSettings(prev => ({
+                          ...prev,
+                          showTopStreak: e.target.checked
+                        }))}
+                      />
+                      <span>Top Streak</span>
+                    </label>
+                    {isQuantifiable && (
+                      <>
+                        <label className="insight-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={insightSettings.showTotalMeasurement}
+                            onChange={(e) => setInsightSettings(prev => ({
+                              ...prev,
+                              showTotalMeasurement: e.target.checked
+                            }))}
+                          />
+                          <span>Total Measurement</span>
+                        </label>
+                        <label className="insight-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={insightSettings.showAverageMeasurement}
+                            onChange={(e) => setInsightSettings(prev => ({
+                              ...prev,
+                              showAverageMeasurement: e.target.checked
+                            }))}
+                          />
+                          <span>Average Per Day</span>
+                        </label>
+                        <label className="insight-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={insightSettings.showAveragePerLog}
+                            onChange={(e) => setInsightSettings(prev => ({
+                              ...prev,
+                              showAveragePerLog: e.target.checked
+                            }))}
+                          />
+                          <span>Average Per Log</span>
+                        </label>
+                      </>
+                    )}
+                  </div>
+                  
+                  <div className="exclude-days-settings">
+                    <p className="insight-settings-label">Exclude days from analytics:</p>
+                    <div className="exclude-days-checkboxes">
+                      {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+                        <button
+                          key={day}
+                          type="button"
+                          className={`day-toggle-button ${insightSettings.excludeDays?.includes(day) ? 'active' : ''}`}
+                          onClick={() => {
+                            const excludeDays = insightSettings.excludeDays || [];
+                            if (excludeDays.includes(day)) {
+                              setInsightSettings(prev => ({
+                                ...prev,
+                                excludeDays: excludeDays.filter(d => d !== day)
+                              }));
+                            } else {
+                              setInsightSettings(prev => ({
+                                ...prev,
+                                excludeDays: [...excludeDays, day]
+                              }));
+                            }
+                          }}
+                        >
+                          {day.slice(0, 3)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1778,7 +1907,7 @@ const MainPage = ({ session }) => {
                 <p>Deleting your account will permanently remove:</p>
                 <ul>
                   <li>All your habits and progress data</li>
-                  <li>Your user profile and username</li>
+                  <li>Your user profile</li>
                   <li>All completion history</li>
                   <li>Your premium status (if applicable)</li>
                 </ul>
@@ -1808,8 +1937,8 @@ const MainPage = ({ session }) => {
             <Dialog.Description>
               <div className="cancel-subscription-content">
                 <p><strong>Are you sure you want to cancel your subscription?</strong></p>
-                <p>You will immediately lose access to premium features and be limited to 2 habits.</p>
-                <p><strong>Warning:</strong> All habits beyond your top 2 will be permanently deleted.</p>
+                <p>Your subscription will be canceled at the end of your current billing period. You'll keep premium access until then.</p>
+                <p><strong>Note:</strong> After your billing period ends, habits beyond your top 2 will be permanently deleted.</p>
               </div>
             </Dialog.Description>
             <div className="dialog-buttons">

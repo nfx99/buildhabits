@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { format, getDay, eachDayOfInterval, getYear, addDays, isAfter, startOfDay } from 'date-fns';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -24,76 +24,175 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
-  const [isMoreOpen, setIsMoreOpen] = React.useState(false);
-  const [menuPosition, setMenuPosition] = React.useState({ top: 0, right: 0 });
-  const [selectedDate, setSelectedDate] = React.useState(new Date());
-  const [isDateCompleted, setIsDateCompleted] = React.useState(false);
-  const [editName, setEditName] = React.useState(habit.name);
-  const [planDate, setPlanDate] = React.useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isDateCompleted, setIsDateCompleted] = useState(false);
+  const [editName, setEditName] = useState(habit.name);
+  const [planDate, setPlanDate] = useState(null);
 
-  const [editIsQuantifiable, setEditIsQuantifiable] = React.useState(habit.is_quantifiable || false);
-  const [editTargetValue, setEditTargetValue] = React.useState(habit.target_value || '');
-  const [editMetricUnit, setEditMetricUnit] = React.useState(habit.metric_unit || '');
-  const [editIsPrivate, setEditIsPrivate] = React.useState(habit.is_private || false);
-  const [editHasInsights, setEditHasInsights] = React.useState(habit.has_insights || false);
-  const [editInsightSettings, setEditInsightSettings] = React.useState(habit.insight_settings || {
+  const [editIsQuantifiable, setEditIsQuantifiable] = useState(habit.is_quantifiable || false);
+  const [editTargetValue, setEditTargetValue] = useState(habit.target_value || '');
+  const [editMetricUnit, setEditMetricUnit] = useState(habit.metric_unit || '');
+  const [editIsPrivate, setEditIsPrivate] = useState(habit.is_private || false);
+  const [editHasInsights, setEditHasInsights] = useState(habit.has_insights || false);
+  const [editInsightSettings, setEditInsightSettings] = useState(habit.insight_settings || {
     showCurrentStreak: true,
     showTotalDays: true,
-    showProgressBar: true
+    showProgressBar: true,
+    showTopStreak: false,
+    showTotalMeasurement: false,
+    showAverageMeasurement: false,
+    showAveragePerLog: false,
+    excludeDays: [] // Array of day names to exclude: ['Sunday', 'Monday', etc.]
   });
-  const [quantifiableValue, setQuantifiableValue] = React.useState('');
+  const [quantifiableValue, setQuantifiableValue] = useState('');
   
   // Year navigation state
-  const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
   // Enhanced insights calculation - now available for all users
-  const insights = React.useMemo(() => {
+  const insights = useMemo(() => {
     if (!habit.has_insights || !habit.habit_completions) return null;
     
     const allCompletions = habit.habit_completions;
-    // Filter out 0-value completions for quantifiable habits
+    const excludeDays = habit.insight_settings?.excludeDays || [];
+    
+    // Filter completions based on exclude days and value for quantifiable habits
     const completions = allCompletions.filter(completion => {
+      const completionDate = new Date(completion.date);
+      const dayName = completionDate.toLocaleDateString('en-US', { weekday: 'long' });
+      
+      // Skip excluded days
+      if (excludeDays.includes(dayName)) {
+        return false;
+      }
+      
+      // Filter out 0-value completions for quantifiable habits
       if (habit.is_quantifiable) {
         return (completion.value || 0) > 0;
       }
       return true; // For non-quantifiable habits, all completions count
     });
-    const totalDays = completions.length;
     
+    const totalDays = completions.length;
     if (totalDays === 0) return null;
     
     const today = new Date();
     const sortedCompletions = [...completions].sort((a, b) => new Date(b.date) - new Date(a.date));
     
-    // Calculate current streak (including current day)
+    // Calculate current streak (excluding specified days)
     let currentStreak = 0;
-    for (let i = 0; i < sortedCompletions.length; i++) {
-      const completionDate = new Date(sortedCompletions[i].date);
-      const daysDiff = Math.floor((today - completionDate) / (1000 * 60 * 60 * 24));
+    let checkDate = new Date(today);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    while (true) {
+      const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
       
-      if (daysDiff === i) {
+      // Skip excluded days
+      if (excludeDays.includes(dayName)) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+      
+      // Check if there's a completion for this date
+      const hasCompletion = completions.some(completion => {
+        const completionDate = new Date(completion.date);
+        completionDate.setHours(0, 0, 0, 0);
+        return completionDate.getTime() === checkDate.getTime();
+      });
+      
+      if (hasCompletion) {
         currentStreak++;
+        checkDate.setDate(checkDate.getDate() - 1);
       } else {
         break;
       }
     }
     
+    // Calculate top streak (longest consecutive streak)
+    let topStreak = 0;
+    let tempStreak = 0;
+    const allDates = [...completions].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    for (let i = 0; i < allDates.length; i++) {
+      if (i === 0) {
+        tempStreak = 1;
+      } else {
+        const prevDate = new Date(allDates[i - 1].date);
+        const currDate = new Date(allDates[i].date);
+        const daysDiff = Math.floor((currDate - prevDate) / (1000 * 60 * 60 * 24));
+        
+        // Account for excluded days between dates
+        let excludedDaysCount = 0;
+        for (let d = 1; d < daysDiff; d++) {
+          const checkDate = new Date(prevDate);
+          checkDate.setDate(checkDate.getDate() + d);
+          const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
+          if (excludeDays.includes(dayName)) {
+            excludedDaysCount++;
+          }
+        }
+        
+        if (daysDiff - excludedDaysCount === 1) {
+          tempStreak++;
+        } else {
+          topStreak = Math.max(topStreak, tempStreak);
+          tempStreak = 1;
+        }
+      }
+    }
+    topStreak = Math.max(topStreak, tempStreak);
+    
+    // Calculate numerical analytics for quantifiable habits
+    let totalMeasurement = 0;
+    let averageMeasurement = 0;
+    let averagePerLog = 0;
+    
+    if (habit.is_quantifiable && completions.length > 0) {
+      const values = completions.map(c => c.value || 0);
+      totalMeasurement = values.reduce((sum, val) => sum + val, 0);
+      averagePerLog = totalMeasurement / completions.length;
+      
+      // Calculate average per day from first logged day to today
+      const firstLogDate = new Date(Math.min(...completions.map(c => new Date(c.date))));
+      const daysSinceFirst = Math.floor((today - firstLogDate) / (1000 * 60 * 60 * 24)) + 1;
+      
+      // Subtract excluded days from the total period
+      let excludedDaysInPeriod = 0;
+      for (let d = 0; d < daysSinceFirst; d++) {
+        const checkDate = new Date(firstLogDate);
+        checkDate.setDate(checkDate.getDate() + d);
+        const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
+        if (excludeDays.includes(dayName)) {
+          excludedDaysInPeriod++;
+        }
+      }
+      
+      const activeDays = daysSinceFirst - excludedDaysInPeriod;
+      averageMeasurement = activeDays > 0 ? totalMeasurement / activeDays : 0;
+    }
+    
     return {
       currentStreak,
-      totalCompletions: totalDays
+      totalCompletions: totalDays,
+      topStreak,
+      totalMeasurement,
+      averageMeasurement,
+      averagePerLog
     };
-  }, [habit.has_insights, habit.habit_completions]);
+  }, [habit.has_insights, habit.habit_completions, habit.insight_settings, habit.is_quantifiable]);
 
   // Tier system stats
-  const tierStats = React.useMemo(() => {
+  const tierStats = useMemo(() => {
     return getHabitStats(habit);
   }, [habit]);
 
   // Update state when habit changes
-  React.useEffect(() => {
+  useEffect(() => {
     setEditName(habit.name);
 
     setEditIsQuantifiable(habit.is_quantifiable || false);
@@ -165,7 +264,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
 
 
 
-  const heatmapData = React.useMemo(() => {
+  const heatmapData = useMemo(() => {
     const now = new Date();
     let startDate, endDate;
     
@@ -377,7 +476,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     handleDateClick(new Date(), false);
   };
 
-  const handleComplete = React.useCallback(async () => {
+  const handleComplete = useCallback(async () => {
     try {
       if (habit.is_quantifiable) {
         const value = parseFloat(quantifiableValue) || 0;
@@ -400,7 +499,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     }
   }, [habit.id, selectedDate, habit.is_quantifiable, quantifiableValue, onComplete]);
 
-  const handleUndo = React.useCallback(async () => {
+  const handleUndo = useCallback(async () => {
     try {
       await onComplete(habit.id, selectedDate, true);
       setIsOpen(false);
@@ -409,7 +508,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     }
   }, [habit.id, selectedDate, onComplete]);
 
-  const handleDelete = React.useCallback(async () => {
+  const handleDelete = useCallback(async () => {
     try {
       await onDelete(habit.id);
       setIsDeleteOpen(false);
@@ -418,7 +517,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     }
   }, [habit.id, onDelete]);
 
-  const handleEdit = React.useCallback(async () => {
+  const handleEdit = useCallback(async () => {
     try {
       // Check if insights are enabled but no specific insights are selected
       let finalHasInsights = editHasInsights;
@@ -722,8 +821,8 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                       } else {
                         cellStyle.backgroundColor = `color-mix(in srgb, var(--cell-completed) ${Math.round(opacity * 100)}%, var(--cell-empty))`;
                       }
-                      // Set border color to match the cell color
-                      cellStyle.borderColor = cellStyle.backgroundColor;
+                      // Set black border for logged numerical habits
+                      cellStyle.borderColor = '#000000';
                     } else {
                       // 0 value or unlogged - treat as unlogged cell
                       if (shouldUseCustomTheme) {
@@ -796,7 +895,7 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
             zIndex: 9999,
             pointerEvents: 'none',
             background: 'var(--text-primary)',
-            color: 'var(--bg-primary)',
+            color: 'white',
             padding: '0.4rem 0.6rem',
             borderRadius: '4px',
             fontSize: '0.7rem',
@@ -996,11 +1095,11 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                 </button>
               </div>
               <p className="insights-description">
-                Get powerful analytics including streaks, trends, and ranked progression
+                Get powerful analytics including streaks, statistics, and ranked progression
               </p>
               {editHasInsights && (
                 <div className="insight-settings">
-                  <p className="insight-settings-label">Choose which insights to display:</p>
+                  <p className="insight-settings-label">Choose which analytics to display:</p>
                   <div className="insight-checkboxes">
                     <label className="insight-checkbox-label">
                       <input
@@ -1035,6 +1134,83 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
                       />
                       <span>Rank Progress Bar</span>
                     </label>
+                    <label className="insight-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={editInsightSettings.showTopStreak}
+                        onChange={(e) => setEditInsightSettings(prev => ({
+                          ...prev,
+                          showTopStreak: e.target.checked
+                        }))}
+                      />
+                      <span>Top Streak</span>
+                    </label>
+                    {editIsQuantifiable && (
+                      <>
+                        <label className="insight-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={editInsightSettings.showTotalMeasurement}
+                            onChange={(e) => setEditInsightSettings(prev => ({
+                              ...prev,
+                              showTotalMeasurement: e.target.checked
+                            }))}
+                          />
+                          <span>Total Measurement</span>
+                        </label>
+                        <label className="insight-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={editInsightSettings.showAverageMeasurement}
+                            onChange={(e) => setEditInsightSettings(prev => ({
+                              ...prev,
+                              showAverageMeasurement: e.target.checked
+                            }))}
+                          />
+                          <span>Average Per Day</span>
+                        </label>
+                        <label className="insight-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={editInsightSettings.showAveragePerLog}
+                            onChange={(e) => setEditInsightSettings(prev => ({
+                              ...prev,
+                              showAveragePerLog: e.target.checked
+                            }))}
+                          />
+                          <span>Average Per Log</span>
+                        </label>
+                      </>
+                    )}
+                  </div>
+                  
+                  <div className="exclude-days-settings">
+                    <p className="insight-settings-label">Exclude days from analytics:</p>
+                    <div className="exclude-days-checkboxes">
+                      {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+                        <button
+                          key={day}
+                          type="button"
+                          className={`day-toggle-button ${editInsightSettings.excludeDays?.includes(day) ? 'active' : ''}`}
+                          onClick={() => {
+                            const excludeDays = editInsightSettings.excludeDays || [];
+                            if (excludeDays.includes(day)) {
+                              setEditInsightSettings(prev => ({
+                                ...prev,
+                                excludeDays: excludeDays.filter(d => d !== day)
+                              }));
+                            } else {
+                              setEditInsightSettings(prev => ({
+                                ...prev,
+                                excludeDays: [...excludeDays, day]
+                              }));
+                            }
+                          }}
+                        >
+                          {day.slice(0, 3)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1082,7 +1258,11 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
       {insights && habit.insight_settings && (
         (habit.insight_settings.showCurrentStreak || 
          habit.insight_settings.showTotalDays || 
-         habit.insight_settings.showProgressBar) && (
+         habit.insight_settings.showProgressBar ||
+         habit.insight_settings.showTopStreak ||
+         habit.insight_settings.showTotalMeasurement ||
+         habit.insight_settings.showAverageMeasurement ||
+         habit.insight_settings.showAveragePerLog) && (
         <div className="bottom-stats-section">
           {/* Insights section */}
           <div className="insights-bottom">
@@ -1094,6 +1274,26 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
             {habit.insight_settings.showTotalDays && (
               <span className="insight-item">
                 <span className="insight-value">{insights.totalCompletions}</span> total
+              </span>
+            )}
+            {habit.insight_settings.showTopStreak && (
+              <span className="insight-item">
+                <span className="insight-value">{insights.topStreak}</span> top streak
+              </span>
+            )}
+            {habit.is_quantifiable && habit.insight_settings.showTotalMeasurement && (
+              <span className="insight-item">
+                <span className="insight-value">{insights.totalMeasurement?.toFixed(1) || 0}</span> total {habit.metric_unit || ''}
+              </span>
+            )}
+            {habit.is_quantifiable && habit.insight_settings.showAverageMeasurement && (
+              <span className="insight-item">
+                <span className="insight-value">{insights.averageMeasurement?.toFixed(1) || 0}</span> avg/day
+              </span>
+            )}
+            {habit.is_quantifiable && habit.insight_settings.showAveragePerLog && (
+              <span className="insight-item">
+                <span className="insight-value">{insights.averagePerLog?.toFixed(1) || 0}</span> avg/log
               </span>
             )}
           </div>

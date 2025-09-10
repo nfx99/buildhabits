@@ -321,7 +321,7 @@
 }
 
 .reset-theme-btn:hover:not(:disabled) {
-  background: var(--bg-primary);
+  background: var(--bg-card);
   transform: translateY(-1px);
 }
 

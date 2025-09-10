@@ -30,7 +30,7 @@
 }
 
 .background-upload-area:hover {
-  background: var(--bg-primary);
+  background: var(--bg-card);
 }
 
 .background-upload-area.drag-over {

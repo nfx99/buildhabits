@@ -161,13 +161,18 @@ const Archive = ({ session }) => {
     habit.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (premiumLoading) {
-    return (
-      <div style={getBackgroundImageStyles(backgroundImageUrl)}>
-        <div className="archive-container">
-        </div>
+  // Loading screen component
+  const LoadingScreen = () => (
+    <div className="loading-screen">
+      <div className="loading-content">
+        <div className="loading-spinner"></div>
+        <p className="loading-text">Loading archive...</p>
       </div>
-    );
+    </div>
+  );
+
+  if (premiumLoading) {
+    return <LoadingScreen />;
   }
 
     if (!isPremium) {
@@ -216,12 +221,7 @@ const Archive = ({ session }) => {
   }
 
   if (loading) {
-    return (
-      <div style={getBackgroundImageStyles(backgroundImageUrl)}>
-        <div className="archive-container">
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (

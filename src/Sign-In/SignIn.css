@@ -39,7 +39,7 @@
 }
 
 .sign-in-box .form-group input {
-  background: var(--bg-primary);
+  background: var(--bg-card);
   border: 1px solid var(--border-primary);
   font-size: 1rem;
   padding: 1rem 1.25rem;

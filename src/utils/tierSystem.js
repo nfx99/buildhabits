@@ -79,8 +79,18 @@ export const calculatePointsWithStreak = (basePoints, currentStreak) => {
 // Get habit statistics including tier and streak info
 export const getHabitStats = (habit) => {
   const allCompletions = habit.habit_completions || [];
-  // Filter out 0-value completions for quantifiable habits, they should not count toward rank
+  const excludeDays = habit.insight_settings?.excludeDays || [];
+  
+  // Filter out 0-value completions for quantifiable habits and excluded days
   const completions = allCompletions.filter(completion => {
+    const completionDate = new Date(completion.date);
+    const dayName = completionDate.toLocaleDateString('en-US', { weekday: 'long' });
+    
+    // Skip excluded days
+    if (excludeDays.includes(dayName)) {
+      return false;
+    }
+    
     if (habit.is_quantifiable) {
       return (completion.value || 0) > 0;
     }
@@ -88,17 +98,31 @@ export const getHabitStats = (habit) => {
   });
   const totalDays = completions.length;
   
-  // Calculate current streak (including current day)
+  // Calculate current streak (excluding specified days)
   const today = new Date();
-  const sortedCompletions = [...completions].sort((a, b) => new Date(b.date) - new Date(a.date));
-  
   let currentStreak = 0;
-  for (let i = 0; i < sortedCompletions.length; i++) {
-    const completionDate = new Date(sortedCompletions[i].date);
-    const daysDiff = Math.floor((today - completionDate) / (1000 * 60 * 60 * 24));
+  let checkDate = new Date(today);
+  checkDate.setHours(0, 0, 0, 0);
+  
+  while (true) {
+    const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
     
-    if (daysDiff === i) {
+    // Skip excluded days
+    if (excludeDays.includes(dayName)) {
+      checkDate.setDate(checkDate.getDate() - 1);
+      continue;
+    }
+    
+    // Check if there's a completion for this date
+    const hasCompletion = completions.some(completion => {
+      const completionDate = new Date(completion.date);
+      completionDate.setHours(0, 0, 0, 0);
+      return completionDate.getTime() === checkDate.getTime();
+    });
+    
+    if (hasCompletion) {
       currentStreak++;
+      checkDate.setDate(checkDate.getDate() - 1);
     } else {
       break;
     }

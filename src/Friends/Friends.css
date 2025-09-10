@@ -263,7 +263,7 @@
   outline: none;
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
-  background: var(--bg-primary);
+  background: var(--bg-card);
 }
 
 .search-input::placeholder {
@@ -292,7 +292,7 @@
 
 .search-icon-btn:hover {
   color: var(--accent-primary);
-  background: var(--bg-primary);
+  background: var(--bg-card);
 }
 
 .search-icon {
