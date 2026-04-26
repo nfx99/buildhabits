@@ -6,7 +6,6 @@ import './HabitCard.css';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { getHabitStats } from '../utils/tierSystem';
-import { applyThemeToDocument } from '../utils/themeCustomization';
 
 const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onUnarchive, isReadOnly = false, viewMode = 'year', isPremium = false, isArchived = false, onEditDialogChange, onDeleteDialogChange, onLogProgressDialogChange, onMoreMenuChange, friendTheme = null }) => {
   const {
@@ -82,7 +81,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     if (totalDays === 0) return null;
     
     const today = new Date();
-    const sortedCompletions = [...completions].sort((a, b) => new Date(b.date) - new Date(a.date));
     
     // Calculate current streak (excluding specified days)
     let currentStreak = 0;
@@ -212,28 +210,28 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
     if (onEditDialogChange) {
       onEditDialogChange(isEditOpen);
     }
-  }, [isEditOpen]); // Only depend on isEditOpen, not the callback function
+  }, [isEditOpen, onEditDialogChange]);
 
   // Update delete dialog state change
   React.useEffect(() => {
     if (onDeleteDialogChange) {
       onDeleteDialogChange(isDeleteOpen);
     }
-  }, [isDeleteOpen]); // Only depend on isDeleteOpen, not the callback function
+  }, [isDeleteOpen, onDeleteDialogChange]);
 
   // Update log progress dialog state change
   React.useEffect(() => {
     if (onLogProgressDialogChange) {
       onLogProgressDialogChange(isOpen);
     }
-  }, [isOpen]); // Only depend on isOpen, not the callback function
+  }, [isOpen, onLogProgressDialogChange]);
 
   // Update more menu state change
   React.useEffect(() => {
     if (onMoreMenuChange) {
       onMoreMenuChange(isMoreOpen);
     }
-  }, [isMoreOpen]); // Only depend on isMoreOpen, not the callback function
+  }, [isMoreOpen, onMoreMenuChange]);
 
   // Note: We don't apply friend's theme globally here to avoid conflicts
   // Instead, we pass the theme data to the component and use it conditionally
@@ -612,9 +610,6 @@ const HabitCard = ({ habit, onComplete, onDelete, onEdit, onPlan, onArchive, onU
   // 2. In read-only mode but friend's theme is available (friend's habits)
   // Exclude demo habits from custom themes
   const shouldUseCustomTheme = (habit.id !== 'demo') && (!isReadOnly || (isReadOnly && friendTheme));
-  
-  // Determine which theme to use
-  const themeToUse = isReadOnly && friendTheme ? friendTheme : null;
   
   // Apply friend's theme locally if available
   const friendThemeStyles = React.useMemo(() => {

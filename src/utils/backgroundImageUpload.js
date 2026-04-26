@@ -108,12 +108,11 @@ export const uploadBackgroundImage = async (userId, file, onProgress = null) => 
     
     // Generate unique filename
     const timestamp = Date.now();
-    const fileExt = file.name.split('.').pop();
     const fileName = `${userId}_${timestamp}.jpg`; // Always use jpg after compression
     const filePath = `${userId}/${fileName}`;
 
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(filePath, resizedBlob, {
         cacheControl: '3600',

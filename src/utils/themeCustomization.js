@@ -266,7 +266,7 @@ export const getUserTheme = async (userId) => {
  */
 export const resetUserTheme = async (userId) => {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('user_profiles')
       .update({ 
         theme_customization: DEFAULT_THEME,

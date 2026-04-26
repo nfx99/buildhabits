@@ -3,7 +3,6 @@ import {
   DEFAULT_THEME, 
   updateUserTheme, 
   resetUserTheme, 
-  validateTheme, 
   analyzeContrast,
   applyThemeToDocument 
 } from '../utils/themeCustomization';
