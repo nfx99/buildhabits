@@ -119,7 +119,7 @@ function App() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isEmailConfirmation]);
 
   const handleGetStarted = () => {
     window.location.href = '/signin?signup=true';

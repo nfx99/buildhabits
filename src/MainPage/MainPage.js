@@ -6,7 +6,6 @@ import * as Dialog from '@radix-ui/react-dialog';
 import * as Toast from '@radix-ui/react-toast';
 import { loadStripe } from '@stripe/stripe-js';
 import { format } from 'date-fns';
-import { getDefaultAvatarUrl, uploadProfilePicture, updateUserProfilePicture, extractFilePathFromUrl } from '../utils/profilePictureUpload';
 import { getBackgroundImageStyles } from '../utils/backgroundImageUpload';
 import { DEFAULT_THEME, applyThemeToDocument } from '../utils/themeCustomization';
 import ProfilePictureUpload from '../components/ProfilePictureUpload';
@@ -50,7 +49,7 @@ const MainPage = ({ session }) => {
   const [habitEditDialogStates, setHabitEditDialogStates] = useState({});
   const [habitDeleteDialogStates, setHabitDeleteDialogStates] = useState({});
   const [habitLogProgressDialogStates, setHabitLogProgressDialogStates] = useState({});
-  const [habitMoreMenuStates, setHabitMoreMenuStates] = useState({});
+  const [, setHabitMoreMenuStates] = useState({});
   const [, setShowShareSuccess] = useState(false);
 
   const [isQuantifiable, setIsQuantifiable] = useState(false);
@@ -94,7 +93,7 @@ const MainPage = ({ session }) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [calendarViewMode, setCalendarViewMode] = useState('year');
-  const [currentView, setCurrentView] = useState('habits'); // 'habits' or 'planner'
+  const [currentView] = useState('habits');
   const [plannerRefreshTrigger, setPlannerRefreshTrigger] = useState(0);
 
 
@@ -290,8 +289,6 @@ const MainPage = ({ session }) => {
         
         return isPremium;
       }
-      
-      return false;
     } catch (error) {
       console.error('Unexpected error in checkPaymentStatus:', error);
       // Set default values and continue
@@ -961,7 +958,7 @@ const MainPage = ({ session }) => {
     }
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('user_profiles')
         .upsert([
           {

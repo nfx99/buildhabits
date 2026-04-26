@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../config/supabase';
 import HabitCard from '../components/HabitCard';
 import ProfilePictureUpload from '../components/ProfilePictureUpload';
-import { getDefaultAvatarUrl } from '../utils/profilePictureUpload';
 import { getBackgroundImageStyles } from '../utils/backgroundImageUpload';
 import { getButtonStyles } from '../utils/themeCustomization';
 import './UserProfile.css';
@@ -15,7 +14,6 @@ const UserProfile = ({ session }) => {
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [, setShowShareSuccess] = useState(false);
   const [friendStatus, setFriendStatus] = useState('none'); // 'none', 'friend', 'pending', 'incoming'
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [uploadError, setUploadError] = useState(null);
@@ -198,25 +196,10 @@ const UserProfile = ({ session }) => {
       console.log('useEffect triggered for userId:', userId);
       loadUserData();
     }
-  }, [userId]); // Only depend on userId to avoid infinite loops
+  }, [userId, fetchUserProfile, fetchUserHabits, checkFriendStatus, fetchFriendTheme, fetchCurrentUserTheme]);
 
   const handleBackToHome = () => {
     navigate('/');
-  };
-
-  const handleShareProfile = async () => {
-    try {
-      const profileUrl = window.location.href;
-      await navigator.clipboard.writeText(profileUrl);
-      setShowShareSuccess(true);
-      
-      // Reset share success state after 2 seconds
-      setTimeout(() => {
-        setShowShareSuccess(false);
-      }, 2000);
-    } catch (error) {
-      console.error('Error copying to clipboard:', error);
-    }
   };
 
   const sendFriendRequest = async () => {
@@ -242,69 +225,6 @@ const UserProfile = ({ session }) => {
       setFriendStatus('pending');
     } catch (error) {
       console.error('Error sending friend request:', error);
-    }
-  };
-
-  const acceptFriendRequest = async () => {
-    try {
-      console.log('Accepting friend request from', userId);
-      const { data, error } = await supabase
-        .from('friendships')
-        .update({ status: 'accepted' })
-        .eq('user_id', userId)
-        .eq('friend_id', session.user.id)
-        .select();
-
-      if (error) {
-        console.error('Supabase error accepting friend request:', error);
-        throw error;
-      }
-      
-      console.log('Friend request accepted successfully:', data);
-      setFriendStatus('friend');
-    } catch (error) {
-      console.error('Error accepting friend request:', error);
-    }
-  };
-
-  const rejectFriendRequest = async () => {
-    try {
-      console.log('Rejecting friend request from', userId);
-      const { error } = await supabase
-        .from('friendships')
-        .delete()
-        .eq('user_id', userId)
-        .eq('friend_id', session.user.id);
-
-      if (error) {
-        console.error('Supabase error rejecting friend request:', error);
-        throw error;
-      }
-      
-      console.log('Friend request rejected successfully');
-      setFriendStatus('none');
-    } catch (error) {
-      console.error('Error rejecting friend request:', error);
-    }
-  };
-
-  const removeFriend = async () => {
-    try {
-      console.log('Removing friend relationship with', userId);
-      const { error } = await supabase
-        .from('friendships')
-        .delete()
-        .or(`and(user_id.eq.${session.user.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${session.user.id})`);
-
-      if (error) {
-        console.error('Supabase error removing friend:', error);
-        throw error;
-      }
-      
-      console.log('Friend removed successfully');
-      setFriendStatus('none');
-    } catch (error) {
-      console.error('Error removing friend:', error);
     }
   };
 

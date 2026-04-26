@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../config/supabase';
-import { getDefaultAvatarUrl } from '../utils/profilePictureUpload';
 import * as Dialog from '@radix-ui/react-dialog';
 import './Friends.css';
 
