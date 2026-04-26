@@ -15,7 +15,7 @@ const UserProfile = ({ session }) => {
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showShareSuccess, setShowShareSuccess] = useState(false);
+  const [, setShowShareSuccess] = useState(false);
   const [friendStatus, setFriendStatus] = useState('none'); // 'none', 'friend', 'pending', 'incoming'
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [uploadError, setUploadError] = useState(null);

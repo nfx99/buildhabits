@@ -6,7 +6,6 @@ import * as Dialog from '@radix-ui/react-dialog';
 import * as Toast from '@radix-ui/react-toast';
 import { loadStripe } from '@stripe/stripe-js';
 import { format } from 'date-fns';
-import { getHabitStats } from '../utils/tierSystem';
 import { getDefaultAvatarUrl, uploadProfilePicture, updateUserProfilePicture, extractFilePathFromUrl } from '../utils/profilePictureUpload';
 import { getBackgroundImageStyles } from '../utils/backgroundImageUpload';
 import { DEFAULT_THEME, applyThemeToDocument } from '../utils/themeCustomization';
@@ -38,7 +37,6 @@ const DraggablePlannerWidget = lazy(() => import('../Planner/DraggablePlannerWid
 
 // Lazy load Friends component
 const Friends = lazy(() => import('../Friends/Friends'));
-const Planner = lazy(() => import('../Planner/Planner'));
 
 const MainPage = ({ session }) => {
   const [habits, setHabits] = useState([]);
@@ -53,7 +51,7 @@ const MainPage = ({ session }) => {
   const [habitDeleteDialogStates, setHabitDeleteDialogStates] = useState({});
   const [habitLogProgressDialogStates, setHabitLogProgressDialogStates] = useState({});
   const [habitMoreMenuStates, setHabitMoreMenuStates] = useState({});
-  const [showShareSuccess, setShowShareSuccess] = useState(false);
+  const [, setShowShareSuccess] = useState(false);
 
   const [isQuantifiable, setIsQuantifiable] = useState(false);
   const [targetValue, setTargetValue] = useState('');
@@ -71,7 +69,7 @@ const MainPage = ({ session }) => {
     excludeDays: []
   });
   const [loading, setLoading] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true);
+  const [, setInitialLoad] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   
 
@@ -102,29 +100,6 @@ const MainPage = ({ session }) => {
 
 
   const navigate = useNavigate();
-
-  // Calculate overall stats from all habits
-  const overallStats = useMemo(() => {
-    if (!habits.length) return { totalPoints: 0, totalDays: 0, currentStreak: 0 };
-    
-    let totalDays = 0;
-    let maxStreak = 0;
-    
-    habits.forEach(habit => {
-      const stats = getHabitStats(habit);
-      totalDays += stats.totalDays;
-      maxStreak = Math.max(maxStreak, stats.currentStreak);
-    });
-    
-    // Calculate points based on habit data (10 points per day)
-    const totalPoints = totalDays * 10;
-    
-    return {
-      totalPoints,
-      totalDays,
-      currentStreak: maxStreak
-    };
-  }, [habits]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -562,11 +537,6 @@ const MainPage = ({ session }) => {
       // Normalize the date to avoid timezone issues
       const targetDate = format(date, 'yyyy-MM-dd');
       const normalizedDate = new Date(targetDate + 'T12:00:00.000Z').toISOString();
-      
-      // Check if this is today's date for points awarding
-      const today = new Date();
-      const todayStr = format(today, 'yyyy-MM-dd');
-      const isToday = targetDate === todayStr;
       
       if (isUndo) {
         // For undo, delete using exact date match
@@ -1298,7 +1268,6 @@ const MainPage = ({ session }) => {
   const isAnyEditDialogOpen = Object.values(habitEditDialogStates).some(isOpen => isOpen);
   const isAnyDeleteDialogOpen = Object.values(habitDeleteDialogStates).some(isOpen => isOpen);
   const isAnyLogProgressDialogOpen = Object.values(habitLogProgressDialogStates).some(isOpen => isOpen);
-  const isAnyMoreMenuOpen = Object.values(habitMoreMenuStates).some(isOpen => isOpen);
 
   const handlePlanHabit = async (habitId, plannedDate) => {
     try {
